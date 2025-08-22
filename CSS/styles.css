@@ -1,14 +1,16 @@
 /* Imágenes de fondo para las tarjetas de la sección división */
-.card-rediseñada.futbolista .card-bg-img {
-  background-image: url('../imagenes/imagen2.png');
-  background-size: cover;
-  background-position: center;
-}
-.card-rediseñada.scout .card-bg-img {
-  background-image: url('../imagenes/imagen3.png');
-  background-size: cover;
-  background-position: center;
-}
+/* .card-rediseñada.futbolista .card-bg-img,
+.card-rediseñada.scout .card-bg-img,
+.cf-steps-futbolistas,
+.cf-steps-ojeadores,
+.cf-futbolistas-section,
+.cf-futbolistas-container,
+.cf-title,
+.cf-title span,
+.cf-steps,
+.cf-step {
+  // Migrados a como-funciona.css
+} */
 /* Asegura que los pasos se vean en fila horizontal */
 .cf-steps-futbolistas,
 .cf-steps-ojeadores {
