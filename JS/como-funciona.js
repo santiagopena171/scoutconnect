@@ -2,6 +2,9 @@
 // Genera dinámicamente el contenido de la página "Cómo funciona ScoutConnect"
 
 document.addEventListener('DOMContentLoaded', function () {
+  // Actualizar navbar con estado de sesión
+  updateNavbarWithSession();
+
   // Datos para futbolistas
   const futbolistasSteps = [
     {
@@ -81,4 +84,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
   renderSteps(futbolistasSteps, '.cf-steps-futbolistas');
   renderSteps(ojeadoresSteps, '.cf-steps-ojeadores');
+
+  // Función para actualizar navbar con estado de sesión
+  function updateNavbarWithSession() {
+    const navbarMenu = document.querySelector('.navbar-menu');
+    if (!navbarMenu) return;
+
+    const sessionToken = localStorage.getItem('scoutConnectToken');
+    const sessionUser = localStorage.getItem('scoutConnectUser');
+    const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
+    
+    // Encontrar el último enlace (actualmente "Contacto" o "Iniciar sesión")
+    const lastMenuItem = navbarMenu.querySelector('li:last-child');
+    if (!lastMenuItem) return;
+
+    if (sessionToken && sessionUser && sessionExpiry) {
+      const now = new Date().getTime();
+      const expiryTime = parseInt(sessionExpiry);
+      
+      if (now < expiryTime) {
+        // Sesión válida - mostrar enlace al dashboard
+        try {
+          const userData = JSON.parse(sessionUser);
+          const dashboardUrl = getDashboardUrl(userData.userType || 'jugador');
+          lastMenuItem.innerHTML = `<a href="${dashboardUrl}">Mi Dashboard</a>`;
+          return;
+        } catch (error) {
+          console.error('Error parsing session data:', error);
+        }
+      } else {
+        // Sesión expirada - limpiar
+        localStorage.removeItem('scoutConnectToken');
+        localStorage.removeItem('scoutConnectUser');
+        localStorage.removeItem('scoutConnectExpiry');
+      }
+    }
+    
+    // No hay sesión válida - mostrar enlace de login
+    lastMenuItem.innerHTML = '<a href="login.html">Iniciar sesión</a>';
+  }
+
+  // Función para obtener URL del dashboard según tipo de usuario
+  function getDashboardUrl(userType) {
+    switch(userType) {
+      case 'jugador':
+      case 'futbolista':
+        return 'dashboard-futbolista.html';
+      case 'scout':
+      case 'ojeador':
+        return 'dashboard-futbolista.html'; // Temporal
+      case 'club':
+      case 'academia':
+        return 'dashboard-futbolista.html'; // Temporal
+      default:
+        return 'dashboard-futbolista.html';
+    }
+  }
 });

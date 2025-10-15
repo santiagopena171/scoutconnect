@@ -1,6 +1,9 @@
 // ===== JAVASCRIPT PARA LA PÁGINA DE LOGIN =====
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Verificar sesión activa al cargar la página
+  checkActiveSession();
+
   // Elementos del DOM
   const loginForm = document.getElementById('loginForm');
   const emailInput = document.getElementById('email');
@@ -13,6 +16,71 @@ document.addEventListener('DOMContentLoaded', function() {
   const messageTitle = document.getElementById('messageTitle');
   const messageText = document.getElementById('messageText');
   const messageClose = document.getElementById('messageClose');
+
+  // Función para verificar sesión activa
+  function checkActiveSession() {
+    const sessionToken = localStorage.getItem('scoutConnectToken');
+    const sessionUser = localStorage.getItem('scoutConnectUser');
+    const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
+
+    if (sessionToken && sessionUser && sessionExpiry) {
+      const now = new Date().getTime();
+      const expiryTime = parseInt(sessionExpiry);
+
+      if (now < expiryTime) {
+        // Sesión válida - redirigir al dashboard
+        const userData = JSON.parse(sessionUser);
+        redirectToDashboard(userData.userType || 'jugador');
+        return true;
+      } else {
+        // Sesión expirada - limpiar datos
+        clearSession();
+      }
+    }
+    return false;
+  }
+
+  // Función para limpiar sesión
+  function clearSession() {
+    localStorage.removeItem('scoutConnectToken');
+    localStorage.removeItem('scoutConnectUser');
+    localStorage.removeItem('scoutConnectExpiry');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('userEmail');
+  }
+
+  // Función para redirigir al dashboard según tipo de usuario
+  function redirectToDashboard(userType) {
+    console.log('🎯 Redirigiendo usuario tipo:', userType);
+    
+    showMessage('info', 'Sesión activa detectada', 'Redirigiendo a tu dashboard...');
+    
+    setTimeout(() => {
+      let redirectUrl;
+      
+      switch(userType) {
+        case 'jugador':
+        case 'futbolista':
+          redirectUrl = 'dashboard-futbolista.html';
+          break;
+        case 'scout':
+        case 'ojeador':
+          // Cuando esté listo: redirectUrl = 'dashboard-scout.html';
+          redirectUrl = 'dashboard-futbolista.html'; // Temporal
+          break;
+        case 'club':
+        case 'academia':
+          // Cuando esté listo: redirectUrl = 'dashboard-club.html';
+          redirectUrl = 'dashboard-futbolista.html'; // Temporal
+          break;
+        default:
+          redirectUrl = 'dashboard-futbolista.html';
+      }
+      
+      console.log('🚀 Redirigiendo a:', redirectUrl);
+      window.location.href = redirectUrl;
+    }, 1500);
+  }
 
   // Funcionalidad de mostrar/ocultar contraseña
   togglePassword.addEventListener('click', function() {
@@ -102,11 +170,14 @@ document.addEventListener('DOMContentLoaded', function() {
   loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    console.log('🔄 Iniciando proceso de login...');
+
     // Validar campos
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
     if (!isEmailValid || !isPasswordValid) {
+      console.log('❌ Validación de campos fallida');
       return;
     }
 
@@ -115,23 +186,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
     try {
       // Simular llamada a la API (reemplazar con tu lógica real)
-      await simulateLogin();
+      console.log('📡 Enviando credenciales...');
+      const simulationResult = await simulateLogin();
+      console.log('✅ Login exitoso:', simulationResult);
       
       // Login exitoso
+      const userData = {
+        email: emailInput.value.trim(),
+        userType: simulationResult.user.userType || 'jugador',
+        name: simulationResult.user.name || 'Usuario',
+        loginTime: new Date().toISOString()
+      };
+
+      // Guardar sesión
+      const sessionToken = generateSessionToken();
+      const expiryTime = new Date().getTime() + (rememberMe.checked ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000); // 30 días o 1 día
+      
+      localStorage.setItem('scoutConnectToken', sessionToken);
+      localStorage.setItem('scoutConnectUser', JSON.stringify(userData));
+      localStorage.setItem('scoutConnectExpiry', expiryTime.toString());
+
+      console.log('💾 Sesión guardada:', {
+        token: sessionToken,
+        user: userData,
+        expiry: new Date(expiryTime).toLocaleString()
+      });
+
       if (rememberMe.checked) {
         localStorage.setItem('rememberMe', 'true');
         localStorage.setItem('userEmail', emailInput.value.trim());
+        console.log('✅ Datos de "recordarme" guardados');
       }
 
       showMessage('success', '¡Bienvenido!', 'Has iniciado sesión correctamente.');
       
       // Redirigir después de 2 segundos
       setTimeout(() => {
-        window.location.href = 'index.html';
+        console.log('🚀 Redirigiendo al dashboard...');
+        redirectToDashboard(userData.userType);
       }, 2000);
 
     } catch (error) {
       // Error en el login
+      console.error('❌ Error en login:', error);
       showMessage('error', 'Error de autenticación', error.message || 'Credenciales incorrectas. Por favor, verifica tu correo y contraseña.');
     } finally {
       setLoadingState(false);
@@ -142,19 +239,72 @@ document.addEventListener('DOMContentLoaded', function() {
   function simulateLogin() {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
+        try {
+          const email = emailInput.value.trim();
+          const password = passwordInput.value;
 
-        // Simulación simple - reemplazar con validación real
-        if (email === 'admin@scoutconnect.com' && password === 'admin123') {
-          resolve({ success: true, user: { email, name: 'Administrador' } });
-        } else if (email.includes('@') && password.length >= 6) {
-          resolve({ success: true, user: { email, name: 'Usuario' } });
-        } else {
-          reject(new Error('Credenciales incorrectas'));
+          console.log('🔍 Validando credenciales para:', email);
+
+          // Simulación simple - reemplazar con validación real
+          if (email === 'admin@scoutconnect.com' && password === 'admin123') {
+            const result = { 
+              success: true, 
+              user: { 
+                email, 
+                name: 'Administrador',
+                userType: 'admin'
+              } 
+            };
+            console.log('✅ Admin login exitoso');
+            resolve(result);
+          } else if (email === 'scout@scoutconnect.com' && password === 'scout123') {
+            const result = { 
+              success: true, 
+              user: { 
+                email, 
+                name: 'Carlos Mendoza',
+                userType: 'scout'
+              } 
+            };
+            console.log('✅ Scout login exitoso');
+            resolve(result);
+          } else if (email === 'club@scoutconnect.com' && password === 'club123') {
+            const result = { 
+              success: true, 
+              user: { 
+                email, 
+                name: 'Boca Juniors',
+                userType: 'club'
+              } 
+            };
+            console.log('✅ Club login exitoso');
+            resolve(result);
+          } else if (email.includes('@') && password.length >= 6) {
+            const result = { 
+              success: true, 
+              user: { 
+                email, 
+                name: 'Juan Pérez',
+                userType: 'jugador'
+              } 
+            };
+            console.log('✅ Jugador login exitoso');
+            resolve(result);
+          } else {
+            console.log('❌ Credenciales incorrectas');
+            reject(new Error('Credenciales incorrectas'));
+          }
+        } catch (error) {
+          console.error('❌ Error en simulateLogin:', error);
+          reject(error);
         }
       }, 1500); // Simular latencia de red
     });
+  }
+
+  // Función para generar token de sesión
+  function generateSessionToken() {
+    return 'scToken_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
   }
 
   // Estados de carga del botón

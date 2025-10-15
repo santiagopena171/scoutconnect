@@ -1,6 +1,9 @@
 // ===== JAVASCRIPT PARA LA PÁGINA DE REGISTRO =====
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Verificar sesión activa al cargar la página
+  checkActiveSession();
+
   // Elementos del DOM
   const registerForm = document.getElementById('registerForm');
   const userTypeTabs = document.querySelectorAll('.user-type-tab');
@@ -19,6 +22,64 @@ document.addEventListener('DOMContentLoaded', function() {
   const messageClose = document.getElementById('messageClose');
 
   let currentUserType = 'jugador';
+
+  // Función para verificar sesión activa
+  function checkActiveSession() {
+    const sessionToken = localStorage.getItem('scoutConnectToken');
+    const sessionUser = localStorage.getItem('scoutConnectUser');
+    const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
+
+    if (sessionToken && sessionUser && sessionExpiry) {
+      const now = new Date().getTime();
+      const expiryTime = parseInt(sessionExpiry);
+
+      if (now < expiryTime) {
+        // Sesión válida - redirigir al dashboard
+        const userData = JSON.parse(sessionUser);
+        redirectToDashboard(userData.userType || 'jugador');
+        return true;
+      } else {
+        // Sesión expirada - limpiar datos
+        clearSession();
+      }
+    }
+    return false;
+  }
+
+  // Función para limpiar sesión
+  function clearSession() {
+    localStorage.removeItem('scoutConnectToken');
+    localStorage.removeItem('scoutConnectUser');
+    localStorage.removeItem('scoutConnectExpiry');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('userEmail');
+  }
+
+  // Función para redirigir al dashboard según tipo de usuario
+  function redirectToDashboard(userType) {
+    showMessage('info', 'Sesión activa detectada', 'Redirigiendo a tu dashboard...');
+    
+    setTimeout(() => {
+      switch(userType) {
+        case 'jugador':
+        case 'futbolista':
+          window.location.href = 'dashboard-futbolista.html';
+          break;
+        case 'scout':
+        case 'ojeador':
+          // Cuando esté listo: window.location.href = 'dashboard-scout.html';
+          window.location.href = 'dashboard-futbolista.html'; // Temporal
+          break;
+        case 'club':
+        case 'academia':
+          // Cuando esté listo: window.location.href = 'dashboard-club.html';
+          window.location.href = 'dashboard-futbolista.html'; // Temporal
+          break;
+        default:
+          window.location.href = 'dashboard-futbolista.html';
+      }
+    }, 1500);
+  }
 
   // Inicialización
   init();
@@ -313,14 +374,29 @@ document.addEventListener('DOMContentLoaded', function() {
       const formData = collectFormData();
       
       // Simulate API call
-      await simulateRegistration(formData);
+      const registrationResult = await simulateRegistration(formData);
       
       // Registration successful
-      showMessage('success', '¡Cuenta creada exitosamente!', 'Bienvenido a ScoutConnect. Serás redirigido al login.');
+      const userData = {
+        email: formData.email,
+        userType: formData.userType,
+        name: `${formData.firstName} ${formData.lastName}`,
+        registrationTime: new Date().toISOString()
+      };
+
+      // Crear sesión automáticamente después del registro
+      const sessionToken = generateSessionToken();
+      const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 1 día
       
-      // Redirect after 3 seconds
+      localStorage.setItem('scoutConnectToken', sessionToken);
+      localStorage.setItem('scoutConnectUser', JSON.stringify(userData));
+      localStorage.setItem('scoutConnectExpiry', expiryTime.toString());
+
+      showMessage('success', '¡Cuenta creada exitosamente!', 'Bienvenido a ScoutConnect. Serás redirigido a tu dashboard.');
+      
+      // Redirigir después de 3 segundos
       setTimeout(() => {
-        window.location.href = 'login.html';
+        redirectToDashboard(userData.userType);
       }, 3000);
 
     } catch (error) {
@@ -361,6 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }, 2000);
     });
+  }
+
+  // Función para generar token de sesión
+  function generateSessionToken() {
+    return 'scToken_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
   }
 
   function setLoadingState(loading) {
