@@ -6,6 +6,7 @@
   <title>ScoutConnect - Donde los talentos se encuentran con las oportunidades</title>
   <link rel="stylesheet" href="CSS/styles.css">
   <link rel="stylesheet" href="CSS/index.css">
+  <link rel="stylesheet" href="CSS/navbar-fix.css">
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Smooth scroll y toggles de secciones
@@ -16,6 +17,36 @@
           if (target) target.scrollIntoView({ behavior: 'smooth' });
         });
       });
+      
+      // Hamburger menu functionality
+      const navbarToggle = document.getElementById('navbarToggle');
+      const navbarMenu = document.getElementById('navbarMenu');
+      
+      console.log('Navbar elements:', { navbarToggle, navbarMenu });
+      
+      if (navbarToggle && navbarMenu) {
+        console.log('Setting up hamburger menu functionality');
+        navbarToggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('Hamburger clicked');
+          navbarToggle.classList.toggle('active');
+          navbarMenu.classList.toggle('active');
+          console.log('Classes after toggle:', {
+            hamburger: navbarToggle.className,
+            menu: navbarMenu.className
+          });
+        });
+        
+        // Close menu when clicking on a link
+        navbarMenu.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', () => {
+            navbarToggle.classList.remove('active');
+            navbarMenu.classList.remove('active');
+          });
+        });
+      } else {
+        console.log('ERROR: Navbar elements not found');
+      }
     });
   </script>
 </head>
@@ -23,7 +54,20 @@
   <!-- Barra superior fija -->
   <nav class="main-navbar">
     <div class="navbar-container">
-      <ul class="navbar-menu">
+      <!-- Logo (solo visible en móvil) -->
+      <div class="navbar-logo">
+        <img src="imagenes/logo.png" alt="ScoutConnect Logo">
+      </div>
+      
+      <!-- Hamburger button para móvil -->
+      <button class="navbar-hamburger" id="navbarToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      
+      <!-- Menu de navegación -->
+      <ul class="navbar-menu" id="navbarMenu">
         <li><a href="index.html">Inicio</a></li>
         <li><a href="como-funciona.html">Cómo funciona</a></li>
         <li><a href="#seguridad">Seguridad</a></li>

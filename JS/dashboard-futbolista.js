@@ -643,6 +643,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function setupEventListeners() {
+    // Hamburger menu for mobile
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const userInfo = document.getElementById('userInfo');
+    
+    if (hamburgerMenu && userInfo) {
+      hamburgerMenu.addEventListener('click', () => {
+        hamburgerMenu.classList.toggle('active');
+        userInfo.classList.toggle('mobile-active');
+      });
+    }
+
     // Dropdowns
     notificationBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -660,6 +671,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', () => {
       closeDropdown(notificationDropdown);
       closeDropdown(userMenuDropdown);
+      // Close mobile menu when clicking outside
+      if (hamburgerMenu && userInfo) {
+        hamburgerMenu.classList.remove('active');
+        userInfo.classList.remove('mobile-active');
+      }
     });
 
     // Modales

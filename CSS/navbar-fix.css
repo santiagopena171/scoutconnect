@@ -1,0 +1,213 @@
+/* NAVBAR FIX - Para corregir conflictos de estilos */
+
+/* Viewport fixes for mobile */
+html {
+  scroll-behavior: smooth !important;
+}
+
+body {
+  overflow-x: hidden !important;
+}
+
+/* Override de estilos conflictivos del navbar */
+.main-navbar {
+  background: #fff !important;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.06) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  height: 80px !important;
+  min-height: 80px !important;
+}
+
+.navbar-menu li a {
+  color: #1E1E1E !important;
+  font-weight: 500 !important;
+  padding: 8px 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+.navbar-menu li a:hover {
+  color: #00A859 !important;
+  background: transparent !important;
+  border-bottom: 2px solid #00A859 !important;
+  border-radius: 0 !important;
+}
+
+/* Mobile specific fixes */
+@media (max-width: 768px) {
+  .main-navbar {
+    height: 70px !important;
+    min-height: 70px !important;
+  }
+  
+  .navbar-logo {
+    display: flex !important;
+  }
+  
+  .navbar-hamburger {
+    display: flex !important;
+  }
+  
+  .navbar-menu {
+    position: fixed !important;
+    top: 70px !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #fff !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 20px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-110%) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+    z-index: 999 !important;
+  }
+  
+  .navbar-menu.active {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  .navbar-menu li a {
+    color: #1E1E1E !important;
+    background: transparent !important;
+    padding: 16px 0 !important;
+    border-bottom: none !important;
+    display: block !important;
+    width: 100% !important;
+  }
+  
+  .navbar-menu li a:hover {
+    background: #f8f9fa !important;
+    color: #00A859 !important;
+    border-bottom: none !important;
+  }
+  
+  body {
+    padding-top: 70px !important;
+  }
+}
+
+/* HERO SECTION MOBILE FIXES */
+@media (max-width: 768px) {
+  .hero-section {
+    height: auto !important;
+    min-height: calc(100vh - 70px) !important;
+    padding: 40px 20px !important;
+  }
+  
+  .hero-balance-final {
+    padding: 20px !important;
+    min-height: calc(100vh - 140px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  
+  .hero-title-rediseñado,
+  .hero-title-balance-final {
+    font-size: 2rem !important;
+    margin-bottom: 1rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  .hero-desc-rediseñado {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .hero-balance-row-final {
+    flex-direction: column !important;
+    gap: 20px !important;
+    align-items: center !important;
+  }
+  
+  .hero-desc-balance-final {
+    text-align: center !important;
+    max-width: 100% !important;
+  }
+  
+  .hero-buttons-balance-final {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+  
+  .hero-buttons-balance-final .btn {
+    min-width: 140px !important;
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    min-height: calc(100vh - 70px) !important;
+    padding: 20px 15px !important;
+  }
+  
+  .hero-balance-final {
+    padding: 15px !important;
+    min-height: calc(100vh - 110px) !important;
+  }
+  
+  .hero-title-rediseñado,
+  .hero-title-balance-final {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.8rem !important;
+  }
+  
+  .hero-desc-rediseñado {
+    font-size: 13px !important;
+    margin-bottom: 1.2rem !important;
+  }
+  
+  .hero-buttons-balance-final {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  
+  .hero-buttons-balance-final .btn {
+    width: 100% !important;
+    max-width: 250px !important;
+  }
+}
+
+/* ADDITIONAL MOBILE CONTENT FIXES */
+@media (max-width: 768px) {
+  /* Ensure content doesn't get cut off */
+  .logo-section {
+    margin-top: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Fix any potential overlay issues */
+  .overlay {
+    z-index: 1 !important;
+  }
+  
+  .hero-balance-final {
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
+  /* Ensure proper spacing */
+  .hero-section {
+    margin-bottom: 0 !important;
+  }
+  
+  /* Fix for any absolute positioned elements */
+  .hero-video {
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+}

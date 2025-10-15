@@ -11,11 +11,66 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 0; /* Asegurar que no haya margen superior */
 }
+
 .main-logo img {
   max-width: 250px;
   margin: 20px auto;
   display: block;
+}
+
+/* Mobile adjustments for index page */
+@media (max-width: 768px) {
+  .logo-section {
+    padding: 20px 0;
+  }
+  
+  .main-logo img {
+    max-width: 200px;
+    margin: 10px auto;
+  }
+  
+  /* Fix hero section for mobile */
+  .hero-section {
+    height: auto !important;
+    min-height: calc(100vh - 70px) !important;
+    padding: 40px 20px !important;
+  }
+  
+  .hero-title-rediseñado {
+    font-size: 2rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .hero-desc-rediseñado {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .hero-balance-final {
+    padding: 20px !important;
+  }
+  
+  .hero-balance-row-final {
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    min-height: calc(100vh - 70px) !important;
+    padding: 20px 15px !important;
+  }
+  
+  .hero-title-rediseñado {
+    font-size: 1.5rem !important;
+  }
+  
+  .hero-desc-rediseñado {
+    font-size: 13px !important;
+  }
 }
 .hero-section {
   position: relative;
