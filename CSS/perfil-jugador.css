@@ -304,12 +304,16 @@ body {
   padding: 40px;
 }
 
+/* ============================================
+   CORRECCIÓN CRÍTICA: Ocultar secciones 
+   Última actualización: 2025-10-17
+   ============================================ */
 .profile-section {
-  display: none;
+  display: none !important;
 }
 
 .profile-section.active {
-  display: block;
+  display: block !important;
   animation: fadeInUp 0.3s ease-out;
 }
 

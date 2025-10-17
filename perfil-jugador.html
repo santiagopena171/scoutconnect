@@ -8,7 +8,7 @@
     <!-- Enlaces CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="CSS/styles.css">
-    <link rel="stylesheet" href="CSS/perfil-jugador.css">
+    <link rel="stylesheet" href="CSS/perfil-jugador.css?v=20251017">
 </head>
 <body>
     <!-- Navegación Principal -->
@@ -108,12 +108,12 @@
                     <button id="followBtn" class="btn btn-secondary" onclick="playerProfile.toggleFollow()">
                         <i class="fas fa-star"></i> Seguir
                     </button>
-                    <button class="btn btn-primary" onclick="playerProfile.showReportModal()">
+                    <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
                         <i class="fas fa-file-alt"></i> Generar Reporte
                     </button>
-                    <button class="btn btn-info" onclick="playerProfile.generateSampleReports()" style="background: #17a2b8; color: white;">
+                    <!-- <button class="btn btn-info" onclick="playerProfile.generateSampleReports()" style="background: #17a2b8; color: white;">
                         <i class="fas fa-database"></i> Demo: Cargar Reportes
-                    </button>
+                    </button> -->
                     <button class="btn btn-outline" onclick="window.history.back()">
                         <i class="fas fa-arrow-left"></i> Volver
                     </button>
@@ -282,72 +282,7 @@
 
             <!-- Sección: Reportes Generados -->
             <section id="section-reports" class="profile-section">
-                <div class="reports-header">
-                    <h3><i class="fas fa-clipboard-list"></i> Reportes de Scouting</h3>
-                    <div class="reports-actions">
-                        <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
-                            <i class="fas fa-plus"></i> Generar Nuevo Reporte
-                        </button>
-                        <button class="btn btn-secondary" onclick="playerProfile.refreshReports()">
-                            <i class="fas fa-sync-alt"></i> Actualizar
-                        </button>
-                    </div>
-                    <div class="reports-filter" style="margin-left: 16px; display: flex; gap:8px; align-items: center;">
-                        <label style="font-size:0.9rem; color: #374151;">Ver:</label>
-                        <div class="filter-buttons">
-                            <button id="filterAllReports" class="btn btn-outline small active" onclick="playerProfile.setReportsFilter('all')">Todos</button>
-                            <button id="filterMyReports" class="btn btn-outline small" onclick="playerProfile.setReportsFilter('mine')">Mis reportes</button>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-
-                <div class="reports-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h4 id="totalReports">0</h4>
-                            <p>Total de Reportes</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h4 id="avgRating">-</h4>
-                            <p>Rating Promedio</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h4 id="lastReportDate">-</h4>
-                            <p>Último Reporte</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="reports-container">
-                    <div class="reports-list" id="playerReportsList">
-                        <!-- Los reportes se cargarán dinámicamente aquí -->
-                    </div>
-                    
-                    <div class="empty-reports-state" id="emptyReportsState" style="display: none;">
-                        <div class="empty-icon">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                        <h3>No hay reportes generados</h3>
-                        <p>Este jugador aún no tiene reportes de scouting. Genera el primer reporte para comenzar el seguimiento profesional.</p>
-                        <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
-                            <i class="fas fa-plus"></i> Crear Primer Reporte
-                        </button>
-                    </div>
-                </div>
+                <!-- El contenido se generará dinámicamente por JavaScript -->
             </section>
 
         </div>
@@ -470,5 +405,23 @@
 
     <!-- Scripts -->
     <script src="JS/perfil-jugador.js"></script>
+    
+    <!-- Script de depuración -->
+    <script>
+    window.addEventListener('load', () => {
+        console.log('🔍 DEBUG: Verificando secciones...');
+        document.querySelectorAll('.profile-section').forEach(section => {
+            const display = window.getComputedStyle(section).display;
+            const hasActive = section.classList.contains('active');
+            console.log(`${section.id}: display=${display}, active=${hasActive}`);
+            
+            // Forzar que solo la sección activa sea visible
+            if (!hasActive && display !== 'none') {
+                console.warn(`⚠️ ${section.id} debería estar oculta pero tiene display: ${display}`);
+                section.style.display = 'none';
+            }
+        });
+    });
+    </script>
 </body>
 </html>

@@ -24,14 +24,22 @@ class ReportGenerator {
     const playerId = urlParams.get('playerId');
     
     if (playerId) {
+      console.log('🎯 Jugador preseleccionado detectado:', playerId);
+      
       // Buscar el jugador en la lista de seguimiento
       const player = this.watchedPlayers.find(p => p.id == playerId);
+      
       if (player) {
-        this.selectPlayer(player);
-        // Avanzar automáticamente al paso 2
-        setTimeout(() => this.goToStep(2), 500);
+        // El jugador ya está en la lista de seguimiento
+        console.log('✅ Jugador encontrado en lista de seguimiento');
+        setTimeout(() => {
+          this.selectPlayerById(playerId);
+          // Avanzar automáticamente al paso 2
+          setTimeout(() => this.goToStep(2), 300);
+        }, 100);
       } else {
-        // Si el jugador no está en seguimiento, agregarlo temporalmente
+        // Si el jugador no está en seguimiento, cargarlo desde los datos
+        console.log('📥 Cargando jugador desde datos mock...');
         this.loadPlayerFromId(playerId);
       }
     }
@@ -39,19 +47,65 @@ class ReportGenerator {
 
   async loadPlayerFromId(playerId) {
     try {
-      // Simular carga de datos del jugador (en implementación real sería una API call)
-      const playerData = {
-        id: playerId,
-        name: `Jugador ${playerId}`,
-        position: 'Delantero',
-        age: 25,
-        club: 'Club Temporal',
-        nationality: 'Argentina',
-        photo: 'imagenes/default-player.jpg'
-      };
+      // Buscar el jugador en los datos simulados (mock data)
+      const mockPlayers = [
+        {
+          id: 1,
+          name: 'Miguel Rodríguez',
+          position: 'Mediocampista Ofensivo',
+          age: 22,
+          location: 'Buenos Aires, ARG',
+          country: 'Argentina',
+          club: 'Club Atlético River',
+          rating: 8.5,
+          avatar: 'imagenes/player1.jpg'
+        },
+        {
+          id: 2,
+          name: 'Andrés Silva',
+          position: 'Defensa Central',
+          age: 25,
+          location: 'Montevideo, URU',
+          country: 'Uruguay',
+          club: 'Club Nacional',
+          rating: 7.2,
+          avatar: 'imagenes/player2.jpg'
+        },
+        {
+          id: 3,
+          name: 'Luis Gómez',
+          position: 'Delantero Centro',
+          age: 19,
+          location: 'São Paulo, BRA',
+          country: 'Brasil',
+          club: 'Santos FC',
+          rating: 9.1,
+          avatar: 'imagenes/player3.jpg'
+        }
+      ];
+
+      // Buscar el jugador por ID
+      const playerData = mockPlayers.find(p => p.id == playerId);
       
-      this.selectPlayer(playerData);
-      setTimeout(() => this.goToStep(2), 500);
+      if (playerData) {
+        // Agregar temporalmente a la lista para poder seleccionarlo
+        if (!this.watchedPlayers.find(p => p.id == playerId)) {
+          this.watchedPlayers.push(playerData);
+        }
+        
+        // Actualizar la vista con el jugador agregado
+        this.displayPlayers();
+        
+        // Seleccionar el jugador automáticamente
+        setTimeout(() => {
+          this.selectPlayerById(playerId);
+          // Avanzar automáticamente al paso 2 después de un breve delay
+          setTimeout(() => this.goToStep(2), 300);
+        }, 100);
+      } else {
+        console.error('Jugador no encontrado con ID:', playerId);
+        alert('No se pudo cargar la información del jugador seleccionado.');
+      }
     } catch (error) {
       console.error('Error al cargar jugador:', error);
       alert('No se pudo cargar la información del jugador seleccionado.');
@@ -185,14 +239,24 @@ class ReportGenerator {
 
     // Seleccionar nuevo jugador
     const playerCard = document.querySelector(`[data-player-id="${playerId}"]`);
-    playerCard.classList.add('selected');
+    if (playerCard) {
+      playerCard.classList.add('selected');
+    }
 
-    this.selectedPlayer = this.watchedPlayers.find(p => p.id === playerId);
+    this.selectedPlayer = this.watchedPlayers.find(p => p.id == playerId);
     
     // Habilitar botón de continuar
-    document.getElementById('continueToStep2').disabled = false;
+    const continueBtn = document.getElementById('continueToStep2');
+    if (continueBtn) {
+      continueBtn.disabled = false;
+    }
 
-    console.log('✅ Jugador seleccionado:', this.selectedPlayer.name);
+    console.log('✅ Jugador seleccionado:', this.selectedPlayer?.name);
+  }
+
+  // Función auxiliar para seleccionar jugador por ID (usado en precarga)
+  selectPlayerById(playerId) {
+    this.selectPlayer(playerId);
   }
 
   goToStep(stepNumber) {

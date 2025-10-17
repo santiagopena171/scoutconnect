@@ -547,14 +547,8 @@ class ScoutDashboard {
         <button class="btn-action view" title="Ver Perfil" onclick="scoutDashboard.viewPlayerProfile(${player.id})">
           <i class="fas fa-eye"></i>
         </button>
-        <button class="btn-action edit" title="Editar" onclick="scoutDashboard.editPlayer(${player.id})">
-          <i class="fas fa-edit"></i>
-        </button>
         <button class="btn-action star ${player.status === 'priority' ? 'active' : ''}" title="Favorito" onclick="scoutDashboard.toggleFavorite(${player.id})">
           <i class="fas fa-star"></i>
-        </button>
-        <button class="btn-action report" title="Nuevo Reporte" onclick="scoutDashboard.createReport(${player.id})">
-          <i class="fas fa-clipboard"></i>
         </button>
       </div>
     `;
@@ -567,10 +561,8 @@ class ScoutDashboard {
   }
 
   viewPlayerProfile(playerId) {
-    const player = this.players.find(p => p.id === playerId);
-    if (!player) return;
-
-    this.showPlayerProfileModal(player);
+    // Redirigir a la página de perfil del jugador
+    window.location.href = `perfil-jugador.html?id=${playerId}`;
   }
 
   showPlayerProfileModal(player) {
@@ -690,7 +682,43 @@ class ScoutDashboard {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return;
 
-    player.status = player.status === 'priority' ? 'evaluated' : 'priority';
+    // Toggle el estado de prioridad
+    const wasPriority = player.status === 'priority';
+    player.status = wasPriority ? 'evaluated' : 'priority';
+
+    // Cargar la lista de seguimiento actual
+    let watchlist = [];
+    try {
+      const saved = localStorage.getItem('scoutconnect_watchlist');
+      watchlist = saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Error al cargar watchlist:', error);
+      watchlist = [];
+    }
+
+    if (wasPriority) {
+      // Remover de la lista de seguimiento
+      watchlist = watchlist.filter(p => p.id != playerId);
+      localStorage.setItem('scoutconnect_watchlist', JSON.stringify(watchlist));
+      this.showNotification('Jugador removido de la lista de seguimiento', 'info');
+    } else {
+      // Agregar a la lista de seguimiento si no está ya
+      const isInWatchlist = watchlist.some(p => p.id == playerId);
+      
+      if (!isInWatchlist) {
+        const watchlistPlayer = {
+          ...player,
+          addedDate: new Date().toISOString(),
+          addedTimestamp: Date.now()
+        };
+        watchlist.push(watchlistPlayer);
+        localStorage.setItem('scoutconnect_watchlist', JSON.stringify(watchlist));
+        this.showNotification(`${player.name} agregado a la lista de seguimiento ⭐`, 'success');
+      } else {
+        this.showNotification(`${player.name} ya está en la lista de seguimiento`, 'info');
+      }
+    }
+
     this.renderPlayers();
     this.updateStats();
   }

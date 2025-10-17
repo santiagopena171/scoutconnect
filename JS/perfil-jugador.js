@@ -22,8 +22,8 @@ class PlayerProfile {
     this.loadPlayerData();
     this.updateCounters();
     this.setupEventListeners();
-    // Estado inicial de filtro de reportes: 'all' | 'mine'
-    this.reportsFilter = 'all';
+    // Estado inicial de filtro de reportes: 'mine' para mostrar solo reportes del scout actual
+    this.reportsFilter = 'mine';
     // Intentar detectar scout/usuario actual
     this.currentUser = this.loadCurrentUser();
     // Aplicar filtro inicial (actualiza botones y lista)
@@ -397,7 +397,8 @@ class PlayerProfile {
     this.renderPhysicalSection();
     this.renderVideosSection();
     this.renderPerformanceSection();
-    this.renderReportsSection();
+    // NO renderizar reportes en la inicialización - solo cuando se selecciona la pestaña
+    // this.renderReportsSection();
     this.updateFollowButton();
   }
 
@@ -935,15 +936,90 @@ class PlayerProfile {
   }
 
   renderReportsSection() {
+    const sectionReports = document.getElementById('section-reports');
+    
+    // Si ya está renderizado, solo actualizar datos
+    if (sectionReports.querySelector('.reports-header')) {
+      const playerReports = this.getPlayerReports();
+      this.updateReportsStats(playerReports);
+      this.renderReportsList(playerReports);
+      this.updateReportsCounter();
+      return;
+    }
+    
+    // Primera vez: generar TODO el HTML
+    sectionReports.innerHTML = `
+      <div class="reports-header">
+        <h3><i class="fas fa-clipboard-list"></i> Reportes de Scouting</h3>
+        <div class="reports-actions">
+          <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
+            <i class="fas fa-plus"></i> Generar Nuevo Reporte
+          </button>
+          <button class="btn btn-secondary" onclick="playerProfile.refreshReports()">
+            <i class="fas fa-sync-alt"></i> Actualizar
+          </button>
+        </div>
+        <div class="reports-filter" style="margin-left: 16px; display: flex; gap:8px; align-items: center;">
+          <label style="font-size:0.9rem; color: #374151;">Ver:</label>
+          <div class="filter-buttons">
+            <button id="filterAllReports" class="btn btn-outline small" onclick="playerProfile.setReportsFilter('all')">Todos</button>
+            <button id="filterMyReports" class="btn btn-outline small active" onclick="playerProfile.setReportsFilter('mine')">Mis reportes</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="reports-stats">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="stat-content">
+            <h4 id="totalReports">0</h4>
+            <p>Total de Reportes</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="stat-content">
+            <h4 id="avgRating">-</h4>
+            <p>Rating Promedio</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <h4 id="lastReportDate">-</h4>
+            <p>Último Reporte</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="reports-container">
+        <div class="reports-list" id="playerReportsList">
+          <!-- Los reportes se cargarán dinámicamente aquí -->
+        </div>
+        
+        <div class="empty-reports-state" id="emptyReportsState" style="display: none;">
+          <div class="empty-icon">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <h3>No hay reportes generados</h3>
+          <p>Este jugador aún no tiene reportes de scouting. Genera el primer reporte para comenzar el seguimiento profesional.</p>
+          <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
+            <i class="fas fa-plus"></i> Crear Primer Reporte
+          </button>
+        </div>
+      </div>
+    `;
+    
+    // Ahora renderizar los datos
     const playerReports = this.getPlayerReports();
-    
-    // Actualizar estadísticas
     this.updateReportsStats(playerReports);
-    
-    // Renderizar lista de reportes
     this.renderReportsList(playerReports);
-    
-    // Actualizar badge del contador
     this.updateReportsCounter();
   }
 
