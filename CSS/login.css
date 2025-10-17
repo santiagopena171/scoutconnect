@@ -582,3 +582,209 @@
     padding: 12px 16px;
   }
 }
+
+/* ===== CREDENCIALES DE DEMOSTRACIÓN ===== */
+.demo-credentials {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 24px;
+}
+
+.demo-credentials h4 {
+  margin: 0 0 16px 0;
+  color: #334155;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.credential-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.credential-item {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.credential-item.scout-demo {
+  border-left: 4px solid #667eea;
+}
+
+.credential-item.futbolista-demo {
+  border-left: 4px solid #00A859;
+}
+
+.credential-item.general-demo {
+  border-left: 4px solid #f59e0b;
+}
+
+.credential-item strong {
+  color: #334155;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.credential-item p {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* ===== SELECCIÓN DE TIPO DE USUARIO ===== */
+.user-type-selection {
+  margin-bottom: 24px;
+}
+
+.user-type-selection h3 {
+  text-align: center;
+  margin: 0 0 20px 0;
+  color: #334155;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.user-type-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.user-type-option {
+  cursor: pointer;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.user-type-option:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-type-option input[type="radio"] {
+  display: none;
+}
+
+.user-type-option input[type="radio"]:checked + .option-content {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border-color: #00A859;
+}
+
+.user-type-option input[type="radio"]:checked + .option-content .option-icon {
+  background: #00A859;
+  color: white;
+}
+
+.user-type-option input[type="radio"]:checked + .option-content .option-text h4 {
+  color: #00A859;
+}
+
+.option-content {
+  padding: 16px;
+  text-align: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.option-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px auto;
+  font-size: 20px;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+
+.option-icon.futbolista {
+  background: linear-gradient(135deg, #00A859, #00C464);
+  color: white;
+}
+
+.option-icon.scout {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.option-text h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  transition: color 0.3s ease;
+}
+
+.option-text p {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+@media (max-width: 480px) {
+  .demo-credentials {
+    padding: 16px;
+    margin-top: 20px;
+  }
+  
+  .demo-credentials h4 {
+    font-size: 14px;
+  }
+  
+  .credential-item {
+    padding: 10px;
+  }
+  
+  .credential-item strong {
+    font-size: 13px;
+  }
+  
+  .credential-item p {
+    font-size: 11px;
+  }
+
+  .user-type-options {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .user-type-selection h3 {
+    font-size: 16px;
+  }
+
+  .option-content {
+    padding: 12px;
+  }
+
+  .option-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .option-text h4 {
+    font-size: 13px;
+  }
+
+  .option-text p {
+    font-size: 11px;
+  }
+}

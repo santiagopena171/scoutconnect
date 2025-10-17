@@ -386,7 +386,9 @@ class ScoutDashboard {
     // Botones de acción del header
     const newReportBtn = document.getElementById('newReportBtn');
     if (newReportBtn) {
-      newReportBtn.addEventListener('click', () => this.showNewReportModal());
+      newReportBtn.addEventListener('click', () => {
+        window.location.href = 'nuevo-reporte.html';
+      });
     }
 
     const exportDataBtn = document.getElementById('exportDataBtn');
@@ -1148,13 +1150,8 @@ class ScoutDashboard {
   }
 
   viewReport(reportId) {
-    const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
-    const report = reports.find(r => r.id === reportId);
-    
-    if (report) {
-      // Abrir el perfil del jugador con el reporte
-      window.open(`perfil-jugador.html?id=${report.playerId}&report=${reportId}`, '_blank');
-    }
+    // Redirigir a la página dedicada de visualización de reporte
+    window.location.href = `ver-reporte.html?id=${reportId}`;
   }
 
   editReport(reportId) {

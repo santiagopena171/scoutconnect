@@ -639,6 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadNotifications();
     loadMessages();
     loadScouts();
+    loadPlayerReports(); // Cargar reportes de scouting
     calculateProfileCompletion();
     
     // Debug chat
@@ -1130,6 +1131,283 @@ document.addEventListener('DOMContentLoaded', function() {
       scoutsList.appendChild(scoutElement);
     });
   }
+
+  // ===== FUNCIONES PARA MANEJAR REPORTES =====
+
+  function loadPlayerReports() {
+    try {
+      const allReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+      
+      // Filtrar reportes que corresponden a este futbolista
+      const playerReports = allReports.filter(report => {
+        // Comparar por nombre del jugador ya que usamos datos mock
+        return report.playerName === playerData.name || 
+               report.playerId === playerData.id ||
+               report.playerId === playerData.id.toString();
+      });
+
+      console.log('📊 Reportes encontrados para', playerData.name + ':', playerReports.length);
+      
+      updateReportsStats(playerReports);
+      renderReports(playerReports);
+      
+    } catch (error) {
+      console.error('❌ Error al cargar reportes:', error);
+      showEmptyReportsState();
+    }
+  }
+
+  function updateReportsStats(reports) {
+    const totalCount = reports.length;
+    const avgRating = totalCount > 0 ? 
+      (reports.reduce((sum, r) => sum + (r.overallRating || 0), 0) / totalCount).toFixed(1) : '-';
+    const lastDate = totalCount > 0 ? 
+      new Date(Math.max(...reports.map(r => new Date(r.date)))).toLocaleDateString('es-ES') : '-';
+
+    document.getElementById('totalReportsCount').textContent = totalCount;
+    document.getElementById('averageRating').textContent = avgRating !== '-' ? avgRating + '/10' : '-';
+    document.getElementById('lastReportDate').textContent = lastDate;
+  }
+
+  function renderReports(reports) {
+    const container = document.getElementById('reportsContainer');
+    const emptyState = document.getElementById('emptyReportsState');
+    const actions = document.getElementById('reportsActions');
+    
+    if (reports.length === 0) {
+      showEmptyReportsState();
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    container.style.display = 'grid';
+    actions.style.display = 'flex';
+
+    // Mostrar los últimos 3 reportes
+    const recentReports = reports.slice(-3).reverse();
+    
+    container.innerHTML = recentReports.map(report => createReportCard(report)).join('');
+  }
+
+  function createReportCard(report) {
+    const ratings = [
+      { label: 'Técnico', value: report.technicalRating || 0 },
+      { label: 'Físico', value: report.physicalRating || 0 },
+      { label: 'Mental', value: report.mentalRating || 0 },
+      { label: 'Táctico', value: report.tacticalRating || 0 }
+    ];
+
+    return `
+      <div class="report-card" onclick="viewReportDetails('${report.id}')">
+        <div class="report-header">
+          <div>
+            <h4 class="report-title">${report.title || 'Reporte de Scouting'}</h4>
+          </div>
+          <div class="report-meta">
+            <span class="report-date">${new Date(report.date).toLocaleDateString('es-ES')}</span>
+            <span class="report-scout">por ${report.scoutName}</span>
+          </div>
+        </div>
+        
+        <div class="report-ratings">
+          ${ratings.map(rating => `
+            <div class="rating-item">
+              <span class="rating-label">${rating.label}</span>
+              <div class="rating-value">
+                ${rating.value}/10
+                <div class="rating-bar">
+                  <div class="rating-fill" style="width: ${(rating.value / 10) * 100}%"></div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="report-summary">
+          ${report.summary || 'Evaluación completa del rendimiento del jugador en diferentes aspectos técnicos, físicos, mentales y tácticos.'}
+        </div>
+
+        <div class="report-actions">
+          <button class="report-btn secondary" onclick="event.stopPropagation(); shareReport('${report.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16,6 12,2 8,6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+            Compartir
+          </button>
+          <button class="report-btn primary" onclick="event.stopPropagation(); viewReportDetails('${report.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Ver Detalles
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function showEmptyReportsState() {
+    document.getElementById('reportsContainer').style.display = 'none';
+    document.getElementById('emptyReportsState').style.display = 'block';
+    document.getElementById('reportsActions').style.display = 'none';
+  }
+
+  function viewReportDetails(reportId) {
+    // Redirigir a la página dedicada de visualización de reporte
+    window.location.href = `ver-reporte.html?id=${reportId}`;
+  }
+
+  function showReportModal(report) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-content report-modal">
+        <div class="modal-header">
+          <h3>${report.title || 'Reporte de Scouting'}</h3>
+          <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="report-details-grid">
+            <div class="detail-item">
+              <div class="detail-label">Fecha de Evaluación</div>
+              <div class="detail-value">${new Date(report.date).toLocaleDateString('es-ES')}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Scout Evaluador</div>
+              <div class="detail-value">${report.scoutName}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Rating General</div>
+              <div class="detail-value">${report.overallRating || 0}/10</div>
+            </div>
+          </div>
+          
+          <div class="ratings-breakdown">
+            <h4>Evaluaciones Detalladas</h4>
+            
+            <div class="rating-category">
+              <h5>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4"></path>
+                  <path d="M15 11h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4"></path>
+                  <path d="M11 5a2 2 0 0 1 2-2v0a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V5z"></path>
+                </svg>
+                Aspectos Técnicos (${report.technicalRating || 0}/10)
+              </h5>
+              <div class="skills-grid">
+                ${report.technicalEvals ? Object.entries(report.technicalEvals).map(([skill, rating]) => 
+                  `<div class="skill-item"><span>${skill}</span><span>${rating}/10</span></div>`
+                ).join('') : '<p>No hay evaluaciones técnicas registradas</p>'}
+              </div>
+            </div>
+            
+            <div class="rating-category">
+              <h5>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M13.5 3H12h1.5zM13.5 3L14.46 2.04a1.5 1.5 0 0 1 2.12 0l1.04 1.04a1.5 1.5 0 0 1 0 2.12L16.5 6.5 13.5 3z"></path>
+                  <path d="M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m1.5-5.5L21 3"></path>
+                </svg>
+                Aspectos Físicos (${report.physicalRating || 0}/10)
+              </h5>
+              <div class="skills-grid">
+                ${report.physicalEvals ? Object.entries(report.physicalEvals).map(([skill, rating]) => 
+                  `<div class="skill-item"><span>${skill}</span><span>${rating}/10</span></div>`
+                ).join('') : '<p>No hay evaluaciones físicas registradas</p>'}
+              </div>
+            </div>
+            
+            <div class="rating-category">
+              <h5>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+                </svg>
+                Aspectos Mentales (${report.mentalRating || 0}/10)
+              </h5>
+              <div class="skills-grid">
+                ${report.mentalEvals ? Object.entries(report.mentalEvals).map(([skill, rating]) => 
+                  `<div class="skill-item"><span>${skill}</span><span>${rating}/10</span></div>`
+                ).join('') : '<p>No hay evaluaciones mentales registradas</p>'}
+              </div>
+            </div>
+
+            <div class="rating-category">
+              <h5>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="7.5,4.21 12,6.81 16.5,4.21"></polyline>
+                  <polyline points="7.5,19.79 7.5,14.6 3,12"></polyline>
+                  <polyline points="16.5,19.79 16.5,14.6 21,12"></polyline>
+                </svg>
+                Aspectos Tácticos (${report.tacticalRating || 0}/10)
+              </h5>
+              <div class="skills-grid">
+                ${report.tacticalEvals ? Object.entries(report.tacticalEvals).map(([skill, rating]) => 
+                  `<div class="skill-item"><span>${skill}</span><span>${rating}/10</span></div>`
+                ).join('') : '<p>No hay evaluaciones tácticas registradas</p>'}
+              </div>
+            </div>
+          </div>
+
+          ${report.summary ? `
+            <div class="report-summary-full">
+              <h4>Resumen del Scout</h4>
+              <p>${report.summary}</p>
+            </div>
+          ` : ''}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">
+            Cerrar
+          </button>
+          <button class="btn btn-primary" onclick="shareReport('${report.id}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16,6 12,2 8,6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+            Compartir Reporte
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+  }
+
+  function shareReport(reportId) {
+    // Función para compartir reporte (implementar según necesidades)
+    const shareUrl = `${window.location.origin}/reporte.html?id=${reportId}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Reporte de Scouting',
+        text: 'Mira mi reporte de scouting en ScoutConnect',
+        url: shareUrl
+      });
+    } else {
+      // Fallback: copiar al portapapeles
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showNotification('success', 'Enlace copiado al portapapeles');
+      });
+    }
+  }
+
+  function refreshPlayerReports() {
+    console.log('🔄 Actualizando reportes...');
+    loadPlayerReports();
+    showNotification('success', 'Reportes actualizados');
+  }
+
+  // Event listeners para reportes
+  document.getElementById('refreshReportsBtn')?.addEventListener('click', refreshPlayerReports);
+  document.getElementById('viewAllReportsBtn')?.addEventListener('click', () => {
+    // Redirigir a página de todos los reportes o mostrar modal expandido
+    console.log('📄 Ver todos los reportes');
+  });
 
   function calculateProfileCompletion() {
     let completion = 0;

@@ -111,6 +111,9 @@
                     <button class="btn btn-primary" onclick="playerProfile.showReportModal()">
                         <i class="fas fa-file-alt"></i> Generar Reporte
                     </button>
+                    <button class="btn btn-info" onclick="playerProfile.generateSampleReports()" style="background: #17a2b8; color: white;">
+                        <i class="fas fa-database"></i> Demo: Cargar Reportes
+                    </button>
                     <button class="btn btn-outline" onclick="window.history.back()">
                         <i class="fas fa-arrow-left"></i> Volver
                     </button>
@@ -141,6 +144,9 @@
                 </button>
                 <button class="tab-btn" data-section="performance" onclick="playerProfile.switchSection('performance')">
                     <i class="fas fa-chart-line"></i> Rendimiento
+                </button>
+                <button class="tab-btn" data-section="reports" onclick="playerProfile.switchSection('reports')">
+                    <i class="fas fa-clipboard-list"></i> Reportes <span id="reportsCount" class="count-badge">0</span>
                 </button>
             </div>
         </nav>
@@ -270,6 +276,76 @@
                     <h3><i class="fas fa-calendar-alt"></i> Historial de Rendimiento</h3>
                     <div class="performance-timeline" id="performanceHistory">
                         <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección: Reportes Generados -->
+            <section id="section-reports" class="profile-section">
+                <div class="reports-header">
+                    <h3><i class="fas fa-clipboard-list"></i> Reportes de Scouting</h3>
+                    <div class="reports-actions">
+                        <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
+                            <i class="fas fa-plus"></i> Generar Nuevo Reporte
+                        </button>
+                        <button class="btn btn-secondary" onclick="playerProfile.refreshReports()">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                    <div class="reports-filter" style="margin-left: 16px; display: flex; gap:8px; align-items: center;">
+                        <label style="font-size:0.9rem; color: #374151;">Ver:</label>
+                        <div class="filter-buttons">
+                            <button id="filterAllReports" class="btn btn-outline small active" onclick="playerProfile.setReportsFilter('all')">Todos</button>
+                            <button id="filterMyReports" class="btn btn-outline small" onclick="playerProfile.setReportsFilter('mine')">Mis reportes</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="reports-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4 id="totalReports">0</h4>
+                            <p>Total de Reportes</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4 id="avgRating">-</h4>
+                            <p>Rating Promedio</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4 id="lastReportDate">-</h4>
+                            <p>Último Reporte</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reports-container">
+                    <div class="reports-list" id="playerReportsList">
+                        <!-- Los reportes se cargarán dinámicamente aquí -->
+                    </div>
+                    
+                    <div class="empty-reports-state" id="emptyReportsState" style="display: none;">
+                        <div class="empty-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <h3>No hay reportes generados</h3>
+                        <p>Este jugador aún no tiene reportes de scouting. Genera el primer reporte para comenzar el seguimiento profesional.</p>
+                        <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
+                            <i class="fas fa-plus"></i> Crear Primer Reporte
+                        </button>
                     </div>
                 </div>
             </section>

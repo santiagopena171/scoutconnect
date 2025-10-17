@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function redirectToDashboard(userType) {
     console.log('🎯 Redirigiendo usuario tipo:', userType);
     
-    showMessage('info', 'Sesión activa detectada', 'Redirigiendo a tu dashboard...');
+    showMessage('info', 'Iniciando sesión...', 'Redirigiendo a tu dashboard...');
     
     setTimeout(() => {
       let redirectUrl;
@@ -65,8 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
           break;
         case 'scout':
         case 'ojeador':
-          // Cuando esté listo: redirectUrl = 'dashboard-scout.html';
-          redirectUrl = 'dashboard-futbolista.html'; // Temporal
+          redirectUrl = 'dashboard-scout.html';
           break;
         case 'club':
         case 'academia':
@@ -242,57 +241,80 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
           const email = emailInput.value.trim();
           const password = passwordInput.value;
+          const selectedUserType = document.querySelector('input[name="userType"]:checked').value;
 
-          console.log('🔍 Validando credenciales para:', email);
+          console.log('🔍 Validando credenciales para:', email, 'como:', selectedUserType);
 
-          // Simulación simple - reemplazar con validación real
-          if (email === 'admin@scoutconnect.com' && password === 'admin123') {
-            const result = { 
-              success: true, 
-              user: { 
-                email, 
-                name: 'Administrador',
-                userType: 'admin'
-              } 
-            };
-            console.log('✅ Admin login exitoso');
-            resolve(result);
-          } else if (email === 'scout@scoutconnect.com' && password === 'scout123') {
-            const result = { 
-              success: true, 
-              user: { 
-                email, 
-                name: 'Carlos Mendoza',
-                userType: 'scout'
-              } 
-            };
-            console.log('✅ Scout login exitoso');
-            resolve(result);
-          } else if (email === 'club@scoutconnect.com' && password === 'club123') {
-            const result = { 
-              success: true, 
-              user: { 
-                email, 
-                name: 'Boca Juniors',
-                userType: 'club'
-              } 
-            };
-            console.log('✅ Club login exitoso');
-            resolve(result);
-          } else if (email.includes('@') && password.length >= 6) {
-            const result = { 
-              success: true, 
-              user: { 
-                email, 
-                name: 'Juan Pérez',
-                userType: 'jugador'
-              } 
-            };
-            console.log('✅ Jugador login exitoso');
+          // Validación básica de email y contraseña
+          if (!email || !password || password.length < 6) {
+            reject(new Error('Por favor completa todos los campos correctamente'));
+            return;
+          }
+
+          // Credenciales específicas para cada tipo
+          let result = null;
+
+          if (selectedUserType === 'scout') {
+            // Credenciales específicas para scouts
+            if ((email === 'scout@scoutconnect.com' && password === 'scout123') ||
+                (email === 'scout1@scoutconnect.com' && password === 'scout123') ||
+                (email === 'ojeador@scoutconnect.com' && password === 'scout123')) {
+              result = { 
+                success: true, 
+                user: { 
+                  email, 
+                  name: 'Scout Profesional',
+                  userType: 'scout'
+                } 
+              };
+            } else {
+              // Para scouts, cualquier email válido con contraseña correcta
+              if (email.includes('@') && password.length >= 6) {
+                result = { 
+                  success: true, 
+                  user: { 
+                    email, 
+                    name: 'Scout',
+                    userType: 'scout'
+                  } 
+                };
+              }
+            }
+          } else if (selectedUserType === 'futbolista') {
+            // Credenciales específicas para futbolistas
+            if ((email === 'futbolista@scoutconnect.com' && password === 'futbol123') ||
+                (email === 'jugador@scoutconnect.com' && password === 'futbol123') ||
+                (email === 'player@scoutconnect.com' && password === 'futbol123')) {
+              result = { 
+                success: true, 
+                user: { 
+                  email, 
+                  name: 'Futbolista Profesional',
+                  userType: 'futbolista'
+                } 
+              };
+            } else {
+              // Para futbolistas, cualquier email válido con contraseña correcta
+              if (email.includes('@') && password.length >= 6) {
+                result = { 
+                  success: true, 
+                  user: { 
+                    email, 
+                    name: 'Futbolista',
+                    userType: 'futbolista'
+                  } 
+                };
+              }
+            }
+          }
+
+          // Verificar si el login fue exitoso
+          if (result && result.success) {
+            console.log(`✅ ${selectedUserType} login exitoso para:`, email);
             resolve(result);
           } else {
             console.log('❌ Credenciales incorrectas');
-            reject(new Error('Credenciales incorrectas'));
+            reject(new Error('Credenciales incorrectas. Verifica tu email y contraseña.'));
           }
         } catch (error) {
           console.error('❌ Error en simulateLogin:', error);

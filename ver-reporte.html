@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Reporte - ScoutConnect</title>
+    
+    <!-- Enlaces CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/styles.css">
+    <link rel="stylesheet" href="CSS/ver-reporte.css">
+</head>
+<body>
+    <!-- Navegación Principal -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-search-location"></i>
+                <span>ScoutConnect</span>
+            </div>
+            
+            <div class="nav-links">
+                <a href="dashboard-scout.html" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="busqueda-avanzada.html" class="nav-link">
+                    <i class="fas fa-search"></i>
+                    Búsqueda
+                </a>
+                <a href="lista-seguimiento.html" class="nav-link">
+                    <i class="fas fa-star"></i>
+                    Seguimiento
+                </a>
+            </div>
+            
+            <div class="nav-user">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span id="currentUserName">Scout Pro</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Estado de Carga -->
+    <div id="loadingState" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando reporte...</p>
+        </div>
+    </div>
+
+    <!-- Estado de Error: Acceso Denegado -->
+    <div id="accessDeniedState" class="error-overlay" style="display: none;">
+        <div class="error-container">
+            <i class="fas fa-lock"></i>
+            <h2>Acceso Denegado</h2>
+            <p>No tienes permiso para ver este reporte. Solo el scout que creó el reporte puede acceder a él.</p>
+            <div class="error-actions">
+                <a href="busqueda-avanzada.html" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Ir a Búsqueda
+                </a>
+                <button onclick="window.history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de Error: Reporte no encontrado -->
+    <div id="notFoundState" class="error-overlay" style="display: none;">
+        <div class="error-container">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>Reporte No Encontrado</h2>
+            <p>El reporte solicitado no existe o ha sido eliminado.</p>
+            <div class="error-actions">
+                <a href="busqueda-avanzada.html" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Ir a Búsqueda
+                </a>
+                <button onclick="window.history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal del Reporte -->
+    <main id="reportContent" class="report-container" style="display: none;">
+        
+        <!-- Header del Reporte -->
+        <header class="report-header">
+            <div class="header-top">
+                <button onclick="window.history.back()" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+                <div class="header-actions">
+                    <button id="editReportBtn" class="btn btn-secondary" onclick="reportViewer.editReport()">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                    <button class="btn btn-outline" onclick="reportViewer.printReport()">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                    <button class="btn btn-outline" onclick="reportViewer.shareReport()">
+                        <i class="fas fa-share-alt"></i> Compartir
+                    </button>
+                </div>
+            </div>
+
+            <div class="report-title-section">
+                <h1 id="reportTitle">Título del Reporte</h1>
+                <div class="report-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span id="reportDate">--/--/----</span>
+                    </span>
+                    <span class="meta-item">
+                        <i class="fas fa-user"></i>
+                        <span id="reportScout">Scout</span>
+                    </span>
+                    <span class="meta-item">
+                        <i class="fas fa-futbol"></i>
+                        <span id="reportPlayer">Jugador</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="overall-rating-card">
+                <div class="rating-display">
+                    <div class="rating-number" id="overallRating">0.0</div>
+                    <div class="rating-label">Rating General</div>
+                </div>
+                <div class="rating-stars" id="ratingStars">
+                    <!-- Se llenarán dinámicamente -->
+                </div>
+            </div>
+        </header>
+
+        <!-- Sección: Información del Jugador -->
+        <section class="report-section player-info-section">
+            <h2><i class="fas fa-user-circle"></i> Información del Jugador</h2>
+            <div class="player-info-grid" id="playerInfoGrid">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Sección: Evaluaciones por Categoría -->
+        <section class="report-section evaluations-section">
+            <h2><i class="fas fa-chart-bar"></i> Evaluaciones Detalladas</h2>
+            
+            <div class="evaluations-grid">
+                <!-- Técnico -->
+                <div class="evaluation-card">
+                    <div class="evaluation-header">
+                        <h3><i class="fas fa-star"></i> Técnico</h3>
+                        <span class="category-rating" id="technicalRating">0.0/10</span>
+                    </div>
+                    <div class="skills-list" id="technicalSkills">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Físico -->
+                <div class="evaluation-card">
+                    <div class="evaluation-header">
+                        <h3><i class="fas fa-dumbbell"></i> Físico</h3>
+                        <span class="category-rating" id="physicalRating">0.0/10</span>
+                    </div>
+                    <div class="skills-list" id="physicalSkills">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Mental -->
+                <div class="evaluation-card">
+                    <div class="evaluation-header">
+                        <h3><i class="fas fa-brain"></i> Mental</h3>
+                        <span class="category-rating" id="mentalRating">0.0/10</span>
+                    </div>
+                    <div class="skills-list" id="mentalSkills">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Táctico -->
+                <div class="evaluation-card">
+                    <div class="evaluation-header">
+                        <h3><i class="fas fa-chess"></i> Táctico</h3>
+                        <span class="category-rating" id="tacticalRating">0.0/10</span>
+                    </div>
+                    <div class="skills-list" id="tacticalSkills">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección: Resumen y Observaciones -->
+        <section class="report-section summary-section">
+            <h2><i class="fas fa-file-alt"></i> Resumen del Reporte</h2>
+            <div class="summary-content" id="reportSummary">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Sección: Fortalezas y Debilidades -->
+        <section class="report-section strengths-weaknesses-section">
+            <div class="sw-grid">
+                <div class="sw-card strengths-card">
+                    <h3><i class="fas fa-thumbs-up"></i> Fortalezas</h3>
+                    <ul id="strengthsList">
+                        <!-- Se llenará dinámicamente -->
+                    </ul>
+                </div>
+                <div class="sw-card weaknesses-card">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Áreas de Mejora</h3>
+                    <ul id="weaknessesList">
+                        <!-- Se llenará dinámicamente -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección: Recomendación -->
+        <section class="report-section recommendation-section">
+            <h2><i class="fas fa-lightbulb"></i> Recomendación Final</h2>
+            <div class="recommendation-content" id="recommendationContent">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Footer del Reporte -->
+        <footer class="report-footer">
+            <div class="footer-content">
+                <p>Reporte generado por <strong id="footerScout">Scout</strong> el <strong id="footerDate">--/--/----</strong></p>
+                <p class="confidential-notice">
+                    <i class="fas fa-lock"></i> Este reporte es confidencial y de uso exclusivo del scout autor.
+                </p>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="JS/ver-reporte.js"></script>
+</body>
+</html>

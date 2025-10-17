@@ -6,6 +6,7 @@
   <title>Iniciar Sesión - ScoutConnect</title>
   <link rel="stylesheet" href="CSS/styles.css">
   <link rel="stylesheet" href="CSS/login.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
   <!-- Barra superior fija -->
@@ -43,6 +44,38 @@
         </div>
 
         <form id="loginForm" class="login-form">
+          <!-- Selección de tipo de usuario -->
+          <div class="user-type-selection">
+            <h3>¿Cómo quieres iniciar sesión?</h3>
+            <div class="user-type-options">
+              <label class="user-type-option" for="userTypeFutbolista">
+                <input type="radio" id="userTypeFutbolista" name="userType" value="futbolista" checked>
+                <div class="option-content">
+                  <div class="option-icon futbolista">
+                    <i class="fas fa-running"></i>
+                  </div>
+                  <div class="option-text">
+                    <h4>Futbolista</h4>
+                    <p>Accede a tu perfil de jugador</p>
+                  </div>
+                </div>
+              </label>
+              
+              <label class="user-type-option" for="userTypeScout">
+                <input type="radio" id="userTypeScout" name="userType" value="scout">
+                <div class="option-content">
+                  <div class="option-icon scout">
+                    <i class="fas fa-binoculars"></i>
+                  </div>
+                  <div class="option-text">
+                    <h4>Scout/Ojeador</h4>
+                    <p>Accede a tu panel de scouting</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="email">Correo Electrónico</label>
             <input 
@@ -108,6 +141,25 @@
 
         <div class="signup-link">
           <p>¿No tienes una cuenta? <a href="registro.html" class="signup-btn">Regístrate aquí</a></p>
+        </div>
+
+        <!-- Credenciales de demostración -->
+        <div class="demo-credentials">
+          <h4>🎯 Credenciales de Demostración</h4>
+          <div class="credential-items">
+            <div class="credential-item scout-demo">
+              <strong>🔍 Para Scout/Ojeador:</strong>
+              <p>Email: scout@scoutconnect.com<br>Contraseña: scout123</p>
+            </div>
+            <div class="credential-item futbolista-demo">
+              <strong>⚽ Para Futbolista:</strong>
+              <p>Email: futbolista@scoutconnect.com<br>Contraseña: futbol123</p>
+            </div>
+            <div class="credential-item general-demo">
+              <strong>📝 Demo General:</strong>
+              <p>Cualquier email válido + contraseña (min. 6 caracteres)</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
