@@ -19,6 +19,7 @@ class ScoutDashboard {
   init() {
     console.log('🚀 Inicializando Scout Dashboard...');
     this.loadMockData();
+    this.loadWatchlistCount();
     this.setupEventListeners();
     this.setupNavigation();
     this.setupAdvancedSearch();
@@ -987,7 +988,263 @@ class ScoutDashboard {
 
   renderReports() {
     console.log('📋 Cargando reportes...');
-    // Implementar renderizado de reportes
+    this.loadGeneratedReports();
+  }
+
+  loadGeneratedReports() {
+    // Cargar reportes generados desde localStorage
+    const savedReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+    
+    // Actualizar estadísticas
+    this.updateReportsStats(savedReports);
+    
+    // Renderizar lista de reportes
+    this.renderReportsList(savedReports);
+  }
+
+  updateReportsStats(reports) {
+    const totalCount = reports.length;
+    const pendingCount = reports.filter(r => r.status === 'pending').length;
+    const completedCount = reports.filter(r => r.status === 'completed').length;
+    const favoriteCount = reports.filter(r => r.isFavorite).length;
+
+    document.getElementById('totalReportsCount').textContent = totalCount;
+    document.getElementById('pendingReportsCount').textContent = pendingCount;
+    document.getElementById('completedReportsCount').textContent = completedCount;
+    document.getElementById('favoriteReportsCount').textContent = favoriteCount;
+  }
+
+  renderReportsList(reports) {
+    const reportsGrid = document.getElementById('reportsGrid');
+    const emptyState = document.getElementById('emptyReportsState');
+
+    if (reports.length === 0) {
+      reportsGrid.style.display = 'none';
+      emptyState.style.display = 'flex';
+      return;
+    }
+
+    reportsGrid.style.display = 'grid';
+    emptyState.style.display = 'none';
+
+    // Ordenar reportes por fecha (más recientes primero)
+    const sortedReports = reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    reportsGrid.innerHTML = sortedReports.map(report => `
+      <div class="report-card ${report.status}" data-report-id="${report.id}">
+        <div class="report-header">
+          <div class="report-player">
+            <img src="${report.playerAvatar || 'imagenes/default-avatar.png'}" alt="${report.playerName}" class="player-avatar">
+            <div class="player-info">
+              <h4>${report.playerName}</h4>
+              <span class="player-position">${report.playerPosition || 'N/A'}</span>
+            </div>
+          </div>
+          <div class="report-actions">
+            <button class="btn-icon ${report.isFavorite ? 'active' : ''}" onclick="dashboard.toggleReportFavorite('${report.id}')" title="Marcar como favorito">
+              <i class="fas fa-star"></i>
+            </button>
+            <div class="dropdown">
+              <button class="btn-icon dropdown-toggle">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="dropdown-menu">
+                <a href="#" onclick="dashboard.viewReport('${report.id}')" class="dropdown-item">
+                  <i class="fas fa-eye"></i> Ver reporte
+                </a>
+                <a href="#" onclick="dashboard.editReport('${report.id}')" class="dropdown-item">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="#" onclick="dashboard.shareReport('${report.id}')" class="dropdown-item">
+                  <i class="fas fa-share"></i> Compartir
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="dashboard.deleteReport('${report.id}')" class="dropdown-item text-danger">
+                  <i class="fas fa-trash"></i> Eliminar
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="report-content">
+          <div class="report-meta">
+            <span class="report-date">
+              <i class="fas fa-calendar"></i>
+              ${new Date(report.createdAt).toLocaleDateString('es-ES')}
+            </span>
+            <span class="report-status status-${report.status}">
+              ${this.getStatusText(report.status)}
+            </span>
+          </div>
+          
+          <div class="report-summary">
+            <h5>Resumen del Reporte</h5>
+            <p>${report.summary || 'Sin resumen disponible'}</p>
+          </div>
+          
+          <div class="report-ratings">
+            <div class="rating-item">
+              <span>Técnica</span>
+              <div class="rating-bar">
+                <div class="rating-fill" style="width: ${(report.ratings?.technical || 0) * 10}%"></div>
+              </div>
+              <span class="rating-value">${report.ratings?.technical || 'N/A'}</span>
+            </div>
+            <div class="rating-item">
+              <span>Física</span>
+              <div class="rating-bar">
+                <div class="rating-fill" style="width: ${(report.ratings?.physical || 0) * 10}%"></div>
+              </div>
+              <span class="rating-value">${report.ratings?.physical || 'N/A'}</span>
+            </div>
+            <div class="rating-item">
+              <span>Mental</span>
+              <div class="rating-bar">
+                <div class="rating-fill" style="width: ${(report.ratings?.mental || 0) * 10}%"></div>
+              </div>
+              <span class="rating-value">${report.ratings?.mental || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="report-footer">
+          <button class="btn btn-primary btn-sm" onclick="dashboard.viewReport('${report.id}')">
+            <i class="fas fa-eye"></i> Ver Completo
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="dashboard.downloadReport('${report.id}')">
+            <i class="fas fa-download"></i> Descargar
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  getStatusText(status) {
+    const statusMap = {
+      'pending': 'Pendiente',
+      'completed': 'Completado',
+      'draft': 'Borrador',
+      'reviewed': 'Revisado'
+    };
+    return statusMap[status] || status;
+  }
+
+  toggleReportFavorite(reportId) {
+    const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+    const reportIndex = reports.findIndex(r => r.id === reportId);
+    
+    if (reportIndex !== -1) {
+      reports[reportIndex].isFavorite = !reports[reportIndex].isFavorite;
+      localStorage.setItem('generatedReports', JSON.stringify(reports));
+      this.loadGeneratedReports(); // Recargar la vista
+      
+      // Mostrar notificación
+      this.showNotification(
+        reports[reportIndex].isFavorite ? 'Reporte marcado como favorito' : 'Reporte removido de favoritos',
+        'success'
+      );
+    }
+  }
+
+  viewReport(reportId) {
+    const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+    const report = reports.find(r => r.id === reportId);
+    
+    if (report) {
+      // Abrir el perfil del jugador con el reporte
+      window.open(`perfil-jugador.html?id=${report.playerId}&report=${reportId}`, '_blank');
+    }
+  }
+
+  editReport(reportId) {
+    // Implementar edición de reporte
+    this.showNotification('Función de edición en desarrollo', 'info');
+  }
+
+  shareReport(reportId) {
+    // Implementar compartir reporte
+    this.showNotification('Función de compartir en desarrollo', 'info');
+  }
+
+  deleteReport(reportId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este reporte?')) {
+      const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+      const updatedReports = reports.filter(r => r.id !== reportId);
+      localStorage.setItem('generatedReports', JSON.stringify(updatedReports));
+      this.loadGeneratedReports();
+      this.showNotification('Reporte eliminado correctamente', 'success');
+    }
+  }
+
+  downloadReport(reportId) {
+    const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+    const report = reports.find(r => r.id === reportId);
+    
+    if (report) {
+      // Crear contenido del reporte para descarga
+      const reportContent = this.generateReportPDF(report);
+      const blob = new Blob([reportContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_${report.playerName}_${new Date(report.createdAt).toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      this.showNotification('Reporte descargado correctamente', 'success');
+    }
+  }
+
+  generateReportPDF(report) {
+    return `
+REPORTE DE EVALUACIÓN - SCOUTCONNECT
+=====================================
+
+Jugador: ${report.playerName}
+Posición: ${report.playerPosition}
+Fecha de creación: ${new Date(report.createdAt).toLocaleDateString('es-ES')}
+Estado: ${this.getStatusText(report.status)}
+
+RESUMEN
+-------
+${report.summary || 'Sin resumen disponible'}
+
+EVALUACIONES
+------------
+Técnica: ${report.ratings?.technical || 'N/A'}/10
+Física: ${report.ratings?.physical || 'N/A'}/10
+Mental: ${report.ratings?.mental || 'N/A'}/10
+
+OBSERVACIONES
+-------------
+${report.observations || 'Sin observaciones adicionales'}
+
+---
+Generado por ScoutConnect
+    `.trim();
+  }
+
+  showNotification(message, type = 'info') {
+    // Crear notificación temporal
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+      <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}-circle"></i>
+      <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 3000);
   }
 
   renderWatchlist() {
@@ -1579,6 +1836,28 @@ class ScoutDashboard {
 
     // Actualizar badge inicialmente
     this.updateNotificationBadge();
+  }
+
+  // ===== SISTEMA DE WATCHLIST =====
+
+  // Cargar contador de watchlist
+  loadWatchlistCount() {
+    try {
+      const saved = localStorage.getItem('scoutconnect_watchlist');
+      const watchlist = saved ? JSON.parse(saved) : [];
+      this.updateWatchlistCounter(watchlist.length);
+    } catch (error) {
+      console.error('Error al cargar watchlist count:', error);
+      this.updateWatchlistCounter(0);
+    }
+  }
+
+  updateWatchlistCounter(count) {
+    const counter = document.getElementById('dashboardWatchlistCount');
+    if (counter) {
+      counter.textContent = count;
+      counter.style.display = count > 0 ? 'inline' : 'none';
+    }
   }
 
   // ===== SISTEMA DE BÚSQUEDA AVANZADA =====

@@ -5,6 +5,9 @@ class AdvancedSearch {
     this.players = [];
     this.searchResults = [];
     this.countriesData = null;
+    this.selectedStates = [];
+    this.selectedTags = [];
+    this.watchlist = this.loadWatchlist();
     this.init();
   }
 
@@ -14,6 +17,7 @@ class AdvancedSearch {
     this.loadPlayerData();
     this.setupEventListeners();
     this.populateCountrySelects();
+    this.setupTags();
     console.log('✅ Búsqueda Avanzada inicializada correctamente');
   }
 
@@ -83,6 +87,7 @@ class AdvancedSearch {
           expires: '2025-12-31',
           value: '2.8M'
         },
+        tags: ['técnico', 'veloz', 'creativo', 'líder', 'versátil', 'zurdo'],
         notes: 'Excelente técnica y visión de juego. Recomendado para fichaje inmediato.',
         marketValue: 2800000
       },
@@ -106,6 +111,7 @@ class AdvancedSearch {
           expires: '2025-06-30',
           value: '1.2M'
         },
+        tags: ['fuerte', 'aéreo', 'aguerrido', 'experimentado', 'confiable'],
         notes: 'Buen defensor físico, experiencia internacional.',
         marketValue: 1200000
       },
@@ -129,6 +135,7 @@ class AdvancedSearch {
           expires: '2025-12-31',
           value: '2.5M'
         },
+        tags: ['goleador', 'instinto', 'veloz', 'ambicioso', 'joven talento', 'clínico'],
         notes: 'Talento excepcional. Gran proyección.',
         marketValue: 3000000
       },
@@ -152,6 +159,7 @@ class AdvancedSearch {
           expires: '2026-06-30',
           value: '1.8M'
         },
+        tags: ['veloz', 'ofensivo', 'centros', 'resistente', 'polivalente'],
         notes: 'Muy veloz por la banda. Buena proyección ofensiva.',
         marketValue: 1500000
       },
@@ -175,6 +183,7 @@ class AdvancedSearch {
           expires: '2025-06-30',
           value: '4.2M'
         },
+        tags: ['líder', 'pases largos', 'elegante', 'inteligente', 'ambidiestro', 'experimentado'],
         notes: 'Líder natural. Excelente distribución de balón.',
         marketValue: 8500000
       },
@@ -198,6 +207,7 @@ class AdvancedSearch {
           expires: '2027-05-31',
           value: '3.1M'
         },
+        tags: ['driblador', 'veloz', 'creativo', 'zurdo', 'joven talento', 'espectacular'],
         notes: 'Extremo muy prometedor. Gran potencial de crecimiento.',
         marketValue: 4200000
       },
@@ -221,6 +231,7 @@ class AdvancedSearch {
           expires: '2024-12-31',
           value: '800K'
         },
+        tags: ['reflejos', 'agilidad', 'confiable', 'joven talento', 'altura'],
         notes: 'Portero con gran potencial, reflexos excepcionales.',
         marketValue: 600000
       },
@@ -244,6 +255,7 @@ class AdvancedSearch {
           expires: '',
           value: ''
         },
+        tags: ['técnico', 'zurdo', 'joven talento', 'inteligente', 'promesa', 'elegante'],
         notes: 'Juvenil muy prometedor, técnica depurada.',
         marketValue: 0
       },
@@ -267,6 +279,7 @@ class AdvancedSearch {
           expires: '2026-06-30',
           value: '1.5M'
         },
+        tags: ['veloz', 'driblador', 'polivalente', 'técnico', 'espectacular'],
         notes: 'Extremo veloz con gran técnica individual.',
         marketValue: 1800000
       },
@@ -290,6 +303,7 @@ class AdvancedSearch {
           expires: '2025-12-31',
           value: '2.2M'
         },
+        tags: ['fuerte', 'aéreo', 'experimentado', 'polivalente', 'zurdo', 'líder'],
         notes: 'Defensor sólido con experiencia en selección.',
         marketValue: 2500000
       },
@@ -313,6 +327,7 @@ class AdvancedSearch {
           expires: '2025-06-30',
           value: '400K'
         },
+        tags: ['creativo', 'inteligente', 'polivalente', 'ambicioso', 'promesa'],
         notes: 'Talento africano emergente, gran visión de juego.',
         marketValue: 800000
       },
@@ -336,6 +351,7 @@ class AdvancedSearch {
           expires: '2026-01-31',
           value: '1.1M'
         },
+        tags: ['resistente', 'técnico', 'polivalente', 'disciplinado', 'ofensivo'],
         notes: 'Lateral técnico con gran resistencia física.',
         marketValue: 1400000
       }
@@ -380,8 +396,9 @@ class AdvancedSearch {
       }
     });
 
-    // Inicializar estados seleccionados
+    // Inicializar estados seleccionados y etiquetas
     this.selectedStates = [];
+    this.selectedTags = [];
   }
 
   collectFilters() {
@@ -395,6 +412,7 @@ class AdvancedSearch {
       nationality: document.getElementById('nationality')?.value || '',
       country: document.getElementById('country')?.value || '',
       states: this.selectedStates || [],
+      tags: this.selectedTags || [],
       league: document.getElementById('league')?.value || '',
       club: document.getElementById('club')?.value?.toLowerCase() || '',
       heightMin: parseInt(document.getElementById('heightMin')?.value) || null,
@@ -445,6 +463,12 @@ class AdvancedSearch {
 
       // Filtro por estados/departamentos (múltiples)
       if (filters.states && filters.states.length > 0 && !filters.states.includes(player.state)) return false;
+
+      // Filtro por etiquetas/características
+      if (filters.tags && filters.tags.length > 0) {
+        const hasAllTags = filters.tags.every(tag => player.tags && player.tags.includes(tag));
+        if (!hasAllTags) return false;
+      }
 
       // Filtro por liga
       if (filters.league && player.league !== filters.league) return false;
@@ -501,6 +525,20 @@ class AdvancedSearch {
     `;
   }
 
+  renderFollowButton(playerId) {
+    const isFollowing = this.watchlist.some(p => p.id === playerId);
+    
+    if (isFollowing) {
+      return `<button class="btn btn-warning btn-sm" onclick="event.stopPropagation(); advancedSearch.addToWatchlist(${playerId})">
+                <i class="fas fa-star-of-life"></i> Siguiendo
+              </button>`;
+    } else {
+      return `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); advancedSearch.addToWatchlist(${playerId})">
+                <i class="fas fa-star"></i> Seguir
+              </button>`;
+    }
+  }
+
   createPlayerCard(player) {
     const contractStatusLabels = {
       professional: { text: 'Profesional', class: 'professional' },
@@ -551,29 +589,26 @@ class AdvancedSearch {
           </div>
         </div>
         
+        ${player.tags && player.tags.length > 0 ? `
+        <div class="player-tags">
+          ${player.tags.slice(0, 4).map(tag => `<span class="player-tag">${this.getTagEmoji(tag)} ${tag}</span>`).join('')}
+          ${player.tags.length > 4 ? `<span class="more-tags">+${player.tags.length - 4}</span>` : ''}
+        </div>
+        ` : ''}
+        
         <div class="player-actions">
           <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); advancedSearch.showPlayerProfile(${player.id})">
             <i class="fas fa-eye"></i> Ver Perfil
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); advancedSearch.addToWatchlist(${player.id})">
-            <i class="fas fa-star"></i> Seguir
-          </button>
+          ${this.renderFollowButton(player.id)}
         </div>
       </div>
     `;
   }
 
   showPlayerProfile(playerId) {
-    const player = this.players.find(p => p.id === playerId);
-    if (!player) return;
-
-    const modal = document.getElementById('playerProfileModal');
-    const content = document.getElementById('playerProfileContent');
-    
-    content.innerHTML = this.createPlayerProfileContent(player);
-    modal.style.display = 'flex';
-    
-    document.getElementById('modalPlayerName').textContent = player.name;
+    // Redirigir a la página dedicada del perfil
+    window.location.href = `perfil-jugador.html?id=${playerId}`;
   }
 
   createPlayerProfileContent(player) {
@@ -923,7 +958,205 @@ class AdvancedSearch {
     }
   }
 
-  // Actualizar clearFilters para incluir estados
+
+
+  // Sistema de Etiquetas
+  setupTags() {
+    this.predefinedTags = {
+      physical: {
+        name: 'Físico',
+        icon: 'fas fa-dumbbell',
+        tags: [
+          { id: 'fuerte', name: 'Fuerte', icon: '💪' },
+          { id: 'veloz', name: 'Veloz', icon: '⚡' },
+          { id: 'resistente', name: 'Resistente', icon: '🏃' },
+          { id: 'aéreo', name: 'Aéreo', icon: '🦅' },
+          { id: 'agilidad', name: 'Ágil', icon: '🤸' },
+          { id: 'altura', name: 'Alto', icon: '📏' },
+          { id: 'potencia', name: 'Potente', icon: '🔥' }
+        ]
+      },
+      technical: {
+        name: 'Técnico',
+        icon: 'fas fa-futbol',
+        tags: [
+          { id: 'técnico', name: 'Técnico', icon: '⚽' },
+          { id: 'driblador', name: 'Driblador', icon: '🎯' },
+          { id: 'goleador', name: 'Goleador', icon: '⚽' },
+          { id: 'pases largos', name: 'Pases Largos', icon: '🎯' },
+          { id: 'centros', name: 'Centros', icon: '📐' },
+          { id: 'clínico', name: 'Clínico', icon: '🎯' },
+          { id: 'elegante', name: 'Elegante', icon: '✨' },
+          { id: 'reflejos', name: 'Reflejos', icon: '🧤' }
+        ]
+      },
+      mental: {
+        name: 'Mental',
+        icon: 'fas fa-brain',
+        tags: [
+          { id: 'líder', name: 'Líder', icon: '👑' },
+          { id: 'inteligente', name: 'Inteligente', icon: '🧠' },
+          { id: 'creativo', name: 'Creativo', icon: '🎨' },
+          { id: 'aguerrido', name: 'Aguerrido', icon: '⚔️' },
+          { id: 'ambicioso', name: 'Ambicioso', icon: '🎯' },
+          { id: 'disciplinado', name: 'Disciplinado', icon: '📚' },
+          { id: 'confiable', name: 'Confiable', icon: '🛡️' },
+          { id: 'instinto', name: 'Instinto', icon: '🔮' }
+        ]
+      },
+      tactical: {
+        name: 'Táctico',
+        icon: 'fas fa-chess',
+        tags: [
+          { id: 'polivalente', name: 'Polivalente', icon: '🔄' },
+          { id: 'ofensivo', name: 'Ofensivo', icon: '⚔️' },
+          { id: 'defensivo', name: 'Defensivo', icon: '🛡️' },
+          { id: 'posicional', name: 'Posicional', icon: '📍' },
+          { id: 'pressing', name: 'Pressing', icon: '🔥' },
+          { id: 'contraataque', name: 'Contraataque', icon: '⚡' }
+        ]
+      },
+      special: {
+        name: 'Especiales',
+        icon: 'fas fa-star',
+        tags: [
+          { id: 'joven talento', name: 'Joven Talento', icon: '🌟' },
+          { id: 'experimentado', name: 'Experimentado', icon: '🏆' },
+          { id: 'versátil', name: 'Versátil', icon: '🔧' },
+          { id: 'zurdo', name: 'Zurdo', icon: '👈' },
+          { id: 'ambidiestro', name: 'Ambidiestro', icon: '👐' },
+          { id: 'espectacular', name: 'Espectacular', icon: '🎪' },
+          { id: 'promesa', name: 'Promesa', icon: '💎' }
+        ]
+      }
+    };
+
+    this.renderTags();
+  }
+
+  renderTags() {
+    Object.keys(this.predefinedTags).forEach(categoryKey => {
+      const category = this.predefinedTags[categoryKey];
+      const container = document.getElementById(`${categoryKey}Tags`);
+      
+      if (container) {
+        container.innerHTML = '';
+        
+        category.tags.forEach(tag => {
+          const tagElement = document.createElement('div');
+          tagElement.className = `tag-checkbox-item ${categoryKey}`;
+          
+          tagElement.innerHTML = `
+            <label class="tag-checkbox-label">
+              <input type="checkbox" 
+                     class="tag-checkbox" 
+                     value="${tag.id}"
+                     onchange="advancedSearch.handleTagCheckbox('${tag.id}', '${categoryKey}', this)">
+              <span class="tag-checkmark"></span>
+              <span class="tag-icon">${tag.icon}</span>
+              <span class="tag-text">${tag.name}</span>
+            </label>
+          `;
+          
+          container.appendChild(tagElement);
+        });
+      }
+    });
+  }
+
+  handleTagCheckbox(tagId, category, checkbox) {
+    if (checkbox.checked) {
+      // Agregar etiqueta si no está seleccionada
+      if (!this.selectedTags.includes(tagId)) {
+        this.selectedTags.push(tagId);
+      }
+    } else {
+      // Remover etiqueta
+      this.selectedTags = this.selectedTags.filter(t => t !== tagId);
+    }
+    
+    this.updateTagsSummary();
+    console.log('Etiquetas seleccionadas:', this.selectedTags);
+  }
+
+  updateTagsSummary() {
+    const count = this.selectedTags.length;
+    const summaryElement = document.querySelector('.tags-summary');
+    
+    if (summaryElement) {
+      if (count > 0) {
+        summaryElement.innerHTML = `
+          <span class="tags-count">
+            <i class="fas fa-tags"></i>
+            ${count} etiqueta${count > 1 ? 's' : ''} seleccionada${count > 1 ? 's' : ''}
+          </span>
+          <button class="clear-selected-tags" onclick="advancedSearch.clearSelectedTags()">
+            <i class="fas fa-times"></i> Limpiar etiquetas
+          </button>
+        `;
+        summaryElement.style.display = 'flex';
+      } else {
+        summaryElement.style.display = 'none';
+      }
+    }
+    
+    console.log('Etiquetas seleccionadas:', this.selectedTags);
+  }
+
+  clearSelectedTags() {
+    this.selectedTags = [];
+    document.querySelectorAll('.tag-checkbox').forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    this.updateTagsSummary();
+  }
+
+  getTagEmoji(tagName) {
+    const tagEmojis = {
+      'fuerte': '💪',
+      'veloz': '⚡',
+      'resistente': '🏃',
+      'aéreo': '🦅',
+      'ágil': '🤸',
+      'alto': '📏',
+      'potente': '🔥',
+      'técnico': '⚽',
+      'driblador': '🎯',
+      'goleador': '⚽',
+      'pases largos': '🎯',
+      'centros': '📐',
+      'clínico': '🎯',
+      'elegante': '✨',
+      'reflejos': '🧤',
+      'líder': '👑',
+      'inteligente': '🧠',
+      'creativo': '🎨',
+      'aguerrido': '⚔️',
+      'ambicioso': '🎯',
+      'disciplinado': '📚',
+      'confiable': '🛡️',
+      'instinto': '🔮',
+      'polivalente': '🔄',
+      'ofensivo': '⚔️',
+      'defensivo': '🛡️',
+      'posicional': '📍',
+      'pressing': '🔥',
+      'contraataque': '⚡',
+      'joven talento': '🌟',
+      'experimentado': '🏆',
+      'versátil': '🔧',
+      'zurdo': '👈',
+      'ambidiestro': '👐',
+      'espectacular': '🎪',
+      'promesa': '💎'
+    };
+    
+    return tagEmojis[tagName] || '🏈';
+  }
+
+
+
+  // Actualizar clearFilters para incluir etiquetas
   clearFilters() {
     const form = document.getElementById('advancedSearchForm');
     if (form) {
@@ -933,6 +1166,13 @@ class AdvancedSearch {
     // Limpiar estados seleccionados
     this.selectedStates = [];
     this.updateStateButtonText();
+    
+    // Limpiar etiquetas seleccionadas (checkboxes)
+    this.selectedTags = [];
+    document.querySelectorAll('.tag-checkbox').forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    this.updateTagsSummary();
     
     // Resetear dropdown de estados
     const stateDropdownList = document.getElementById('stateDropdownList');
@@ -949,6 +1189,123 @@ class AdvancedSearch {
     `;
     
     document.getElementById('resultsCount').textContent = 'Use los filtros para buscar jugadores';
+  }
+
+  // ================ SISTEMA DE LISTA DE SEGUIMIENTO ================
+  
+  loadWatchlist() {
+    try {
+      const saved = localStorage.getItem('scoutconnect_watchlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Error al cargar watchlist:', error);
+      return [];
+    }
+  }
+
+  saveWatchlist() {
+    try {
+      localStorage.setItem('scoutconnect_watchlist', JSON.stringify(this.watchlist));
+      console.log('Watchlist guardada:', this.watchlist);
+    } catch (error) {
+      console.error('Error al guardar watchlist:', error);
+    }
+  }
+
+  addToWatchlist(playerId) {
+    const player = this.players.find(p => p.id === playerId);
+    if (!player) {
+      console.error('Jugador no encontrado:', playerId);
+      return;
+    }
+
+    // Verificar si ya está en la lista
+    const isAlreadyInList = this.watchlist.some(p => p.id === playerId);
+    
+    if (isAlreadyInList) {
+      // Remover de la lista
+      this.watchlist = this.watchlist.filter(p => p.id !== playerId);
+      this.showNotification(`${player.name} removido de la lista de seguimiento`, 'info');
+    } else {
+      // Agregar a la lista
+      const watchlistPlayer = {
+        ...player,
+        addedDate: new Date().toISOString(),
+        addedTimestamp: Date.now()
+      };
+      this.watchlist.push(watchlistPlayer);
+      this.showNotification(`${player.name} agregado a la lista de seguimiento`, 'success');
+    }
+    
+    this.saveWatchlist();
+    this.updateWatchlistUI();
+    
+    // Actualizar el botón en la interfaz
+    this.updateFollowButton(playerId, !isAlreadyInList);
+  }
+
+  updateFollowButton(playerId, isFollowing) {
+    // Actualizar botones en resultados de búsqueda
+    const buttons = document.querySelectorAll(`button[onclick*="addToWatchlist(${playerId})"]`);
+    buttons.forEach(button => {
+      if (isFollowing) {
+        button.innerHTML = '<i class="fas fa-star-of-life"></i> Siguiendo';
+        button.classList.remove('btn-secondary');
+        button.classList.add('btn-warning');
+      } else {
+        button.innerHTML = '<i class="fas fa-star"></i> Seguir';
+        button.classList.remove('btn-warning');
+        button.classList.add('btn-secondary');
+      }
+    });
+  }
+
+  updateWatchlistUI() {
+    // Actualizar contador en navegación si existe
+    const watchlistCount = document.getElementById('watchlistCount');
+    if (watchlistCount) {
+      watchlistCount.textContent = this.watchlist.length;
+      watchlistCount.style.display = this.watchlist.length > 0 ? 'inline' : 'none';
+    }
+  }
+
+  getWatchlistCount() {
+    return this.watchlist.length;
+  }
+
+  clearWatchlist() {
+    if (confirm('¿Estás seguro de que quieres limpiar toda la lista de seguimiento?')) {
+      this.watchlist = [];
+      this.saveWatchlist();
+      this.showNotification('Lista de seguimiento limpiada', 'info');
+      this.updateWatchlistUI();
+      // Actualizar todos los botones
+      this.players.forEach(player => {
+        this.updateFollowButton(player.id, false);
+      });
+    }
+  }
+
+  showNotification(message, type = 'info') {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+      <span>${message}</span>
+    `;
+    
+    // Agregar al body
+    document.body.appendChild(notification);
+    
+    // Mostrar con animación
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
   }
 }
 

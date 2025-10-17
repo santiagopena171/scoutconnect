@@ -77,10 +77,10 @@
         <span>Reportes</span>
         <span class="nav-badge pending">12</span>
       </a>
-      <a href="#watchlist" class="nav-item" data-section="watchlist">
+      <a href="lista-seguimiento.html" class="nav-item">
         <i class="fas fa-star"></i>
         <span>Lista de Seguimiento</span>
-        <span class="nav-badge">34</span>
+        <span class="nav-badge" id="dashboardWatchlistCount">0</span>
       </a>
       <a href="#calendar" class="nav-item" data-section="calendar">
         <i class="fas fa-calendar-alt"></i>
@@ -462,7 +462,84 @@
       </div>
     </section>
 
+    <!-- Sección de Reportes -->
+    <section class="content-section" id="reports">
+      <div class="page-header">
+        <h1><i class="fas fa-clipboard-list"></i> Gestión de Reportes</h1>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="newReportBtn">
+            <i class="fas fa-plus"></i> Nuevo Reporte
+          </button>
+          <button class="btn btn-secondary" id="exportReportsBtn">
+            <i class="fas fa-download"></i> Exportar Todos
+          </button>
+          <select class="filter-select" id="reportsFilter">
+            <option value="all">Todos los reportes</option>
+            <option value="recent">Recientes</option>
+            <option value="favorite">Favoritos</option>
+            <option value="pending">Pendientes de revisión</option>
+          </select>
+        </div>
+      </div>
 
+      <!-- Estadísticas de Reportes -->
+      <div class="reports-stats">
+        <div class="stat-card">
+          <div class="stat-icon reports">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="stat-content">
+            <h3 id="totalReportsCount">0</h3>
+            <p>Total de Reportes</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pending">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <h3 id="pendingReportsCount">0</h3>
+            <p>Pendientes</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon completed">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <h3 id="completedReportsCount">0</h3>
+            <p>Completados</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon favorite">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="stat-content">
+            <h3 id="favoriteReportsCount">0</h3>
+            <p>Favoritos</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de Reportes -->
+      <div class="reports-container">
+        <div class="reports-grid" id="reportsGrid">
+          <!-- Los reportes se cargarán dinámicamente aquí -->
+        </div>
+        
+        <div class="empty-state" id="emptyReportsState" style="display: none;">
+          <div class="empty-icon">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <h3>No hay reportes generados</h3>
+          <p>Comienza generando reportes desde los perfiles de jugadores para verlos aquí.</p>
+          <button class="btn btn-primary" onclick="window.location.href='busqueda-avanzada.html'">
+            <i class="fas fa-search"></i> Buscar Jugadores
+          </button>
+        </div>
+      </div>
+    </section>
 
     <!-- Sección de Analytics Avanzado -->
     <section class="content-section" id="analytics">

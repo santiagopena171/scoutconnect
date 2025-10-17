@@ -954,3 +954,414 @@ body {
   font-weight: 600;
   margin-left: 8px;
 }
+
+/* Sistema de Etiquetas */
+.tags-category {
+  margin-bottom: 20px;
+}
+
+.tags-category h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tags-category h4 i {
+  font-size: 12px;
+  color: var(--primary-color);
+}
+
+.tags-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: white;
+  user-select: none;
+  position: relative;
+}
+
+.tag-item:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-50);
+}
+
+.tag-item.selected {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.tag-item.physical {
+  border-color: #ef4444;
+}
+
+.tag-item.physical:hover {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.tag-item.physical.selected {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.tag-item.technical {
+  border-color: #3b82f6;
+}
+
+.tag-item.technical:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.tag-item.technical.selected {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.tag-item.mental {
+  border-color: #8b5cf6;
+}
+
+.tag-item.mental:hover {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.tag-item.mental.selected {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.tag-item.tactical {
+  border-color: #10b981;
+}
+
+.tag-item.tactical:hover {
+  border-color: #059669;
+  background: #ecfdf5;
+}
+
+.tag-item.tactical.selected {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.tag-item.special {
+  border-color: #f59e0b;
+}
+
+.tag-item.special:hover {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+
+.tag-item.special.selected {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.tag-icon {
+  margin-right: 6px;
+  font-size: 10px;
+}
+
+.selected-tags-summary {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.selected-tags-summary h5 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.selected-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.selected-tag-mini {
+  padding: 2px 8px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.clear-tags-btn {
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s ease;
+}
+
+.clear-tags-btn:hover {
+  background: #dc2626;
+}
+
+/* =============================================================================
+   ETIQUETAS EN TARJETAS DE JUGADORES
+   ============================================================================= */
+
+.player-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 12px 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--gray-100);
+}
+
+.player-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, var(--accent-color), #667eea);
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.more-tags {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: var(--gray-200);
+  color: var(--gray-600);
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* =============================================================================
+   CHECKBOXES DE ETIQUETAS
+   ============================================================================= */
+
+.tag-checkbox-item {
+  margin-bottom: 8px;
+}
+
+.tag-checkbox-label {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.tag-checkbox-label:hover {
+  background-color: var(--gray-50);
+}
+
+.tag-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tag-checkmark {
+  height: 16px;
+  width: 16px;
+  border: 2px solid var(--gray-300);
+  border-radius: 4px;
+  position: relative;
+  margin-right: 10px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tag-checkbox:checked ~ .tag-checkmark {
+  border-color: var(--accent-color);
+  background-color: var(--accent-color);
+}
+
+.tag-checkbox:checked ~ .tag-checkmark:after {
+  content: "";
+  position: absolute;
+  display: block;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.tag-icon {
+  margin-right: 6px;
+  font-size: 14px;
+}
+
+.tag-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+/* Colores específicos por categoría */
+.tag-checkbox-item.physical .tag-checkbox:checked ~ .tag-checkmark {
+  background-color: #16a34a;
+  border-color: #16a34a;
+}
+
+.tag-checkbox-item.technical .tag-checkbox:checked ~ .tag-checkmark {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.tag-checkbox-item.mental .tag-checkbox:checked ~ .tag-checkmark {
+  background-color: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.tag-checkbox-item.tactical .tag-checkbox:checked ~ .tag-checkmark {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.tag-checkbox-item.special .tag-checkbox:checked ~ .tag-checkmark {
+  background-color: #ea580c;
+  border-color: #ea580c;
+}
+
+/* =============================================================================
+   RESUMEN DE ETIQUETAS SELECCIONADAS
+   ============================================================================= */
+
+.tags-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border: 2px solid var(--accent-color);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tags-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-color);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.tags-count i {
+  color: var(--accent-color);
+}
+
+.clear-selected-tags {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clear-selected-tags:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* =============================================================================
+   NOTIFICACIONES
+   ============================================================================= */
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: white;
+  color: var(--gray-800);
+  padding: 16px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  max-width: 350px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.notification.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification-success {
+  border-left-color: #10b981;
+}
+
+.notification-success i {
+  color: #10b981;
+}
+
+.notification-error {
+  border-left-color: #ef4444;
+}
+
+.notification-error i {
+  color: #ef4444;
+}
+
+.notification-info {
+  border-left-color: #3b82f6;
+}
+
+.notification-info i {
+  color: #3b82f6;
+}
