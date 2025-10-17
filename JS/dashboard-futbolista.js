@@ -640,6 +640,13 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMessages();
     loadScouts();
     calculateProfileCompletion();
+    
+    // Debug chat
+    console.log('💬 Inicializando chat...');
+    console.log('📊 Conversaciones disponibles:', conversations.length);
+    
+    updateChatBadge(); // Inicializar badge del chat
+    setupChatInput(); // Configurar input del chat
   }
 
   function setupEventListeners() {
@@ -701,6 +708,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Marcar notificaciones como leídas
     document.querySelector('.mark-all-read').addEventListener('click', markAllNotificationsRead);
+
+    // Cambio de foto de perfil
+    const changePhotoBtn = document.getElementById('changePhotoBtn');
+    const profilePhotoInput = document.getElementById('profilePhotoInput');
+    const profilePhoto = document.getElementById('profilePhoto');
+    const userAvatar = document.getElementById('userAvatar');
+
+    if (changePhotoBtn && profilePhotoInput) {
+      changePhotoBtn.addEventListener('click', () => {
+        profilePhotoInput.click();
+      });
+
+      profilePhotoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          handleProfilePhotoChange(file);
+        }
+      });
+    }
+
+    // Chat functionality
+    const chatBtn = document.getElementById('chatBtn');
+    const chatModal = document.getElementById('chatModal');
+    const closeChatModal = document.getElementById('closeChatModal');
+
+    if (chatBtn && chatModal) {
+      console.log('✅ Elementos de chat encontrados, configurando event listeners...');
+      chatBtn.addEventListener('click', () => {
+        console.log('🖱️ Click en botón de chat detectado');
+        openChatModal();
+      });
+
+      closeChatModal.addEventListener('click', () => {
+        chatModal.classList.remove('show');
+      });
+
+      chatModal.addEventListener('click', (e) => {
+        if (e.target === chatModal) {
+          chatModal.classList.remove('show');
+        }
+      });
+    } else {
+      console.error('❌ No se encontraron elementos de chat:', {
+        chatBtn: !!chatBtn,
+        chatModal: !!chatModal,
+        closeChatModal: !!closeChatModal
+      });
+    }
   }
 
   function loadPlayerData() {
@@ -778,6 +833,162 @@ document.addEventListener('DOMContentLoaded', function() {
         barElement.style.transition = 'width 0.8s ease';
       }, 100);
     }
+  }
+
+  // Función para manejar el cambio de foto de perfil
+  function handleProfilePhotoChange(file) {
+    // Validar el archivo
+    if (!file.type.startsWith('image/')) {
+      showNotification('Por favor selecciona un archivo de imagen válido.', 'error');
+      return;
+    }
+
+    // Validar el tamaño (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('El archivo es demasiado grande. Máximo 5MB.', 'error');
+      return;
+    }
+
+    // Crear URL temporal para previsualización
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const imageUrl = e.target.result;
+      
+      // Mostrar modal de previsualización
+      showPhotoPreviewModal(imageUrl, file);
+    };
+
+    reader.onerror = function() {
+      showNotification('Error al cargar la imagen. Intenta nuevamente.', 'error');
+    };
+
+    // Leer el archivo como data URL
+    reader.readAsDataURL(file);
+  }
+
+  // Función para mostrar el modal de previsualización
+  function showPhotoPreviewModal(imageUrl, file) {
+    const modal = document.getElementById('photoPreviewModal');
+    const preview = document.getElementById('photoPreview');
+    const fileName = document.getElementById('photoFileName');
+    const fileSize = document.getElementById('photoFileSize');
+    const confirmBtn = document.getElementById('confirmPhotoChange');
+    const cancelBtn = document.getElementById('cancelPhotoChange');
+    const closeBtn = document.getElementById('closePhotoModal');
+
+    // Configurar previsualización
+    preview.src = imageUrl;
+    fileName.textContent = `📁 ${file.name}`;
+    fileSize.textContent = `📊 ${(file.size / 1024).toFixed(2)} KB • ${file.type}`;
+
+    // Mostrar modal
+    modal.classList.add('show');
+
+    // Event listeners para el modal
+    const confirmChange = () => {
+      // Actualizar todas las instancias de la foto de perfil
+      const profilePhoto = document.getElementById('profilePhoto');
+      const userAvatar = document.getElementById('userAvatar');
+      
+      if (profilePhoto) {
+        profilePhoto.src = imageUrl;
+      }
+      if (userAvatar) {
+        userAvatar.src = imageUrl;
+      }
+
+      // Actualizar el objeto playerData
+      playerData.avatar = imageUrl;
+      
+      // Guardar en localStorage para persistencia
+      savePlayerDataToStorage();
+      
+      // Cerrar modal y mostrar éxito
+      closePhotoModal();
+      showNotification('✅ Foto de perfil actualizada correctamente', 'success');
+      
+      console.log('✅ Foto de perfil cambiada:', {
+        fileName: file.name,
+        fileSize: `${(file.size / 1024).toFixed(2)} KB`,
+        fileType: file.type
+      });
+    };
+
+    const closePhotoModal = () => {
+      modal.classList.remove('show');
+      // Limpiar event listeners
+      confirmBtn.removeEventListener('click', confirmChange);
+      cancelBtn.removeEventListener('click', closePhotoModal);
+      closeBtn.removeEventListener('click', closePhotoModal);
+      
+      // Reset file input
+      document.getElementById('profilePhotoInput').value = '';
+    };
+
+    // Configurar event listeners
+    confirmBtn.addEventListener('click', confirmChange);
+    cancelBtn.addEventListener('click', closePhotoModal);
+    closeBtn.addEventListener('click', closePhotoModal);
+
+    // Cerrar modal al hacer clic fuera
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closePhotoModal();
+      }
+    });
+  }
+
+  // Función para mostrar notificaciones temporales
+  function showNotification(message, type = 'info') {
+    // Colores según el tipo
+    const colors = {
+      success: '#00A859',
+      error: '#E74C3C',
+      warning: '#F39C12',
+      info: '#3498DB'
+    };
+    
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Estilos inline para la notificación
+    notification.style.cssText = `
+      position: fixed;
+      top: 90px;
+      right: 20px;
+      background: ${colors[type] || colors.info};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      max-width: 300px;
+      word-wrap: break-word;
+    `;
+    
+    // Añadir al DOM
+    document.body.appendChild(notification);
+    
+    // Mostrar con animación
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Ocultar después de 4 segundos (más tiempo para leer)
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, 4000);
   }
 
   function loadVideoFacets() {
@@ -1454,6 +1665,421 @@ document.addEventListener('DOMContentLoaded', function() {
     notifications.forEach(n => n.read = true);
     loadNotifications();
     document.getElementById('notificationBadge').textContent = '0';
+  }
+
+  // ===== FUNCIONES DE CHAT =====
+  
+  // Datos de conversaciones (simulado - en producción vendría de API)
+  let conversations = [
+    {
+      id: 1,
+      user: {
+        name: 'Carlos Mendoza',
+        role: 'Scout - FC Barcelona',
+        avatar: 'imagenes/imagen2.png',
+        status: 'En línea'
+      },
+      lastMessage: '¿Podrías enviarme un video de tus mejores jugadas de los últimos 6 meses?',
+      time: 'Ahora',
+      unread: 3,
+      messages: [
+        {
+          id: 1,
+          sender: 'scout',
+          content: 'Hola Santiago, he visto tu perfil y me ha llamado mucho la atención tu técnica.',
+          time: '10:30 AM',
+          timestamp: new Date('2024-10-16 10:30:00')
+        },
+        {
+          id: 2,
+          sender: 'player',
+          content: '¡Hola Carlos! Muchas gracias por contactarme. Es un honor que el FC Barcelona se interese en mi perfil.',
+          time: '10:35 AM',
+          timestamp: new Date('2024-10-16 10:35:00')
+        },
+        {
+          id: 3,
+          sender: 'scout',
+          content: 'He revisado tus videos y tu posicionamiento defensivo es excelente. Me recuerda a algunos de nuestros mejores centrales.',
+          time: '10:40 AM',
+          timestamp: new Date('2024-10-16 10:40:00')
+        },
+        {
+          id: 4,
+          sender: 'scout',
+          content: '¿Podrías enviarme un video de tus mejores jugadas de los últimos 6 meses?',
+          time: '10:45 AM',
+          timestamp: new Date('2024-10-16 10:45:00')
+        },
+        {
+          id: 5,
+          sender: 'scout',
+          content: 'También nos gustaría saber si tienes disponibilidad para una prueba presencial en Barcelona.',
+          time: '10:46 AM',
+          timestamp: new Date('2024-10-16 10:46:00')
+        }
+      ]
+    },
+    {
+      id: 2,
+      user: {
+        name: 'Ana García',
+        role: 'Directora - Academia Elite Madrid',
+        avatar: 'imagenes/imagen3.png',
+        status: 'En línea'
+      },
+      lastMessage: 'Tenemos una beca completa disponible para jugadores de tu perfil.',
+      time: '5 min',
+      unread: 2,
+      messages: [
+        {
+          id: 1,
+          sender: 'scout',
+          content: 'Hola Santiago, somos una academia en Madrid y nos gustaría hablar contigo sobre una oportunidad.',
+          time: '9:15 AM',
+          timestamp: new Date('2024-10-16 09:15:00')
+        },
+        {
+          id: 2,
+          sender: 'player',
+          content: 'Hola Ana, me encantaría conocer más sobre la academia y la oportunidad.',
+          time: '9:20 AM',
+          timestamp: new Date('2024-10-16 09:20:00')
+        },
+        {
+          id: 3,
+          sender: 'scout',
+          content: 'Somos una de las academias más prestigiosas de España. Hemos formado jugadores que ahora juegan en La Liga.',
+          time: '9:25 AM',
+          timestamp: new Date('2024-10-16 09:25:00')
+        },
+        {
+          id: 4,
+          sender: 'scout',
+          content: 'Tenemos una beca completa disponible para jugadores de tu perfil.',
+          time: 'Hace 5 min',
+          timestamp: new Date('2024-10-16 11:40:00')
+        }
+      ]
+    },
+    {
+      id: 3,
+      user: {
+        name: 'Roberto Silva',
+        role: 'Scout - Real Madrid Castilla',
+        avatar: 'imagenes/imagen4.png',
+        status: 'Hace 30 min'
+      },
+      lastMessage: '¿Tienes pasaporte europeo? Esto facilitaría mucho el proceso.',
+      time: '30 min',
+      unread: 1,
+      messages: [
+        {
+          id: 1,
+          sender: 'scout',
+          content: 'Hola Santiago, soy Roberto Silva del Real Madrid Castilla. Tu perfil nos ha llamado mucho la atención.',
+          time: '8:00 AM',
+          timestamp: new Date('2024-10-16 08:00:00')
+        },
+        {
+          id: 2,
+          sender: 'player',
+          content: '¡Increíble! No puedo creer que el Real Madrid se haya fijado en mí. Es mi sueño desde niño.',
+          time: '8:05 AM',
+          timestamp: new Date('2024-10-16 08:05:00')
+        },
+        {
+          id: 3,
+          sender: 'scout',
+          content: 'Tu técnica defensiva y capacidad de anticipación son excepcionales para tu edad.',
+          time: '8:10 AM',
+          timestamp: new Date('2024-10-16 08:10:00')
+        },
+        {
+          id: 4,
+          sender: 'scout',
+          content: 'Estamos organizando una prueba para el mes que viene. ¿Estarías interesado?',
+          time: '8:15 AM',
+          timestamp: new Date('2024-10-16 08:15:00')
+        },
+        {
+          id: 5,
+          sender: 'player',
+          content: '¡Por supuesto! Estaría encantado de participar. ¿Qué necesito preparar?',
+          time: '8:20 AM',
+          timestamp: new Date('2024-10-16 08:20:00')
+        },
+        {
+          id: 6,
+          sender: 'scout',
+          content: '¿Tienes pasaporte europeo? Esto facilitaría mucho el proceso.',
+          time: '11:15 AM',
+          timestamp: new Date('2024-10-16 11:15:00')
+        }
+      ]
+    },
+    {
+      id: 4,
+      user: {
+        name: 'Marco Pérez',
+        role: 'Agente FIFA',
+        avatar: 'imagenes/imagen5.png',
+        status: 'Hace 2 horas'
+      },
+      lastMessage: 'He hablado con varios clubes europeos interesados en tu perfil.',
+      time: '2h',
+      unread: 1,
+      messages: [
+        {
+          id: 1,
+          sender: 'scout',
+          content: 'Hola Santiago, soy Marco Pérez, agente FIFA. Me han recomendado tu perfil varios scouts.',
+          time: 'Ayer 6:30 PM',
+          timestamp: new Date('2024-10-15 18:30:00')
+        },
+        {
+          id: 2,
+          sender: 'player',
+          content: 'Hola Marco, me interesa mucho saber más sobre las oportunidades que maneja.',
+          time: 'Ayer 7:00 PM',
+          timestamp: new Date('2024-10-15 19:00:00')
+        },
+        {
+          id: 3,
+          sender: 'scout',
+          content: 'Represento jugadores en La Liga, Serie A y Bundesliga. Tu perfil encaja perfectamente.',
+          time: 'Ayer 7:15 PM',
+          timestamp: new Date('2024-10-15 19:15:00')
+        },
+        {
+          id: 4,
+          sender: 'scout',
+          content: 'He hablado con varios clubes europeos interesados en tu perfil.',
+          time: '9:45 AM',
+          timestamp: new Date('2024-10-16 09:45:00')
+        }
+      ]
+    }
+  ];
+
+  let activeConversationId = null;
+
+  function openChatModal() {
+    console.log('🔄 Abriendo modal de chat...');
+    const chatModal = document.getElementById('chatModal');
+    if (chatModal) {
+      chatModal.classList.add('show');
+      console.log('✅ Modal mostrado');
+      loadConversations();
+      updateChatBadge();
+    } else {
+      console.error('❌ No se encontró el elemento chatModal');
+    }
+  }
+
+  function loadConversations() {
+    console.log('🔄 Cargando conversaciones...');
+    const conversationsList = document.getElementById('conversationsList');
+    
+    if (!conversationsList) {
+      console.error('❌ No se encontró el elemento conversationsList');
+      // Intentar encontrar elementos similares
+      console.log('🔍 Buscando elementos similares...');
+      const allElements = document.querySelectorAll('[id*="conversation"], [class*="conversation"]');
+      console.log('📋 Elementos encontrados:', allElements);
+      return;
+    }
+    
+    console.log('📊 Número de conversaciones:', conversations.length);
+    console.log('📍 Elemento conversationsList encontrado:', conversationsList);
+    
+    // Limpiar contenido existente
+    conversationsList.innerHTML = '';
+    
+    // Agregar un elemento de prueba primero
+    const testElement = document.createElement('div');
+    testElement.innerHTML = '<p style="padding: 10px; color: red;">PRUEBA - Si ves esto, el contenedor funciona</p>';
+    conversationsList.appendChild(testElement);
+
+    if (conversations.length === 0) {
+      console.warn('⚠️ No hay conversaciones para mostrar');
+      conversationsList.innerHTML = '<p style="padding: 20px; text-align: center;">No hay conversaciones</p>';
+      return;
+    }
+
+    // Remover elemento de prueba
+    conversationsList.innerHTML = '';
+
+    conversations.forEach((conversation, index) => {
+      console.log(`➕ Agregando conversación ${index + 1}:`, conversation.user.name);
+      
+      const conversationElement = document.createElement('div');
+      conversationElement.className = 'conversation-item';
+      conversationElement.style.cssText = 'padding: 16px; border-bottom: 1px solid #eee; cursor: pointer; background: white;';
+      conversationElement.onclick = () => selectConversation(conversation.id);
+      
+      // Crear HTML más simple para debug
+      conversationElement.innerHTML = `
+        <div class="conversation-info" style="display: flex; align-items: center; gap: 12px;">
+          <img src="${conversation.user.avatar}" alt="${conversation.user.name}" class="conversation-avatar" style="width: 48px; height: 48px; border-radius: 12px; object-fit: cover;">
+          <div class="conversation-details" style="flex: 1;">
+            <h5 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #2d3748;">${conversation.user.name}</h5>
+            <p class="conversation-preview" style="font-size: 13px; color: #718096; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${conversation.lastMessage}</p>
+            <div class="conversation-time" style="font-size: 11px; color: #a0aec0; margin-top: 4px;">${conversation.time}</div>
+            ${conversation.unread > 0 ? `<span class="unread-count" style="background: #ff4757; color: white; border-radius: 12px; padding: 4px 8px; font-size: 11px; font-weight: 600; position: absolute; bottom: 0; right: 0;">${conversation.unread}</span>` : ''}
+          </div>
+        </div>
+      `;
+      
+      conversationsList.appendChild(conversationElement);
+      console.log(`✅ Conversación ${index + 1} agregada al DOM`);
+    });
+    
+    console.log('✅ Todas las conversaciones cargadas');
+    console.log('📏 Altura del contenedor:', conversationsList.scrollHeight, 'px');
+  }
+
+  function selectConversation(conversationId) {
+    activeConversationId = conversationId;
+    const conversation = conversations.find(c => c.id === conversationId);
+    
+    if (!conversation) return;
+
+    // Marcar conversación como activa
+    document.querySelectorAll('.conversation-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    event.target.closest('.conversation-item').classList.add('active');
+
+    // Actualizar header del chat
+    document.getElementById('chatAvatar').src = conversation.user.avatar;
+    document.getElementById('chatUserName').textContent = conversation.user.name;
+    document.getElementById('chatUserStatus').textContent = conversation.user.status;
+
+    // Cargar mensajes
+    loadMessages(conversation);
+
+    // Mostrar área de input
+    document.getElementById('chatInputArea').style.display = 'block';
+    document.querySelector('.no-chat-selected').style.display = 'none';
+
+    // Marcar mensajes como leídos
+    conversation.unread = 0;
+    updateChatBadge();
+    loadConversations();
+  }
+
+  function loadMessages(conversation) {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.innerHTML = '';
+
+    conversation.messages.forEach(message => {
+      const messageElement = document.createElement('div');
+      messageElement.className = `message ${message.sender === 'player' ? 'own' : ''}`;
+      
+      messageElement.innerHTML = `
+        <img src="${message.sender === 'player' ? playerData.avatar : conversation.user.avatar}" 
+             alt="Avatar" class="message-avatar">
+        <div class="message-content">
+          <div class="message-bubble">${message.content}</div>
+          <div class="message-time">${message.time}</div>
+        </div>
+      `;
+      
+      chatMessages.appendChild(messageElement);
+    });
+
+    // Scroll al final
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function setupChatInput() {
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    if (chatInput && sendBtn) {
+      const sendMessage = () => {
+        const message = chatInput.value.trim();
+        if (!message || !activeConversationId) return;
+
+        // Encontrar conversación activa
+        const conversation = conversations.find(c => c.id === activeConversationId);
+        if (!conversation) return;
+
+        // Crear nuevo mensaje
+        const newMessage = {
+          id: conversation.messages.length + 1,
+          sender: 'player',
+          content: message,
+          time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date()
+        };
+
+        // Añadir mensaje a la conversación
+        conversation.messages.push(newMessage);
+        conversation.lastMessage = message;
+        conversation.time = 'Ahora';
+
+        // Recargar mensajes y conversaciones
+        loadMessages(conversation);
+        loadConversations();
+
+        // Limpiar input
+        chatInput.value = '';
+        
+        // Simular respuesta automática después de 2 segundos
+        setTimeout(() => {
+          simulateAutoReply(conversation);
+        }, 2000);
+      };
+
+      sendBtn.addEventListener('click', sendMessage);
+      chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+    }
+  }
+
+  function simulateAutoReply(conversation) {
+    const autoReplies = [
+      'Gracias por tu mensaje, te responderé pronto.',
+      'Interesante, déjame revisar tu perfil en detalle.',
+      'Perfecto, estaremos en contacto.',
+      '¿Podrías contarme más sobre tu experiencia?',
+      'Excelente, eso es justo lo que buscamos.'
+    ];
+
+    const randomReply = autoReplies[Math.floor(Math.random() * autoReplies.length)];
+    
+    const autoMessage = {
+      id: conversation.messages.length + 1,
+      sender: 'scout',
+      content: randomReply,
+      time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date()
+    };
+
+    conversation.messages.push(autoMessage);
+    conversation.lastMessage = randomReply;
+    conversation.time = 'Ahora';
+
+    // Solo recargar si esta conversación está activa
+    if (activeConversationId === conversation.id) {
+      loadMessages(conversation);
+    }
+    
+    loadConversations();
+  }
+
+  function updateChatBadge() {
+    const totalUnread = conversations.reduce((total, conv) => total + conv.unread, 0);
+    const chatBadge = document.getElementById('chatBadge');
+    if (chatBadge) {
+      chatBadge.textContent = totalUnread;
+      chatBadge.style.display = totalUnread > 0 ? 'block' : 'none';
+    }
   }
 
   function openMessage(messageId) {
