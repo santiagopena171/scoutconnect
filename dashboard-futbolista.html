@@ -93,7 +93,7 @@
               Dashboard Scout (Demo)
             </a>
             <hr class="menu-divider">
-            <a href="login.html" class="menu-item logout" id="logoutBtn">
+            <a href="#" onclick="logout(); return false;" class="menu-item logout" id="logoutBtn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16,17 21,12 16,7"></polyline>
@@ -703,6 +703,17 @@
     </div>
   </div>
 
+  <!-- Scripts -->
+  <!-- Librería de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Configuración de Supabase -->
+  <script src="JS/supabase-config.js"></script>
+  
+  <!-- Protección de ruta (Auth Guard) -->
+  <script src="JS/auth-guard.js"></script>
+  
+  <!-- Script principal del dashboard -->
   <script src="JS/dashboard-futbolista.js"></script>
 </body>
 </html>

@@ -18,25 +18,58 @@ document.addEventListener('DOMContentLoaded', function() {
   const messageClose = document.getElementById('messageClose');
 
   // Función para verificar sesión activa
-  function checkActiveSession() {
-    const sessionToken = localStorage.getItem('scoutConnectToken');
-    const sessionUser = localStorage.getItem('scoutConnectUser');
-    const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
-
-    if (sessionToken && sessionUser && sessionExpiry) {
-      const now = new Date().getTime();
-      const expiryTime = parseInt(sessionExpiry);
-
-      if (now < expiryTime) {
-        // Sesión válida - redirigir al dashboard
-        const userData = JSON.parse(sessionUser);
-        redirectToDashboard(userData.userType || 'jugador');
-        return true;
-      } else {
-        // Sesión expirada - limpiar datos
+  async function checkActiveSession() {
+    try {
+      // Si acabamos de hacer logout, NO verificar sesión
+      const justLoggedOut = localStorage.getItem('justLoggedOut');
+      if (justLoggedOut === 'true') {
+        console.log('🚪 Logout reciente detectado, no verificar sesión');
+        localStorage.removeItem('justLoggedOut');
         clearSession();
+        return false;
       }
+
+      // Verificar sesión en Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        console.log('✅ Sesión activa de Supabase detectada');
+        
+        // Obtener datos del perfil
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile && !error) {
+          console.log('👤 Perfil encontrado:', profile);
+          redirectToDashboard(profile.user_type);
+          return true;
+        }
+      }
+
+      // Fallback: verificar localStorage (sesiones antiguas)
+      const sessionToken = localStorage.getItem('scoutConnectToken');
+      const sessionUser = localStorage.getItem('scoutConnectUser');
+      const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
+
+      if (sessionToken && sessionUser && sessionExpiry) {
+        const now = new Date().getTime();
+        const expiryTime = parseInt(sessionExpiry);
+
+        if (now < expiryTime) {
+          const userData = JSON.parse(sessionUser);
+          redirectToDashboard(userData.userType || 'jugador');
+          return true;
+        } else {
+          clearSession();
+        }
+      }
+    } catch (error) {
+      console.error('Error al verificar sesión:', error);
     }
+    
     return false;
   }
 
@@ -184,32 +217,44 @@ document.addEventListener('DOMContentLoaded', function() {
     setLoadingState(true);
 
     try {
-      // Simular llamada a la API (reemplazar con tu lógica real)
-      console.log('📡 Enviando credenciales...');
-      const simulationResult = await simulateLogin();
-      console.log('✅ Login exitoso:', simulationResult);
+      // Login con Supabase
+      console.log('📡 Autenticando con Supabase...');
+      const loginResult = await authenticateWithSupabase();
+      console.log('✅ Login exitoso:', loginResult);
       
-      // Login exitoso
+      // Verificar que el tipo de usuario seleccionado coincida con el registrado
+      const selectedUserType = document.querySelector('input[name="userType"]:checked').value;
+      const registeredUserType = loginResult.profile.user_type;
+      
+      console.log('🔍 Tipo seleccionado:', selectedUserType);
+      console.log('🔍 Tipo registrado:', registeredUserType);
+      
+      if (selectedUserType !== registeredUserType) {
+        // Cerrar la sesión de Supabase ya que no coincide el tipo
+        await supabase.auth.signOut();
+        
+        const tipoSeleccionado = selectedUserType === 'scout' ? 'Scout' : 'Futbolista';
+        const tipoReal = registeredUserType === 'scout' ? 'Scout' : 'Futbolista';
+        
+        throw new Error(`Esta cuenta está registrada como ${tipoReal}. Por favor, selecciona "${tipoReal}" para iniciar sesión.`);
+      }
+      
+      // Login exitoso - obtener perfil del usuario
       const userData = {
-        email: emailInput.value.trim(),
-        userType: simulationResult.user.userType || 'jugador',
-        name: simulationResult.user.name || 'Usuario',
+        id: loginResult.user.id,
+        email: loginResult.user.email,
+        userType: loginResult.profile.user_type,
+        name: loginResult.profile.full_name,
         loginTime: new Date().toISOString()
       };
 
-      // Guardar sesión
-      const sessionToken = generateSessionToken();
-      const expiryTime = new Date().getTime() + (rememberMe.checked ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000); // 30 días o 1 día
-      
-      localStorage.setItem('scoutConnectToken', sessionToken);
+      // Guardar en localStorage para compatibilidad
       localStorage.setItem('scoutConnectUser', JSON.stringify(userData));
-      localStorage.setItem('scoutConnectExpiry', expiryTime.toString());
+      
+      // Marcar que acabamos de iniciar sesión (para que auth-guard no bloquee)
+      localStorage.setItem('justLoggedIn', 'true');
 
-      console.log('💾 Sesión guardada:', {
-        token: sessionToken,
-        user: userData,
-        expiry: new Date(expiryTime).toLocaleString()
-      });
+      console.log('💾 Datos de usuario:', userData);
 
       if (rememberMe.checked) {
         localStorage.setItem('rememberMe', 'true');
@@ -219,109 +264,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
       showMessage('success', '¡Bienvenido!', 'Has iniciado sesión correctamente.');
       
-      // Redirigir después de 2 segundos
-      setTimeout(() => {
-        console.log('🚀 Redirigiendo al dashboard...');
-        redirectToDashboard(userData.userType);
-      }, 2000);
+      console.log('🚀 Redirigiendo al dashboard...');
+      // Redirigir inmediatamente
+      redirectToDashboard(userData.userType);
 
     } catch (error) {
       // Error en el login
       console.error('❌ Error en login:', error);
-      showMessage('error', 'Error de autenticación', error.message || 'Credenciales incorrectas. Por favor, verifica tu correo y contraseña.');
+      let errorMessage = 'Credenciales incorrectas. Por favor, verifica tu correo y contraseña.';
+      
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = 'Email o contraseña incorrectos.';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Tu email no está confirmado. Ve a Supabase Dashboard → Authentication → Providers → Email y desactiva "Confirm email" para desarrollo.';
+      } else if (error.message.includes('Esta cuenta está registrada como')) {
+        errorMessage = error.message; // Mensaje personalizado de tipo de usuario
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showMessage('error', 'Error de autenticación', errorMessage);
     } finally {
       setLoadingState(false);
     }
   });
 
-  // Función para simular login (reemplazar con tu API real)
-  function simulateLogin() {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        try {
-          const email = emailInput.value.trim();
-          const password = passwordInput.value;
-          const selectedUserType = document.querySelector('input[name="userType"]:checked').value;
+  // Función para autenticar con Supabase
+  async function authenticateWithSupabase() {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
 
-          console.log('🔍 Validando credenciales para:', email, 'como:', selectedUserType);
+    console.log('🔍 Validando credenciales para:', email);
 
-          // Validación básica de email y contraseña
-          if (!email || !password || password.length < 6) {
-            reject(new Error('Por favor completa todos los campos correctamente'));
-            return;
-          }
-
-          // Credenciales específicas para cada tipo
-          let result = null;
-
-          if (selectedUserType === 'scout') {
-            // Credenciales específicas para scouts
-            if ((email === 'scout@scoutconnect.com' && password === 'scout123') ||
-                (email === 'scout1@scoutconnect.com' && password === 'scout123') ||
-                (email === 'ojeador@scoutconnect.com' && password === 'scout123')) {
-              result = { 
-                success: true, 
-                user: { 
-                  email, 
-                  name: 'Scout Profesional',
-                  userType: 'scout'
-                } 
-              };
-            } else {
-              // Para scouts, cualquier email válido con contraseña correcta
-              if (email.includes('@') && password.length >= 6) {
-                result = { 
-                  success: true, 
-                  user: { 
-                    email, 
-                    name: 'Scout',
-                    userType: 'scout'
-                  } 
-                };
-              }
-            }
-          } else if (selectedUserType === 'futbolista') {
-            // Credenciales específicas para futbolistas
-            if ((email === 'futbolista@scoutconnect.com' && password === 'futbol123') ||
-                (email === 'jugador@scoutconnect.com' && password === 'futbol123') ||
-                (email === 'player@scoutconnect.com' && password === 'futbol123')) {
-              result = { 
-                success: true, 
-                user: { 
-                  email, 
-                  name: 'Futbolista Profesional',
-                  userType: 'futbolista'
-                } 
-              };
-            } else {
-              // Para futbolistas, cualquier email válido con contraseña correcta
-              if (email.includes('@') && password.length >= 6) {
-                result = { 
-                  success: true, 
-                  user: { 
-                    email, 
-                    name: 'Futbolista',
-                    userType: 'futbolista'
-                  } 
-                };
-              }
-            }
-          }
-
-          // Verificar si el login fue exitoso
-          if (result && result.success) {
-            console.log(`✅ ${selectedUserType} login exitoso para:`, email);
-            resolve(result);
-          } else {
-            console.log('❌ Credenciales incorrectas');
-            reject(new Error('Credenciales incorrectas. Verifica tu email y contraseña.'));
-          }
-        } catch (error) {
-          console.error('❌ Error en simulateLogin:', error);
-          reject(error);
-        }
-      }, 1500); // Simular latencia de red
+    // 1. Iniciar sesión con Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
     });
+
+    if (authError) {
+      console.error('❌ Error de autenticación:', authError);
+      throw authError;
+    }
+
+    console.log('✅ Autenticación exitosa');
+
+    // 2. Obtener perfil del usuario
+    let { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    // 3. Si el perfil no existe, crearlo ahora
+    if (profileError || !profile) {
+      console.warn('⚠️ Perfil no encontrado, creando uno nuevo...');
+      
+      const userMetadata = authData.user.user_metadata || {};
+      const newProfile = {
+        id: authData.user.id,
+        email: authData.user.email,
+        user_type: userMetadata.user_type || 'jugador',
+        full_name: userMetadata.full_name || 'Usuario',
+        phone: userMetadata.phone || null
+      };
+
+      const { data: createdProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert([newProfile])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('❌ Error al crear perfil:', createError);
+        throw new Error('No se pudo crear el perfil del usuario: ' + createError.message);
+      }
+
+      profile = createdProfile;
+      console.log('✅ Perfil creado exitosamente');
+    }
+
+    console.log('👤 Perfil obtenido:', profile);
+
+    return {
+      user: authData.user,
+      session: authData.session,
+      profile: profile
+    };
   }
 
   // Función para generar token de sesión

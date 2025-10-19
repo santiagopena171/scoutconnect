@@ -34,17 +34,17 @@
       <div class="profile-dropdown">
         <img src="imagenes/scout-avatar.png" alt="Scout" class="profile-avatar" id="profileToggle">
         <div class="dropdown-menu" id="profileMenu">
-          <a href="#" class="dropdown-item">
+          <a href="perfil-scout.html" class="dropdown-item">
             <i class="fas fa-user"></i> Mi Perfil
           </a>
-          <a href="#" class="dropdown-item">
+          <a href="perfil-scout.html#settings" class="dropdown-item">
             <i class="fas fa-cog"></i> Configuración
           </a>
-          <a href="#" class="dropdown-item">
+          <a href="perfil-scout.html#statistics" class="dropdown-item">
             <i class="fas fa-chart-bar"></i> Mis Estadísticas
           </a>
           <div class="dropdown-divider"></div>
-          <a href="index.html" class="dropdown-item logout">
+          <a href="#" onclick="logout(); return false;" class="dropdown-item logout">
             <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
           </a>
         </div>
@@ -1239,6 +1239,16 @@
   </div>
 
   <!-- Scripts -->
+  <!-- Librería de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Configuración de Supabase -->
+  <script src="JS/supabase-config.js"></script>
+  
+  <!-- Protección de ruta (Auth Guard) -->
+  <script src="JS/auth-guard.js"></script>
+  
+  <!-- Script principal del dashboard -->
   <script src="JS/dashboard-scout.js"></script>
 </body>
 </html>

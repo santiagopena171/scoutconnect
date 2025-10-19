@@ -24,25 +24,50 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentUserType = 'jugador';
 
   // Función para verificar sesión activa
-  function checkActiveSession() {
-    const sessionToken = localStorage.getItem('scoutConnectToken');
-    const sessionUser = localStorage.getItem('scoutConnectUser');
-    const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
-
-    if (sessionToken && sessionUser && sessionExpiry) {
-      const now = new Date().getTime();
-      const expiryTime = parseInt(sessionExpiry);
-
-      if (now < expiryTime) {
-        // Sesión válida - redirigir al dashboard
-        const userData = JSON.parse(sessionUser);
-        redirectToDashboard(userData.userType || 'jugador');
-        return true;
-      } else {
-        // Sesión expirada - limpiar datos
-        clearSession();
+  async function checkActiveSession() {
+    try {
+      // Verificar sesión en Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        console.log('✅ Sesión activa de Supabase detectada');
+        
+        // Obtener datos del perfil
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          redirectToDashboard(profile.user_type);
+          return true;
+        }
       }
+
+      // Fallback: verificar localStorage (sesiones antiguas)
+      const sessionToken = localStorage.getItem('scoutConnectToken');
+      const sessionUser = localStorage.getItem('scoutConnectUser');
+      const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
+
+      if (sessionToken && sessionUser && sessionExpiry) {
+        const now = new Date().getTime();
+        const expiryTime = parseInt(sessionExpiry);
+
+        if (now < expiryTime) {
+          // Sesión válida - redirigir al dashboard
+          const userData = JSON.parse(sessionUser);
+          redirectToDashboard(userData.userType || 'jugador');
+          return true;
+        } else {
+          // Sesión expirada - limpiar datos
+          clearSession();
+        }
+      }
+    } catch (error) {
+      console.error('Error al verificar sesión:', error);
     }
+    
     return false;
   }
 
@@ -67,8 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
           break;
         case 'scout':
         case 'ojeador':
-          // Cuando esté listo: window.location.href = 'dashboard-scout.html';
-          window.location.href = 'dashboard-futbolista.html'; // Temporal
+          window.location.href = 'dashboard-scout.html';
           break;
         case 'club':
         case 'academia':
@@ -373,34 +397,47 @@ document.addEventListener('DOMContentLoaded', function() {
       // Collect form data
       const formData = collectFormData();
       
-      // Simulate API call
+      // Registrar en Supabase
       const registrationResult = await simulateRegistration(formData);
       
       // Registration successful
       const userData = {
+        id: registrationResult.userId,
         email: formData.email,
         userType: formData.userType,
         name: `${formData.firstName} ${formData.lastName}`,
         registrationTime: new Date().toISOString()
       };
 
-      // Crear sesión automáticamente después del registro
-      const sessionToken = generateSessionToken();
-      const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 1 día
-      
-      localStorage.setItem('scoutConnectToken', sessionToken);
+      // Guardar también en localStorage para compatibilidad
       localStorage.setItem('scoutConnectUser', JSON.stringify(userData));
-      localStorage.setItem('scoutConnectExpiry', expiryTime.toString());
 
       showMessage('success', '¡Cuenta creada exitosamente!', 'Bienvenido a ScoutConnect. Serás redirigido a tu dashboard.');
       
-      // Redirigir después de 3 segundos
-      setTimeout(() => {
-        redirectToDashboard(userData.userType);
-      }, 3000);
+      // Esperar un poco más para asegurar que todo esté listo
+      console.log('⏳ Esperando que el perfil se complete...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log('🚀 Redirigiendo a dashboard...');
+      redirectToDashboard(userData.userType);
+
 
     } catch (error) {
-      showMessage('error', 'Error en el registro', error.message || 'Ocurrió un error al crear tu cuenta. Intenta nuevamente.');
+      console.error('Error completo:', error);
+      let errorMessage = 'Ocurrió un error al crear tu cuenta. Intenta nuevamente.';
+      
+      // Mensajes de error más específicos
+      if (error.message.includes('already registered')) {
+        errorMessage = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+      } else if (error.message.includes('Invalid email')) {
+        errorMessage = 'El formato del correo electrónico no es válido.';
+      } else if (error.message.includes('Password')) {
+        errorMessage = 'La contraseña debe tener al menos 6 caracteres.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showMessage('error', 'Error en el registro', errorMessage);
     } finally {
       setLoadingState(false);
     }
@@ -420,23 +457,127 @@ document.addEventListener('DOMContentLoaded', function() {
     return data;
   }
 
-  function simulateRegistration(formData) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simulate email check
-        if (formData.email === 'test@test.com') {
-          reject(new Error('Este correo electrónico ya está registrado'));
-          return;
+  async function simulateRegistration(formData) {
+    try {
+      console.log('🚀 Iniciando registro con Supabase...');
+      
+      // 1. Registrar usuario en Supabase Auth (el trigger creará el perfil automáticamente)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: `${formData.firstName} ${formData.lastName}`,
+            user_type: formData.userType,
+            phone: formData.phone || null
+          }
+        }
+      });
+
+      if (authError) {
+        console.error('❌ Error en autenticación:', authError);
+        throw new Error(authError.message);
+      }
+
+      console.log('✅ Usuario registrado:', authData);
+
+      // 2. Verificar si el perfil existe, si no, crearlo manualmente
+      let { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (!existingProfile) {
+        console.warn('⚠️ Perfil no creado por trigger, creando manualmente...');
+        
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: authData.user.id,
+            email: formData.email,
+            user_type: formData.userType,
+            full_name: `${formData.firstName} ${formData.lastName}`,
+            phone: formData.phone || null,
+            birth_date: formData.birthDate || null,
+            nationality: formData.nationality || null,
+            city: formData.city || null
+          }]);
+
+        if (insertError) {
+          console.error('❌ Error al crear perfil:', insertError);
+          throw new Error('Error al crear el perfil: ' + insertError.message);
         }
         
-        // Simulate successful registration
-        resolve({
-          success: true,
-          userId: Math.random().toString(36).substr(2, 9),
-          message: 'Usuario registrado exitosamente'
-        });
-      }, 2000);
-    });
+        console.log('✅ Perfil creado manualmente');
+      } else {
+        console.log('✅ Perfil encontrado, actualizando datos adicionales...');
+        
+        // Actualizar con datos adicionales
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            birth_date: formData.birthDate || null,
+            nationality: formData.nationality || null,
+            city: formData.city || null
+          })
+          .eq('id', authData.user.id);
+
+        if (updateError) {
+          console.warn('⚠️ No se pudieron actualizar datos adicionales:', updateError);
+        } else {
+          console.log('✅ Perfil actualizado');
+        }
+      }
+
+      // 3. Crear perfil específico según tipo de usuario
+      if (formData.userType === 'jugador') {
+        const { error: playerError } = await supabase
+          .from('players')
+          .insert([{
+            user_id: authData.user.id,
+            position: formData.position || null,
+            preferred_foot: formData.preferredFoot || null,
+            height: formData.height ? parseFloat(formData.height) : null,
+            weight: formData.weight ? parseFloat(formData.weight) : null,
+            current_club: formData.currentClub || null,
+            country: formData.country || null,
+            state: formData.state || null
+          }]);
+
+        if (playerError) {
+          console.error('❌ Error al crear perfil de jugador:', playerError);
+        } else {
+          console.log('✅ Perfil de jugador creado');
+        }
+      } else if (formData.userType === 'scout') {
+        const { error: scoutError } = await supabase
+          .from('scouts')
+          .insert([{
+            user_id: authData.user.id,
+            organization: formData.organization || null,
+            position: formData.scoutPosition || null,
+            experience: formData.experience ? parseInt(formData.experience) : null
+          }]);
+
+        if (scoutError) {
+          console.error('❌ Error al crear perfil de scout:', scoutError);
+        } else {
+          console.log('✅ Perfil de scout creado');
+        }
+      }
+
+      return {
+        success: true,
+        userId: authData.user.id,
+        user: authData.user,
+        message: 'Usuario registrado exitosamente'
+      };
+
+    } catch (error) {
+      console.error('❌ Error en registro:', error);
+      throw error;
+    }
   }
 
   // Función para generar token de sesión
