@@ -608,17 +608,33 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔄 Actualizando datos del jugador desde sesión:', userData);
     
     try {
-      if (userData.name) {
+      // Usar first_name y last_name si están disponibles, si no usar name
+      if (userData.first_name && userData.last_name) {
+        playerData.firstName = userData.first_name;
+        playerData.lastName = userData.last_name;
+        playerData.name = `${userData.first_name} ${userData.last_name}`;
+        console.log('✅ Nombre actualizado desde first_name/last_name:', playerData.name);
+      } else if (userData.name) {
         playerData.name = userData.name;
         const nameParts = userData.name.split(' ');
         playerData.firstName = nameParts[0] || 'Usuario';
         playerData.lastName = nameParts.slice(1).join(' ') || '';
-        console.log('✅ Nombre actualizado:', playerData.name);
+        console.log('✅ Nombre actualizado desde name:', playerData.name);
       }
       
       if (userData.email) {
         playerData.email = userData.email;
         console.log('✅ Email actualizado:', playerData.email);
+      }
+      
+      if (userData.nationality) {
+        playerData.nationality = userData.nationality;
+        console.log('✅ Nacionalidad actualizada:', playerData.nationality);
+      }
+      
+      if (userData.second_nationality) {
+        playerData.second_nationality = userData.second_nationality;
+        console.log('✅ Segunda nacionalidad actualizada:', playerData.second_nationality);
       }
       
       if (userData.userType) {
@@ -1568,15 +1584,24 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="form-group">
             <label for="editNationality">Nacionalidad</label>
-            <input type="text" id="editNationality" value="${playerData.nationality}">
+            <input type="text" id="editNationality" value="${playerData.nationality}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <small class="text-muted">La nacionalidad no puede ser modificada</small>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
+            <label for="editSecondNationality">Segunda Nacionalidad</label>
+            <input type="text" id="editSecondNationality" value="${playerData.second_nationality || 'Sin segunda nacionalidad'}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <small class="text-muted">La segunda nacionalidad no puede ser modificada</small>
+          </div>
+          <div class="form-group">
             <label for="editLocation">Ubicación</label>
             <input type="text" id="editLocation" value="${playerData.location}" placeholder="Ciudad, País">
           </div>
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
             <label for="editLevel">Nivel de Juego</label>
             <select id="editLevel">
@@ -1586,6 +1611,8 @@ document.addEventListener('DOMContentLoaded', function() {
               <option value="Elite">Elite</option>
             </select>
           </div>
+          <div class="form-group">
+            <!-- Espacio vacío para mantener el layout -->
         </div>
 
         <div class="form-group">
@@ -1842,7 +1869,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const position = document.getElementById('editPosition').value;
     const secondaryPosition = document.getElementById('editSecondaryPosition').value;
     const dominantFoot = document.getElementById('editDominantFoot').value;
-    const nationality = document.getElementById('editNationality').value;
+    // nationality y secondNationality son readonly, no se leen ni se guardan
     const location = document.getElementById('editLocation').value;
     const level = document.getElementById('editLevel').value;
     const club = document.getElementById('editClub').value;
@@ -1896,7 +1923,7 @@ document.addEventListener('DOMContentLoaded', function() {
     playerData.position = position;
     playerData.secondaryPosition = secondaryPosition;
     playerData.dominantFoot = dominantFoot;
-    playerData.nationality = nationality;
+    // nationality y second_nationality NO se actualizan (readonly)
     playerData.height = height;
     playerData.weight = weight;
     playerData.location = location;

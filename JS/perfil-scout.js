@@ -48,14 +48,20 @@ class ScoutProfile {
   }
 
   updateProfileDisplay() {
-    document.getElementById('scoutName').textContent = this.currentUser.name;
-    document.getElementById('scoutRole').textContent = this.currentUser.role;
+    // Construir el nombre completo desde first_name y last_name, o usar name como fallback
+    const fullName = this.currentUser.first_name && this.currentUser.last_name 
+      ? `${this.currentUser.first_name} ${this.currentUser.last_name}`
+      : this.currentUser.name || 'Usuario';
+    
+    document.getElementById('scoutName').textContent = fullName;
+    document.getElementById('scoutRole').textContent = this.currentUser.role || 'Scout';
     
     // Actualizar avatar si existe
-    if (this.currentUser.avatar) {
+    const avatarUrl = this.currentUser.avatar_url || this.currentUser.avatar;
+    if (avatarUrl) {
       const avatarImg = document.getElementById('avatarImage');
       if (avatarImg) {
-        avatarImg.src = this.currentUser.avatar;
+        avatarImg.src = avatarUrl;
       }
     }
     
@@ -216,11 +222,10 @@ class ScoutProfile {
   }
 
   savePersonalInfo() {
-    // Los campos first_name, last_name, email y nationality son readonly, no se envían
+    // Los campos first_name, last_name, email, nationality y second_nationality son readonly, no se envían
     const formData = {
       phone: document.getElementById('phone').value,
       birthDate: document.getElementById('birthDate').value,
-      secondNationality: document.getElementById('secondNationality').value,
       city: document.getElementById('city').value,
       organization: document.getElementById('organization').value,
       position: document.getElementById('position').value,

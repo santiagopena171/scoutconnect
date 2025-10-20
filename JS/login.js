@@ -245,6 +245,14 @@ document.addEventListener('DOMContentLoaded', function() {
         email: loginResult.user.email,
         userType: loginResult.profile.user_type,
         name: loginResult.profile.full_name,
+        first_name: loginResult.profile.first_name,
+        last_name: loginResult.profile.last_name,
+        phone: loginResult.profile.phone,
+        birth_date: loginResult.profile.birth_date,
+        nationality: loginResult.profile.nationality,
+        second_nationality: loginResult.profile.second_nationality,
+        city: loginResult.profile.city,
+        avatar_url: loginResult.profile.avatar_url,
         loginTime: new Date().toISOString()
       };
 

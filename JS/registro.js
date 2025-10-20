@@ -471,7 +471,9 @@ document.addEventListener('DOMContentLoaded', function() {
             first_name: formData.firstName,
             last_name: formData.lastName,
             user_type: formData.userType,
-            phone: formData.phone || null
+            phone: formData.phone || null,
+            nationality: formData.nationality || null,
+            second_nationality: formData.secondNationality || null
           }
         }
       });
@@ -505,6 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
             phone: formData.phone || null,
             birth_date: formData.birthDate || null,
             nationality: formData.nationality || null,
+            second_nationality: formData.secondNationality || null,
             city: formData.city || null
           }]);
 
