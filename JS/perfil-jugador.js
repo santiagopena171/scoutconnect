@@ -496,9 +496,14 @@ class PlayerProfile {
         <span class="data-value">${player.birthPlace}</span>
       </div>
       <div class="data-item">
-        <span class="data-label">Nacionalidad</span>
+        <span class="data-label">Nacionalidad principal</span>
         <span class="data-value">${player.nationality}</span>
       </div>
+      ${player.secondNationality || player.second_nationality ? `
+      <div class="data-item">
+        <span class="data-label">Segunda nacionalidad</span>
+        <span class="data-value">${player.secondNationality || player.second_nationality}</span>
+      </div>` : ''}
       <div class="data-item">
         <span class="data-label">Pie hábil</span>
         <span class="data-value">${player.foot}</span>

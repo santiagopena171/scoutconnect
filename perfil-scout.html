@@ -175,8 +175,13 @@
                                 <input type="date" id="birthDate" class="form-control" value="">
                             </div>
                             <div class="form-group">
-                                <label for="nationality">Nacionalidad</label>
-                                <input type="text" id="nationality" class="form-control" value="">
+                                <label for="nationality">Nacionalidad Principal</label>
+                                <input type="text" id="nationality" class="form-control" value="" readonly>
+                                <small class="text-muted">La nacionalidad principal no puede ser modificada</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="secondNationality">Segunda Nacionalidad (Opcional)</label>
+                                <input type="text" id="secondNationality" class="form-control" value="" placeholder="Ej: Argentina">
                             </div>
                             <div class="form-group">
                                 <label for="city">Ciudad</label>

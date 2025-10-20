@@ -207,6 +207,7 @@ class ScoutProfile {
     document.getElementById('phone').value = this.currentUser.phone || '';
     document.getElementById('birthDate').value = this.currentUser.birthDate || this.currentUser.birth_date || '';
     document.getElementById('nationality').value = this.currentUser.nationality || '';
+    document.getElementById('secondNationality').value = this.currentUser.secondNationality || this.currentUser.second_nationality || '';
     document.getElementById('city').value = this.currentUser.city || '';
     document.getElementById('organization').value = this.currentUser.organization || '';
     document.getElementById('position').value = this.currentUser.position || '';
@@ -215,11 +216,11 @@ class ScoutProfile {
   }
 
   savePersonalInfo() {
-    // Los campos first_name, last_name y email son readonly, no se envían
+    // Los campos first_name, last_name, email y nationality son readonly, no se envían
     const formData = {
       phone: document.getElementById('phone').value,
       birthDate: document.getElementById('birthDate').value,
-      nationality: document.getElementById('nationality').value,
+      secondNationality: document.getElementById('secondNationality').value,
       city: document.getElementById('city').value,
       organization: document.getElementById('organization').value,
       position: document.getElementById('position').value,
