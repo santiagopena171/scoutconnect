@@ -802,6 +802,29 @@ body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.form-group input[readonly],
+.form-group select[readonly],
+.form-group textarea[readonly] {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.form-group input[readonly]:focus,
+.form-group select[readonly]:focus,
+.form-group textarea[readonly]:focus {
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.text-muted {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+  display: block;
+}
+
 .form-group textarea {
   resize: vertical;
   min-height: 100px;

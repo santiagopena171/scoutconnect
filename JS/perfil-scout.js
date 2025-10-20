@@ -201,10 +201,11 @@ class ScoutProfile {
 
   loadPersonalInfoForm() {
     // Cargar datos del usuario en el formulario
-    document.getElementById('fullName').value = this.currentUser.name || '';
+    document.getElementById('firstName').value = this.currentUser.firstName || this.currentUser.first_name || '';
+    document.getElementById('lastName').value = this.currentUser.lastName || this.currentUser.last_name || '';
     document.getElementById('email').value = this.currentUser.email || '';
     document.getElementById('phone').value = this.currentUser.phone || '';
-    document.getElementById('birthDate').value = this.currentUser.birthDate || '';
+    document.getElementById('birthDate').value = this.currentUser.birthDate || this.currentUser.birth_date || '';
     document.getElementById('nationality').value = this.currentUser.nationality || '';
     document.getElementById('city').value = this.currentUser.city || '';
     document.getElementById('organization').value = this.currentUser.organization || '';
@@ -214,9 +215,8 @@ class ScoutProfile {
   }
 
   savePersonalInfo() {
+    // Los campos first_name, last_name y email son readonly, no se envían
     const formData = {
-      name: document.getElementById('fullName').value,
-      email: document.getElementById('email').value,
       phone: document.getElementById('phone').value,
       birthDate: document.getElementById('birthDate').value,
       nationality: document.getElementById('nationality').value,

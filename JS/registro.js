@@ -468,6 +468,8 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
           data: {
             full_name: `${formData.firstName} ${formData.lastName}`,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
             user_type: formData.userType,
             phone: formData.phone || null
           }
@@ -498,6 +500,8 @@ document.addEventListener('DOMContentLoaded', function() {
             email: formData.email,
             user_type: formData.userType,
             full_name: `${formData.firstName} ${formData.lastName}`,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
             phone: formData.phone || null,
             birth_date: formData.birthDate || null,
             nationality: formData.nationality || null,

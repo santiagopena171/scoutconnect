@@ -480,8 +480,12 @@ class PlayerProfile {
     const personalData = document.getElementById('personalData');
     personalData.innerHTML = `
       <div class="data-item">
-        <span class="data-label">Nombre completo</span>
-        <span class="data-value">${player.name}</span>
+        <span class="data-label">Nombre</span>
+        <span class="data-value">${player.firstName || player.first_name || player.name.split(' ')[0]}</span>
+      </div>
+      <div class="data-item">
+        <span class="data-label">Apellido</span>
+        <span class="data-value">${player.lastName || player.last_name || player.name.split(' ').slice(1).join(' ')}</span>
       </div>
       <div class="data-item">
         <span class="data-label">Fecha de nacimiento</span>

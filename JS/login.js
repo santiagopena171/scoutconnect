@@ -326,6 +326,8 @@ document.addEventListener('DOMContentLoaded', function() {
         email: authData.user.email,
         user_type: userMetadata.user_type || 'jugador',
         full_name: userMetadata.full_name || 'Usuario',
+        first_name: userMetadata.first_name || 'Usuario',
+        last_name: userMetadata.last_name || '',
         phone: userMetadata.phone || null
       };
 
