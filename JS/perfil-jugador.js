@@ -918,9 +918,35 @@ class PlayerProfile {
 
   loadCurrentUser() {
     try {
-      const u = localStorage.getItem('scoutConnectUser');
-      return u ? JSON.parse(u) : null;
+      console.log('🔍 Cargando usuario actual...');
+      
+      // 1. Buscar en localStorage (clave del login)
+      const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+      if (scoutConnectUser) {
+        console.log('✅ Usuario encontrado en scoutConnectUser:', scoutConnectUser);
+        return {
+          id: scoutConnectUser.userId || scoutConnectUser.id,
+          name: scoutConnectUser.fullName || scoutConnectUser.full_name || scoutConnectUser.name || scoutConnectUser.email?.split('@')[0],
+          email: scoutConnectUser.email
+        };
+      }
+
+      // 2. Alternativa: buscar en localStorage del perfil (clave alternativa)
+      const userProfile = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
+      if (userProfile) {
+        console.log('✅ Usuario encontrado en scoutconnect_user:', userProfile);
+        return {
+          id: userProfile.id || userProfile.userId,
+          name: userProfile.name || userProfile.fullName || userProfile.email?.split('@')[0],
+          email: userProfile.email
+        };
+      }
+
+      console.warn('⚠️ No se encontró usuario en localStorage');
+      console.log('💡 Tip: Inicia sesión o ejecuta en consola: setTestScout("Tu Nombre", "tu@email.com")');
+      return null;
     } catch (e) {
+      console.error('❌ Error al cargar usuario actual:', e);
       return null;
     }
   }
@@ -935,21 +961,41 @@ class PlayerProfile {
 
     // Si el filtro está en 'mine' y hay un usuario actual, filtrar por scout
     if (this.reportsFilter === 'mine' && this.currentUser) {
-      const scoutIdentifier = this.currentUser.name || this.currentUser.email || this.currentUser.id;
       results = results.filter(r => {
-        return r.scoutName === scoutIdentifier || r.scoutId == this.currentUser.id || r.scoutEmail === this.currentUser.email;
+        // Comparar por ID, email o nombre
+        const matchById = r.scoutId && this.currentUser.id && r.scoutId == this.currentUser.id;
+        const matchByEmail = r.scoutEmail && this.currentUser.email && 
+                            r.scoutEmail.toLowerCase() === this.currentUser.email.toLowerCase();
+        const matchByName = r.scoutName && this.currentUser.name && 
+                           r.scoutName.toLowerCase() === this.currentUser.name.toLowerCase();
+        
+        return matchById || matchByEmail || matchByName;
       });
     }
+
+    // Ordenar por fecha de creación (más reciente primero)
+    results.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.date || 0);
+      const dateB = new Date(b.createdAt || b.date || 0);
+      return dateB - dateA;
+    });
 
     return results;
   }
 
   renderReportsSection() {
+    console.log('📊 Renderizando sección de reportes...');
+    console.log('   - Player ID:', this.playerId);
+    console.log('   - Total reportes en localStorage:', this.reports.length);
+    console.log('   - Usuario actual:', this.currentUser);
+    console.log('   - Filtro activo:', this.reportsFilter);
+    
     const sectionReports = document.getElementById('section-reports');
     
     // Si ya está renderizado, solo actualizar datos
     if (sectionReports.querySelector('.reports-header')) {
       const playerReports = this.getPlayerReports();
+      console.log('   - Reportes del jugador (filtrados):', playerReports.length);
       this.updateReportsStats(playerReports);
       this.renderReportsList(playerReports);
       this.updateReportsCounter();
@@ -1027,6 +1073,7 @@ class PlayerProfile {
     
     // Ahora renderizar los datos
     const playerReports = this.getPlayerReports();
+    console.log('   - Reportes del jugador (primera carga):', playerReports.length);
     this.updateReportsStats(playerReports);
     this.renderReportsList(playerReports);
     this.updateReportsCounter();
@@ -1224,7 +1271,11 @@ class PlayerProfile {
   }
 
   refreshReports() {
+    console.log('🔄 Actualizando reportes...');
     this.reports = this.loadReports();
+    this.currentUser = this.loadCurrentUser();
+    console.log('   - Total reportes cargados:', this.reports.length);
+    console.log('   - Usuario actual:', this.currentUser);
     this.renderReportsSection();
     this.showNotification('Reportes actualizados', 'success');
   }
@@ -1407,8 +1458,126 @@ class PlayerProfile {
   }
 }
 
+// =============================================
+// FUNCIONES AUXILIARES PARA DESARROLLO
+// =============================================
+
+// Función para establecer usuario de prueba (usar en consola del navegador)
+function setTestScout(name = 'Scout Profesional', email = 'scout@test.com') {
+  const testUser = {
+    userId: 'test_scout_' + Date.now(),
+    id: 'test_scout_' + Date.now(),
+    fullName: name,
+    full_name: name,
+    name: name,
+    email: email,
+    userType: 'scout'
+  };
+  
+  // Guardar en ambas claves para máxima compatibilidad
+  localStorage.setItem('scoutConnectUser', JSON.stringify(testUser));
+  localStorage.setItem('scoutconnect_user', JSON.stringify(testUser));
+  
+  console.log('✅ Usuario de prueba establecido:', testUser);
+  console.log('💾 Guardado en: scoutConnectUser y scoutconnect_user');
+  console.log('💡 Recarga la página o ejecuta: playerProfile.refreshReports()');
+  return testUser;
+}
+
+// Función para ver información de debug de reportes
+function debugReports() {
+  const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+  
+  // Mostrar usuario actual
+  const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+  const scoutconnect_user = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
+  
+  console.log('👤 Usuario Actual:');
+  console.log('   scoutConnectUser:', scoutConnectUser);
+  console.log('   scoutconnect_user:', scoutconnect_user);
+  console.log('');
+  
+  console.log('📊 Debug de Reportes:');
+  console.log('   Total reportes:', reports.length);
+  console.log('   Reportes:', reports);
+  console.log('');
+  
+  if (reports.length > 0) {
+    console.log('📋 Desglose por reporte:');
+    reports.forEach((r, i) => {
+      console.log(`   [${i}] ${r.playerName || 'Sin nombre'}`);
+      console.log(`       Scout: ${r.scoutName || 'No especificado'}`);
+      console.log(`       Scout ID: ${r.scoutId || 'No especificado'}`);
+      console.log(`       Email: ${r.scoutEmail || 'No especificado'}`);
+      console.log(`       Fecha: ${r.date || r.createdAt || 'No especificado'}`);
+      console.log('');
+    });
+  }
+  
+  return reports;
+}
+
+// Función para ver quién eres según el sistema
+function whoAmI() {
+  console.log('🔍 Verificando identidad del usuario...');
+  console.log('');
+  
+  // Verificar scoutConnectUser (clave principal del login)
+  const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+  console.log('1️⃣ scoutConnectUser (login principal):');
+  if (scoutConnectUser) {
+    console.log('   ✅ Encontrado');
+    console.log('   ID:', scoutConnectUser.userId || scoutConnectUser.id);
+    console.log('   Nombre:', scoutConnectUser.fullName || scoutConnectUser.full_name || scoutConnectUser.name);
+    console.log('   Email:', scoutConnectUser.email);
+  } else {
+    console.log('   ❌ No encontrado');
+  }
+  console.log('');
+  
+  // Verificar scoutconnect_user (clave alternativa)
+  const scoutconnect_user = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
+  console.log('2️⃣ scoutconnect_user (alternativo):');
+  if (scoutconnect_user) {
+    console.log('   ✅ Encontrado');
+    console.log('   ID:', scoutconnect_user.id || scoutconnect_user.userId);
+    console.log('   Nombre:', scoutconnect_user.name || scoutconnect_user.fullName);
+    console.log('   Email:', scoutconnect_user.email);
+  } else {
+    console.log('   ❌ No encontrado');
+  }
+  console.log('');
+  
+  // Resumen
+  if (scoutConnectUser || scoutconnect_user) {
+    const activeUser = scoutConnectUser || scoutconnect_user;
+    console.log('✅ RESUMEN: Estás identificado como');
+    console.log('   👤', activeUser.fullName || activeUser.full_name || activeUser.name || 'Sin nombre');
+    console.log('   📧', activeUser.email || 'Sin email');
+    console.log('   🆔', activeUser.userId || activeUser.id || 'Sin ID');
+  } else {
+    console.log('❌ RESUMEN: No hay usuario identificado');
+    console.log('');
+    console.log('💡 Soluciones:');
+    console.log('   1. Inicia sesión en la aplicación');
+    console.log('   2. O ejecuta: setTestScout("Tu Nombre", "tu@email.com")');
+  }
+  
+  return scoutConnectUser || scoutconnect_user;
+}
+
+// Exponer funciones globalmente para facilitar el debugging
+window.setTestScout = setTestScout;
+window.debugReports = debugReports;
+window.whoAmI = whoAmI;
+
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🚀 DOM cargado, iniciando Perfil de Jugador...');
   window.playerProfile = new PlayerProfile();
+  console.log('');
+  console.log('💡 Funciones de debug disponibles:');
+  console.log('   - whoAmI()         → Ver tu identidad actual');
+  console.log('   - debugReports()   → Ver todos los reportes');
+  console.log('   - setTestScout()   → Establecer usuario de prueba');
 });

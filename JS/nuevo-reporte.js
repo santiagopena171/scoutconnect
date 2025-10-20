@@ -475,7 +475,7 @@ class ReportGenerator {
       status: 'completed',
       isFavorite: false,
       createdAt: new Date().toISOString(),
-      scoutName: 'Scout Profesional'
+      ...this.getScoutInfo()
     };
 
     // Guardar reporte
@@ -483,6 +483,64 @@ class ReportGenerator {
     
     // Mostrar confirmación
     this.showConfirmation();
+  }
+
+  getScoutInfo() {
+    try {
+      console.log('🔍 Buscando información del scout...');
+      
+      // 1. Buscar en localStorage (clave del login)
+      const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+      if (scoutConnectUser) {
+        console.log('✅ Usuario encontrado en scoutConnectUser:', scoutConnectUser);
+        return {
+          scoutId: scoutConnectUser.userId || scoutConnectUser.id,
+          scoutName: scoutConnectUser.fullName || scoutConnectUser.full_name || scoutConnectUser.name || scoutConnectUser.email?.split('@')[0] || 'Scout',
+          scoutEmail: scoutConnectUser.email
+        };
+      }
+
+      // 2. Intentar obtener desde Supabase Auth directamente
+      if (typeof supabase !== 'undefined' && supabase) {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user) {
+            console.log('✅ Usuario encontrado en Supabase Auth:', user);
+            return {
+              scoutId: user.id,
+              scoutName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Scout',
+              scoutEmail: user.email
+            };
+          }
+        });
+      }
+
+      // 3. Alternativa: buscar en localStorage del perfil (clave alternativa)
+      const userProfile = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
+      if (userProfile) {
+        console.log('✅ Usuario encontrado en scoutconnect_user:', userProfile);
+        return {
+          scoutId: userProfile.id || userProfile.userId || Date.now().toString(),
+          scoutName: userProfile.name || userProfile.fullName || userProfile.email?.split('@')[0] || 'Scout',
+          scoutEmail: userProfile.email
+        };
+      }
+
+      // Fallback: información por defecto
+      console.warn('⚠️ No se pudo obtener información del scout, usando valores por defecto');
+      console.log('💡 Tip: Ejecuta en consola: setTestScout("Tu Nombre", "tu@email.com")');
+      return {
+        scoutId: 'scout_' + Date.now(),
+        scoutName: 'Scout Profesional',
+        scoutEmail: 'scout@scoutconnect.com'
+      };
+    } catch (error) {
+      console.error('❌ Error al obtener información del scout:', error);
+      return {
+        scoutId: 'scout_' + Date.now(),
+        scoutName: 'Scout Profesional',
+        scoutEmail: 'scout@scoutconnect.com'
+      };
+    }
   }
 
   saveReport(report) {
