@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Jugadores en Supabase</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 30px;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .section h2 {
+      color: #667eea;
+      margin-top: 0;
+      font-size: 1.3rem;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+    .status.loading {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      color: #856404;
+    }
+    .status.success {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      color: #155724;
+    }
+    .status.error {
+      background: #f8d7da;
+      border-left: 4px solid #dc3545;
+      color: #721c24;
+    }
+    .player-card {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+    .player-card h3 {
+      margin: 0 0 10px 0;
+      color: #2c3e50;
+    }
+    .player-card p {
+      margin: 5px 0;
+      color: #6c757d;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    pre {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-right: 5px;
+    }
+    .badge-primary { background: #667eea; color: white; }
+    .badge-success { background: #28a745; color: white; }
+    .badge-warning { background: #ffc107; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Test de Jugadores en Supabase</h1>
+    <p class="subtitle">Verificación de la conexión y datos de jugadores registrados</p>
+
+    <div class="section">
+      <h2>1️⃣ Estado de la Conexión</h2>
+      <div id="connectionStatus" class="status loading">
+        ⏳ Verificando conexión con Supabase...
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>2️⃣ Jugadores Registrados</h2>
+      <div id="playersStatus" class="status loading">
+        ⏳ Buscando jugadores...
+      </div>
+      <div id="playersContainer"></div>
+    </div>
+
+    <div class="section">
+      <h2>3️⃣ Estructura de la Tabla</h2>
+      <button onclick="checkTableStructure()">Verificar Columnas de la Tabla</button>
+      <div id="tableStructure" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="section">
+      <h2>4️⃣ Datos Completos (JSON)</h2>
+      <button onclick="showFullData()">Mostrar JSON Completo</button>
+      <pre id="jsonData" style="display: none; margin-top: 15px;"></pre>
+    </div>
+  </div>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="JS/supabase-config.js"></script>
+  <script>
+    let allPlayers = [];
+
+    async function testConnection() {
+      const statusDiv = document.getElementById('connectionStatus');
+      
+      try {
+        // Verificar si supabase está definido
+        if (typeof supabase === 'undefined') {
+          throw new Error('Supabase no está configurado correctamente');
+        }
+
+        // Intentar obtener la sesión
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          statusDiv.className = 'status error';
+          statusDiv.innerHTML = `❌ Error de autenticación: ${sessionError.message}`;
+          return false;
+        }
+
+        statusDiv.className = 'status success';
+        statusDiv.innerHTML = `✅ Conexión exitosa con Supabase<br><small>Sesión: ${session ? 'Activa' : 'No hay sesión activa (puede seguir funcionando)'}</small>`;
+        return true;
+
+      } catch (error) {
+        statusDiv.className = 'status error';
+        statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        console.error('Error en conexión:', error);
+        return false;
+      }
+    }
+
+    async function loadPlayers() {
+      const statusDiv = document.getElementById('playersStatus');
+      const container = document.getElementById('playersContainer');
+
+      try {
+        console.log('🔍 Buscando jugadores en Supabase...');
+        
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_type', 'jugador');
+
+        if (error) {
+          throw error;
+        }
+
+        allPlayers = profiles || [];
+
+        if (allPlayers.length === 0) {
+          statusDiv.className = 'status error';
+          statusDiv.innerHTML = '⚠️ No se encontraron jugadores registrados en la base de datos';
+          container.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #6c757d;">
+              <p>No hay jugadores registrados aún.</p>
+              <p><strong>Solución:</strong> Registra un usuario como "Futbolista" para que aparezca aquí.</p>
+            </div>
+          `;
+          return;
+        }
+
+        statusDiv.className = 'status success';
+        statusDiv.innerHTML = `✅ Se encontraron <strong>${allPlayers.length}</strong> jugador(es) registrado(s)`;
+
+        container.innerHTML = allPlayers.map(player => {
+          const hasPosition = player.position ? `<span class="badge badge-primary">${player.position}</span>` : '';
+          const hasNationality = player.nationality ? `<span class="badge badge-success">${player.nationality}</span>` : '';
+          const hasBirthDate = player.birth_date ? `<span class="badge badge-warning">Edad calculable</span>` : '';
+
+          return `
+            <div class="player-card">
+              <h3>${player.first_name || ''} ${player.last_name || player.full_name || 'Sin nombre'}</h3>
+              <p><strong>Email:</strong> ${player.email}</p>
+              <p><strong>ID:</strong> ${player.id}</p>
+              <div style="margin-top: 10px;">
+                ${hasPosition}
+                ${hasNationality}
+                ${hasBirthDate}
+              </div>
+              <details style="margin-top: 10px;">
+                <summary style="cursor: pointer; color: #667eea; font-weight: 600;">Ver datos completos</summary>
+                <pre style="margin-top: 10px; font-size: 0.8rem;">${JSON.stringify(player, null, 2)}</pre>
+              </details>
+            </div>
+          `;
+        }).join('');
+
+        console.log('✅ Jugadores cargados:', allPlayers);
+
+      } catch (error) {
+        statusDiv.className = 'status error';
+        statusDiv.innerHTML = `❌ Error al cargar jugadores: ${error.message}`;
+        console.error('Error:', error);
+      }
+    }
+
+    async function checkTableStructure() {
+      const container = document.getElementById('tableStructure');
+      container.innerHTML = '<div class="status loading">⏳ Verificando estructura...</div>';
+
+      try {
+        // Obtener un jugador de ejemplo para ver qué campos tiene
+        const { data: sample, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_type', 'jugador')
+          .limit(1);
+
+        if (error) throw error;
+
+        if (sample && sample.length > 0) {
+          const columns = Object.keys(sample[0]);
+          const requiredColumns = [
+            'first_name', 'last_name', 'position', 'nationality', 
+            'birth_date', 'country', 'state', 'height', 'weight',
+            'preferred_foot', 'current_club', 'league'
+          ];
+
+          const presentColumns = requiredColumns.filter(col => columns.includes(col));
+          const missingColumns = requiredColumns.filter(col => !columns.includes(col));
+
+          container.innerHTML = `
+            <div class="status ${missingColumns.length === 0 ? 'success' : 'error'}">
+              ${missingColumns.length === 0 ? '✅' : '⚠️'} 
+              Columnas presentes: ${presentColumns.length} / ${requiredColumns.length}
+            </div>
+            ${presentColumns.length > 0 ? `
+              <p><strong style="color: #28a745;">✅ Columnas disponibles:</strong></p>
+              <p style="color: #6c757d;">${presentColumns.join(', ')}</p>
+            ` : ''}
+            ${missingColumns.length > 0 ? `
+              <p><strong style="color: #dc3545;">❌ Columnas faltantes:</strong></p>
+              <p style="color: #6c757d;">${missingColumns.join(', ')}</p>
+              <p style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                <strong>⚠️ Acción requerida:</strong> Ejecuta el script <code>agregar-campos-busqueda.sql</code> en Supabase
+              </p>
+            ` : ''}
+            <p style="margin-top: 15px;"><strong>Total de columnas en la tabla:</strong> ${columns.length}</p>
+            <details style="margin-top: 10px;">
+              <summary style="cursor: pointer; color: #667eea; font-weight: 600;">Ver todas las columnas</summary>
+              <pre style="margin-top: 10px;">${columns.join('\n')}</pre>
+            </details>
+          `;
+        } else {
+          container.innerHTML = '<div class="status error">❌ No hay jugadores para verificar la estructura</div>';
+        }
+      } catch (error) {
+        container.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+      }
+    }
+
+    function showFullData() {
+      const jsonDiv = document.getElementById('jsonData');
+      if (jsonDiv.style.display === 'none') {
+        jsonDiv.textContent = JSON.stringify(allPlayers, null, 2);
+        jsonDiv.style.display = 'block';
+      } else {
+        jsonDiv.style.display = 'none';
+      }
+    }
+
+    // Ejecutar tests al cargar
+    window.addEventListener('DOMContentLoaded', async () => {
+      const connected = await testConnection();
+      if (connected) {
+        await loadPlayers();
+      }
+    });
+  </script>
+</body>
+</html>

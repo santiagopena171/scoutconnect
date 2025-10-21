@@ -14,10 +14,14 @@ class AdvancedSearch {
   async init() {
     console.log('🔍 Inicializando Búsqueda Avanzada...');
     await this.loadCountriesData();
-    this.loadPlayerData();
+    await this.loadPlayerData();
     this.setupEventListeners();
     this.populateCountrySelects();
     this.setupTags();
+    
+    // Mostrar todos los jugadores al cargar la página
+    this.performSearch();
+    
     console.log('✅ Búsqueda Avanzada inicializada correctamente');
   }
 
@@ -64,11 +68,114 @@ class AdvancedSearch {
     });
   }
 
-  loadPlayerData() {
-    // Datos completos de jugadores
-    this.players = [
+  async loadPlayerData() {
+    console.log('📊 Cargando jugadores desde Supabase...');
+    
+    // Cargar jugadores reales desde Supabase
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_type', 'jugador');
+
+      if (error) {
+        console.error('❌ Error al cargar perfiles:', error);
+      } else if (profiles && profiles.length > 0) {
+        console.log(`✅ ${profiles.length} jugadores cargados desde Supabase`);
+        
+        // Convertir perfiles de Supabase al formato esperado
+        const realPlayers = profiles.map(profile => ({
+          id: profile.id,
+          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Jugador',
+          primaryPosition: profile.position || 'No especificado',
+          secondaryPosition: profile.secondary_position || '',
+          age: profile.birth_date ? this.calculateAge(profile.birth_date) : null,
+          nationality: profile.nationality || 'No especificado',
+          country: profile.country || profile.nationality || 'No especificado',
+          state: profile.state || '',
+          city: profile.city || '',
+          club: profile.current_club || 'Sin club',
+          league: profile.league || '',
+          height: profile.height || null,
+          weight: profile.weight || null,
+          foot: profile.preferred_foot || '',
+          contract: {
+            status: profile.contract_status || 'amateur',
+            expires: profile.contract_expiry || '',
+            value: profile.market_value || ''
+          },
+          tags: this.extractTags(profile),
+          notes: profile.bio || '',
+          marketValue: this.parseMarketValue(profile.market_value),
+          email: profile.email,
+          phone: profile.phone
+        }));
+
+        this.players = [...realPlayers, ...this.getDemoPlayers()];
+        console.log(`📋 Total de jugadores disponibles: ${this.players.length} (${realPlayers.length} reales + ${this.getDemoPlayers().length} demo)`);
+      } else {
+        console.log('⚠️ No se encontraron jugadores en Supabase, usando datos demo');
+        this.players = this.getDemoPlayers();
+        console.log(`📋 Total de jugadores disponibles: ${this.players.length} (solo demo)`);
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado al cargar jugadores:', error);
+      this.players = this.getDemoPlayers();
+      console.log(`📋 Total de jugadores disponibles: ${this.players.length} (fallback a demo por error)`);
+    }
+  }
+
+  calculateAge(birthDate) {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  extractTags(profile) {
+    const tags = [];
+    
+    // Agregar características físicas
+    if (profile.preferred_foot === 'Izquierdo') tags.push('zurdo');
+    if (profile.preferred_foot === 'Ambidiestro') tags.push('ambidiestro');
+    if (profile.height && profile.height > 185) tags.push('altura');
+    if (profile.speed) tags.push('veloz');
+    
+    // Agregar características técnicas
+    if (profile.technical_skills) tags.push('técnico');
+    if (profile.dribbling) tags.push('driblador');
+    if (profile.passing) tags.push('pases largos');
+    
+    // Agregar características mentales
+    if (profile.leadership) tags.push('líder');
+    if (profile.creativity) tags.push('creativo');
+    
+    return tags;
+  }
+
+  parseMarketValue(value) {
+    if (!value) return 0;
+    if (typeof value === 'number') return value;
+    
+    const str = value.toString().toUpperCase();
+    if (str.includes('M')) {
+      return parseFloat(str) * 1000000;
+    } else if (str.includes('K')) {
+      return parseFloat(str) * 1000;
+    }
+    return parseFloat(value) || 0;
+  }
+
+  getDemoPlayers() {
+    // Datos demo de jugadores para testing
+    return [
       {
-        id: 1,
+        id: 'demo-1',
         name: 'Miguel Rodríguez',
         primaryPosition: 'Mediocampista Ofensivo',
         secondaryPosition: 'Extremo Derecho',
@@ -92,7 +199,7 @@ class AdvancedSearch {
         marketValue: 2800000
       },
       {
-        id: 2,
+        id: 'demo-2',
         name: 'Andrés Silva',
         primaryPosition: 'Defensa Central',
         secondaryPosition: 'Mediocampista Defensivo',
@@ -551,7 +658,7 @@ class AdvancedSearch {
     const contractStatus = contractStatusLabels[player.contract.status] || { text: 'No definido', class: 'undefined' };
     
     return `
-      <div class="player-card" onclick="advancedSearch.showPlayerProfile(${player.id})">
+      <div class="player-card" onclick="advancedSearch.showPlayerProfile('${player.id}')">
         <div class="player-contract-status">
           <span class="contract-badge ${contractStatus.class}">${contractStatus.text}</span>
         </div>
@@ -597,7 +704,7 @@ class AdvancedSearch {
         ` : ''}
         
         <div class="player-actions">
-          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); advancedSearch.showPlayerProfile(${player.id})">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); advancedSearch.showPlayerProfile('${player.id}')">
             <i class="fas fa-eye"></i> Ver Perfil
           </button>
           ${this.renderFollowButton(player.id)}
@@ -1320,5 +1427,28 @@ function closeModal(modalId) {
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 DOM cargado, iniciando Búsqueda Avanzada...');
+  
+  // Verificar que Supabase esté disponible
+  if (typeof supabase === 'undefined') {
+    console.error('❌ Error: Supabase no está definido. Verifica que supabase-config.js se haya cargado correctamente.');
+    
+    // Mostrar mensaje de error en la UI
+    const container = document.getElementById('searchResults');
+    if (container) {
+      container.innerHTML = `
+        <div class="search-placeholder" style="text-align: center; padding: 40px;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #dc3545; margin-bottom: 20px;"></i>
+          <h3 style="color: #dc3545;">Error de Configuración</h3>
+          <p>No se pudo conectar con la base de datos.</p>
+          <p style="color: #6c757d; margin-top: 10px;">
+            Verifica que el archivo <code>JS/supabase-config.js</code> exista y esté configurado correctamente.
+          </p>
+        </div>
+      `;
+    }
+    return;
+  }
+  
+  console.log('✅ Supabase disponible, inicializando búsqueda...');
   window.advancedSearch = new AdvancedSearch();
 });

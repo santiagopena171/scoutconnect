@@ -406,6 +406,11 @@ document.addEventListener('DOMContentLoaded', function() {
         email: formData.email,
         userType: formData.userType,
         name: `${formData.firstName} ${formData.lastName}`,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        birth_date: formData.birthDate,
+        nationality: formData.nationality,
+        second_nationality: formData.secondNationality,
         registrationTime: new Date().toISOString()
       };
 
@@ -495,21 +500,34 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!existingProfile) {
         console.warn('⚠️ Perfil no creado por trigger, creando manualmente...');
         
+        const profileData = {
+          id: authData.user.id,
+          email: formData.email,
+          user_type: formData.userType,
+          full_name: `${formData.firstName} ${formData.lastName}`,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone || null,
+          birth_date: formData.birthDate || null,
+          nationality: formData.nationality || null,
+          second_nationality: formData.secondNationality || null,
+          city: formData.city || null
+        };
+
+        // Agregar campos específicos de jugadores
+        if (formData.userType === 'jugador') {
+          profileData.position = formData.position || null;
+          profileData.preferred_foot = formData.preferredFoot || null;
+          profileData.height = formData.height ? parseFloat(formData.height) : null;
+          profileData.weight = formData.weight ? parseFloat(formData.weight) : null;
+          profileData.current_club = formData.currentClub || null;
+          profileData.country = formData.country || null;
+          profileData.state = formData.state || null;
+        }
+
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert([{
-            id: authData.user.id,
-            email: formData.email,
-            user_type: formData.userType,
-            full_name: `${formData.firstName} ${formData.lastName}`,
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            phone: formData.phone || null,
-            birth_date: formData.birthDate || null,
-            nationality: formData.nationality || null,
-            second_nationality: formData.secondNationality || null,
-            city: formData.city || null
-          }]);
+          .insert([profileData]);
 
         if (insertError) {
           console.error('❌ Error al crear perfil:', insertError);
@@ -521,13 +539,27 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Perfil encontrado, actualizando datos adicionales...');
         
         // Actualizar con datos adicionales
+        const updateData = {
+          birth_date: formData.birthDate || null,
+          nationality: formData.nationality || null,
+          second_nationality: formData.secondNationality || null,
+          city: formData.city || null
+        };
+
+        // Agregar datos específicos de jugadores
+        if (formData.userType === 'jugador') {
+          updateData.position = formData.position || null;
+          updateData.preferred_foot = formData.preferredFoot || null;
+          updateData.height = formData.height ? parseFloat(formData.height) : null;
+          updateData.weight = formData.weight ? parseFloat(formData.weight) : null;
+          updateData.current_club = formData.currentClub || null;
+          updateData.country = formData.country || null;
+          updateData.state = formData.state || null;
+        }
+
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({
-            birth_date: formData.birthDate || null,
-            nationality: formData.nationality || null,
-            city: formData.city || null
-          })
+          .update(updateData)
           .eq('id', authData.user.id);
 
         if (updateError) {

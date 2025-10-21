@@ -28,6 +28,11 @@ body {
   line-height: 1.6;
 }
 
+/* Ocultar la navegación principal en el perfil del jugador */
+.main-nav {
+  display: none;
+}
+
 /* ============================================================================
    ESTADOS DE CARGA Y ERROR
    ============================================================================ */
@@ -258,9 +263,12 @@ body {
 .profile-navigation {
   background: white;
   border-bottom: 1px solid var(--gray-200);
-  position: sticky;
-  top: 80px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .nav-tabs {
@@ -296,12 +304,25 @@ body {
   background: var(--gray-50);
 }
 
+.tab-btn.back-btn {
+  margin-right: 16px;
+  padding-right: 24px;
+  border-right: 1px solid var(--gray-200);
+  font-weight: 600;
+}
+
+.tab-btn.back-btn:hover {
+  color: var(--gray-900);
+  background: var(--gray-100);
+}
+
 /* ============================================================================
    CONTENIDO DE SECCIONES
    ============================================================================ */
 
 .profile-content {
   padding: 40px;
+  padding-top: 100px; /* Espacio para el navbar fijo */
 }
 
 /* ============================================
@@ -547,6 +568,190 @@ body {
   gap: 20px;
 }
 
+/* Estilos para facetas de video */
+.videos-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.videos-info p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.videos-info i {
+  font-size: 18px;
+}
+
+.video-facets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.video-facet-card {
+  background: white;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.video-facet-card.has-video {
+  border-color: var(--success-color);
+  background: linear-gradient(to bottom, white, #f0fdf4);
+}
+
+.video-facet-card.no-video {
+  border-color: var(--gray-200);
+  background: white;
+  opacity: 0.7;
+}
+
+.video-facet-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.facet-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.facet-title {
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+
+.facet-status {
+  margin-top: 12px;
+}
+
+.btn-watch-video {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-watch-video:hover {
+  background: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.no-video-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gray-500);
+  font-size: 0.85rem;
+}
+
+/* ============================================================================
+   SECCIÓN FÍSICA - VIDEOS
+   ============================================================================ */
+
+.physical-videos-info {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.physical-videos-info p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.physical-videos-info i {
+  font-size: 18px;
+}
+
+.physical-videos-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .physical-videos-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .physical-videos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .physical-videos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.physical-video-card {
+  background: white;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.physical-video-card.has-video {
+  border-color: var(--warning-color);
+  background: linear-gradient(to bottom, white, #fef3c7);
+}
+
+.physical-video-card.no-video {
+  border-color: var(--gray-200);
+  background: white;
+  opacity: 0.7;
+}
+
+.physical-video-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.physical-icon {
+  font-size: 56px;
+  margin-bottom: 12px;
+}
+
+.physical-title {
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+
+.physical-video-status {
+  margin-top: 12px;
+}
+
+/* Estilos antiguos de video (para compatibilidad) */
 .video-item {
   background: white;
   border: 1px solid var(--gray-200);

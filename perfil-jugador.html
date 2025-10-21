@@ -124,6 +124,9 @@
         <!-- Navegación de Secciones -->
         <nav class="profile-navigation">
             <div class="nav-tabs">
+                <button class="tab-btn back-btn" onclick="history.back()">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
                 <button class="tab-btn active" data-section="overview" onclick="playerProfile.switchSection('overview')">
                     <i class="fas fa-info-circle"></i> Resumen
                 </button>
@@ -133,17 +136,11 @@
                 <button class="tab-btn" data-section="career" onclick="playerProfile.switchSection('career')">
                     <i class="fas fa-trophy"></i> Carrera
                 </button>
-                <button class="tab-btn" data-section="skills" onclick="playerProfile.switchSection('skills')">
-                    <i class="fas fa-star"></i> Habilidades
-                </button>
                 <button class="tab-btn" data-section="physical" onclick="playerProfile.switchSection('physical')">
                     <i class="fas fa-dumbbell"></i> Físico
                 </button>
                 <button class="tab-btn" data-section="videos" onclick="playerProfile.switchSection('videos')">
                     <i class="fas fa-video"></i> Videos
-                </button>
-                <button class="tab-btn" data-section="performance" onclick="playerProfile.switchSection('performance')">
-                    <i class="fas fa-chart-line"></i> Rendimiento
                 </button>
                 <button class="tab-btn" data-section="reports" onclick="playerProfile.switchSection('reports')">
                     <i class="fas fa-clipboard-list"></i> Reportes <span id="reportsCount" class="count-badge">0</span>
@@ -214,23 +211,6 @@
                 </div>
             </section>
 
-            <!-- Sección: Habilidades -->
-            <section id="section-skills" class="profile-section">
-                <div class="data-category">
-                    <h3><i class="fas fa-star"></i> Habilidades Técnicas</h3>
-                    <div class="skills-grid" id="technicalSkills">
-                        <!-- Se llenará dinámicamente -->
-                    </div>
-                </div>
-                
-                <div class="data-category">
-                    <h3><i class="fas fa-brain"></i> Habilidades Mentales</h3>
-                    <div class="skills-grid" id="mentalSkills">
-                        <!-- Se llenará dinámicamente -->
-                    </div>
-                </div>
-            </section>
-
             <!-- Sección: Físico -->
             <section id="section-physical" class="profile-section">
                 <div class="data-category">
@@ -260,23 +240,6 @@
                 <div class="video-placeholder">
                     <i class="fas fa-video"></i>
                     <p>Los videos se mostrarán aquí cuando estén disponibles</p>
-                </div>
-            </section>
-
-            <!-- Sección: Rendimiento -->
-            <section id="section-performance" class="profile-section">
-                <div class="data-category">
-                    <h3><i class="fas fa-chart-bar"></i> Estadísticas de Temporada</h3>
-                    <div class="stats-grid" id="seasonStats">
-                        <!-- Se llenará dinámicamente -->
-                    </div>
-                </div>
-                
-                <div class="data-category">
-                    <h3><i class="fas fa-calendar-alt"></i> Historial de Rendimiento</h3>
-                    <div class="performance-timeline" id="performanceHistory">
-                        <!-- Se llenará dinámicamente -->
-                    </div>
                 </div>
             </section>
 
@@ -403,7 +366,9 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts - Orden correcto de carga -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="JS/supabase-config.js"></script>
     <script src="JS/perfil-jugador.js"></script>
     
     <!-- Script de depuración -->

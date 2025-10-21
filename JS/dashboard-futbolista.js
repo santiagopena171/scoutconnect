@@ -8,12 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Iniciando dashboard del futbolista...');
   console.log('🔧 Acceso directo:', directAccess);
   
+  // Nota: checkSession() ya no actualiza playerData directamente
+  // Los datos se cargarán en init() -> loadPlayerDataFromStorage()
   if (!directAccess && !checkSession()) {
     console.log('❌ No se pudo verificar la sesión, pero continuando con datos por defecto para demo');
     // Para desarrollo, permitir continuar sin sesión válida
     // En producción, descomenta la línea de abajo:
     // return;
   }
+  
   // Elementos del DOM
   const notificationBtn = document.getElementById('notificationBtn');
   const notificationDropdown = document.getElementById('notificationDropdown');
@@ -104,17 +107,35 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📂 Cargando datos persistentes del jugador...');
     
     try {
+      // PASO 1: Cargar primero los datos del usuario registrado (nombre, apellido, etc.)
+      const sessionUser = localStorage.getItem('scoutConnectUser');
+      if (sessionUser) {
+        try {
+          const userData = JSON.parse(sessionUser);
+          console.log('👤 Cargando datos del usuario registrado:', userData);
+          updatePlayerDataFromSession(userData);
+        } catch (error) {
+          console.error('❌ Error parseando datos del usuario:', error);
+        }
+      } else {
+        console.log('⚠️ No hay datos de usuario registrado en scoutConnectUser');
+      }
+      
+      // PASO 2: Luego cargar/fusionar con datos del perfil guardados
       const savedPlayerData = localStorage.getItem('scoutConnectPlayerData');
       if (savedPlayerData) {
         const parsedData = JSON.parse(savedPlayerData);
-        // Combinar datos por defecto con datos guardados
-        playerData = { ...playerData, ...parsedData };
-        console.log('✅ Datos del jugador cargados desde localStorage:', playerData);
+        // Combinar datos, PERO sin sobrescribir nombre, apellido, birthDate que vienen del registro
+        const { firstName, lastName, name, birthDate, age, nationality, second_nationality, ...editableData } = parsedData;
+        playerData = { ...playerData, ...editableData };
+        console.log('✅ Datos del perfil fusionados desde scoutConnectPlayerData');
       } else {
-        console.log('ℹ️ No hay datos guardados, usando datos por defecto');
+        console.log('ℹ️ No hay datos del perfil guardados, usando estructura por defecto');
         // Guardar datos por defecto por primera vez
         savePlayerDataToStorage();
       }
+      
+      console.log('🎯 Datos finales del jugador:', playerData);
     } catch (error) {
       console.error('❌ Error cargando datos del jugador:', error);
       console.log('🔄 Usando datos por defecto');
@@ -122,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Guardar datos del jugador en localStorage
-  function savePlayerDataToStorage() {
+  async function savePlayerDataToStorage() {
     console.log('💾 Guardando datos del jugador...');
     
     try {
@@ -135,13 +156,68 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       localStorage.setItem('scoutConnectSaveCount', saveCount.toString());
       
+      // Guardar en localStorage (fallback)
       localStorage.setItem('scoutConnectPlayerData', JSON.stringify(playerData));
-      console.log('✅ Datos del jugador guardados correctamente');
+      console.log('✅ Datos guardados en localStorage');
+      
+      // Guardar en Supabase si está disponible
+      if (typeof supabase !== 'undefined') {
+        await saveToSupabase();
+      } else {
+        console.warn('⚠️ Supabase no disponible, solo se guardó en localStorage');
+      }
+      
       updateSaveStatus('saved');
       return true;
     } catch (error) {
       console.error('❌ Error guardando datos del jugador:', error);
       updateSaveStatus('error');
+      return false;
+    }
+  }
+
+  // Función para guardar datos en Supabase
+  async function saveToSupabase() {
+    try {
+      console.log('☁️ Guardando en Supabase...');
+      
+      // Obtener el usuario actual
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.warn('⚠️ No hay usuario autenticado en Supabase');
+        return false;
+      }
+      
+      // Preparar datos para actualizar en profiles
+      const profileUpdate = {
+        position: playerData.position || null,
+        secondary_position: playerData.secondaryPosition || null,
+        preferred_foot: playerData.dominantFoot || null,
+        height: playerData.height ? parseFloat(playerData.height) : null,
+        weight: playerData.weight ? parseFloat(playerData.weight) : null,
+        current_club: playerData.club || null,
+        league: playerData.level || null,
+        bio: playerData.bio || null,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Actualizar perfil en Supabase
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(profileUpdate)
+        .eq('id', user.id);
+      
+      if (updateError) {
+        console.error('❌ Error actualizando Supabase:', updateError);
+        return false;
+      }
+      
+      console.log('✅ Datos guardados en Supabase correctamente');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Error en saveToSupabase:', error);
       return false;
     }
   }
@@ -410,11 +486,11 @@ document.addEventListener('DOMContentLoaded', function() {
       return true;
     }
 
-    // Cargar datos del usuario desde la sesión
+    // Solo verificar que los datos existen, NO actualizarlos aquí
+    // Los datos se cargarán en loadPlayerDataFromStorage()
     try {
       const userData = JSON.parse(sessionUser);
-      console.log('✅ Datos de usuario cargados:', userData);
-      updatePlayerDataFromSession(userData);
+      console.log('✅ Datos de usuario validados:', userData.name || userData.email);
       return true;
     } catch (error) {
       console.error('❌ Error parseando datos de sesión:', error);
@@ -637,6 +713,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Segunda nacionalidad actualizada:', playerData.second_nationality);
       }
       
+      if (userData.birth_date) {
+        playerData.birthDate = userData.birth_date;
+        // Calcular edad automáticamente
+        playerData.age = calculateAge(userData.birth_date);
+        console.log('✅ Fecha de nacimiento actualizada:', playerData.birthDate, '- Edad:', playerData.age);
+      }
+      
       if (userData.userType) {
         console.log('✅ Tipo de usuario:', userData.userType);
       }
@@ -645,6 +728,23 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error('❌ Error actualizando datos del jugador:', error);
     }
+  }
+
+  // Función para calcular edad desde fecha de nacimiento
+  function calculateAge(birthDate) {
+    if (!birthDate) return playerData.age || 22; // Valor por defecto
+    
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    // Ajustar si aún no ha cumplido años este año
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age;
   }
 
   function init() {
@@ -675,6 +775,27 @@ document.addEventListener('DOMContentLoaded', function() {
       hamburgerMenu.addEventListener('click', () => {
         hamburgerMenu.classList.toggle('active');
         userInfo.classList.toggle('mobile-active');
+      });
+    }
+
+    // Navegación suave a la sección de videos
+    const navVideosLink = document.getElementById('navVideosLink');
+    if (navVideosLink) {
+      navVideosLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const videosSection = document.getElementById('videos-section');
+        if (videosSection) {
+          videosSection.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+          
+          // Actualizar el estado activo de los links
+          document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+          });
+          navVideosLink.classList.add('active');
+        }
       });
     }
 
@@ -776,6 +897,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function loadPlayerData() {
+    // Recalcular edad desde la fecha de nacimiento antes de cargar
+    if (playerData.birthDate) {
+      playerData.age = calculateAge(playerData.birthDate);
+    }
+    
     // Cargar datos básicos del jugador
     document.getElementById('userName').textContent = playerData.name;
     document.getElementById('userAvatar').src = playerData.avatar;
@@ -792,6 +918,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('currentClub').textContent = playerData.club;
     document.getElementById('playerBio').textContent = playerData.bio;
     
+    // NOTA: Sección de atributos eliminada del dashboard
+    // Los atributos físicos, técnicos y mentales ya no se muestran en el dashboard principal
+    // pero se mantienen en la estructura de datos para el modal de edición y futuras funcionalidades
+    
+    /* COMENTADO - Ya no existe esta sección en el HTML
     // Cargar atributos físicos
     if (playerData.physicalAttributes) {
       updateAttributeBar('speed', playerData.physicalAttributes.speed);
@@ -828,6 +959,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('experience-display').textContent = playerData.additionalInfo.experience || 'No especificado';
       document.getElementById('achievements-display').textContent = playerData.additionalInfo.achievements || 'No especificado';
     }
+    */
     
     // Contadores
     document.getElementById('profileViews').textContent = `${playerData.profileViews} visualizaciones`;
@@ -1520,22 +1652,26 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="form-row">
           <div class="form-group">
             <label for="editFirstName">Nombre</label>
-            <input type="text" id="editFirstName" value="${playerData.firstName}" required>
+            <input type="text" id="editFirstName" value="${playerData.firstName}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <small class="text-muted">El nombre no puede ser modificado</small>
           </div>
           <div class="form-group">
             <label for="editLastName">Apellido</label>
-            <input type="text" id="editLastName" value="${playerData.lastName}" required>
+            <input type="text" id="editLastName" value="${playerData.lastName}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <small class="text-muted">El apellido no puede ser modificado</small>
           </div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
             <label for="editAge">Edad</label>
-            <input type="number" id="editAge" value="${playerData.age}" min="16" max="45">
+            <input type="number" id="editAge" value="${playerData.age}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <small class="text-muted">Se calcula automáticamente desde la fecha de nacimiento</small>
           </div>
           <div class="form-group">
             <label for="editBirthDate">Fecha de Nacimiento</label>
-            <input type="date" id="editBirthDate" value="${playerData.birthDate}">
+            <input type="date" id="editBirthDate" value="${playerData.birthDate}" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <small class="text-muted">La fecha de nacimiento no puede ser modificada</small>
           </div>
         </div>
 
@@ -1861,11 +1997,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function saveProfileChanges() {
-    // Información básica
-    const firstName = document.getElementById('editFirstName').value;
-    const lastName = document.getElementById('editLastName').value;
-    const age = parseInt(document.getElementById('editAge').value);
-    const birthDate = document.getElementById('editBirthDate').value;
+    // NOTA: firstName, lastName, birthDate y age NO se modifican (son readonly)
+    // Estos datos vienen del registro y no se pueden cambiar
+    
     const position = document.getElementById('editPosition').value;
     const secondaryPosition = document.getElementById('editSecondaryPosition').value;
     const dominantFoot = document.getElementById('editDominantFoot').value;
@@ -1914,12 +2048,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const injuries = document.getElementById('editInjuries').value;
     const availability = document.getElementById('editAvailability').value;
     
-    // Actualizar todos los datos del jugador
-    playerData.firstName = firstName;
-    playerData.lastName = lastName;
-    playerData.name = `${firstName} ${lastName}`;
-    playerData.age = age;
-    playerData.birthDate = birthDate;
+    // Actualizar solo los datos modificables
+    // firstName, lastName, name, age y birthDate NO se modifican (vienen del registro)
     playerData.position = position;
     playerData.secondaryPosition = secondaryPosition;
     playerData.dominantFoot = dominantFoot;

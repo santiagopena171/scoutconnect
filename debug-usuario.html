@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Usuario - ScoutConnect</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      border-bottom: 3px solid #1abc9c;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #34495e;
+      margin-top: 30px;
+    }
+    .data-box {
+      background: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .btn {
+      background: #1abc9c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 14px;
+    }
+    .btn:hover {
+      background: #16a085;
+    }
+    .btn-danger {
+      background: #e74c3c;
+    }
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .status.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Debug de Datos de Usuario</h1>
+    <p>Esta página te ayuda a ver qué datos están guardados en localStorage</p>
+
+    <div>
+      <button class="btn" onclick="cargarDatos()">🔄 Actualizar Datos</button>
+      <button class="btn btn-danger" onclick="limpiarTodo()">🗑️ Limpiar Todo</button>
+      <button class="btn" onclick="irDashboard()">➡️ Ir al Dashboard</button>
+    </div>
+
+    <h2>📋 scoutConnectUser (Datos del Registro/Login)</h2>
+    <div id="userData" class="data-box">Cargando...</div>
+
+    <h2>💾 scoutConnectPlayerData (Datos del Perfil)</h2>
+    <div id="playerData" class="data-box">Cargando...</div>
+
+    <h2>🔐 Otros Datos de Sesión</h2>
+    <div id="sessionData" class="data-box">Cargando...</div>
+
+    <h2>📊 Todas las Claves en localStorage</h2>
+    <div id="allKeys" class="data-box">Cargando...</div>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    function mostrarEstado(mensaje, tipo = 'success') {
+      const statusDiv = document.getElementById('status');
+      statusDiv.className = `status ${tipo}`;
+      statusDiv.textContent = mensaje;
+      setTimeout(() => {
+        statusDiv.textContent = '';
+        statusDiv.className = 'status';
+      }, 3000);
+    }
+
+    function cargarDatos() {
+      // scoutConnectUser
+      const userDataRaw = localStorage.getItem('scoutConnectUser');
+      const userDataDiv = document.getElementById('userData');
+      if (userDataRaw) {
+        try {
+          const userData = JSON.parse(userDataRaw);
+          userDataDiv.innerHTML = `
+<strong>✅ Datos encontrados:</strong>
+
+${JSON.stringify(userData, null, 2)}
+
+<strong>Campos importantes:</strong>
+- Nombre: ${userData.first_name || userData.name || 'No especificado'}
+- Apellido: ${userData.last_name || 'No especificado'}
+- Email: ${userData.email || 'No especificado'}
+- Fecha de nacimiento: ${userData.birth_date || 'No especificado'}
+- Nacionalidad: ${userData.nationality || 'No especificado'}
+          `;
+        } catch (error) {
+          userDataDiv.innerHTML = `<strong>❌ Error parseando JSON:</strong>\n${userDataRaw}`;
+        }
+      } else {
+        userDataDiv.innerHTML = '<strong>⚠️ No hay datos de usuario registrado</strong>';
+      }
+
+      // scoutConnectPlayerData
+      const playerDataRaw = localStorage.getItem('scoutConnectPlayerData');
+      const playerDataDiv = document.getElementById('playerData');
+      if (playerDataRaw) {
+        try {
+          const playerData = JSON.parse(playerDataRaw);
+          playerDataDiv.innerHTML = `
+<strong>✅ Datos encontrados:</strong>
+
+${JSON.stringify(playerData, null, 2)}
+          `;
+        } catch (error) {
+          playerDataDiv.innerHTML = `<strong>❌ Error parseando JSON:</strong>\n${playerDataRaw}`;
+        }
+      } else {
+        playerDataDiv.innerHTML = '<strong>⚠️ No hay datos del perfil guardados</strong>';
+      }
+
+      // Datos de sesión
+      const sessionDataDiv = document.getElementById('sessionData');
+      const token = localStorage.getItem('scoutConnectToken');
+      const expiry = localStorage.getItem('scoutConnectExpiry');
+      let expiryDate = 'No especificado';
+      if (expiry) {
+        expiryDate = new Date(parseInt(expiry)).toLocaleString('es-ES');
+      }
+      sessionDataDiv.innerHTML = `
+<strong>Token:</strong> ${token ? '✅ Presente' : '❌ No encontrado'}
+<strong>Expira:</strong> ${expiryDate}
+<strong>Estado:</strong> ${token && expiry && Date.now() < parseInt(expiry) ? '✅ Sesión válida' : '❌ Sesión expirada o no válida'}
+      `;
+
+      // Todas las claves
+      const allKeysDiv = document.getElementById('allKeys');
+      const keys = Object.keys(localStorage);
+      allKeysDiv.innerHTML = `
+<strong>Total de claves:</strong> ${keys.length}
+
+${keys.map(key => `- ${key}`).join('\n')}
+      `;
+
+      mostrarEstado('Datos actualizados correctamente', 'success');
+    }
+
+    function limpiarTodo() {
+      if (confirm('⚠️ ¿Estás seguro de que quieres limpiar TODOS los datos?\n\nEsto incluye:\n- Datos de usuario\n- Datos del perfil\n- Sesión activa\n- Reportes guardados\n\nDeberás iniciar sesión nuevamente.')) {
+        localStorage.clear();
+        mostrarEstado('✅ Todos los datos han sido eliminados', 'warning');
+        setTimeout(() => {
+          cargarDatos();
+        }, 500);
+      }
+    }
+
+    function irDashboard() {
+      window.location.href = 'dashboard-futbolista.html';
+    }
+
+    // Cargar datos al inicio
+    cargarDatos();
+  </script>
+</body>
+</html>

@@ -59,7 +59,93 @@ class PlayerProfile {
   }
 
   async fetchPlayerData(playerId) {
-    // Mock data - en implementación real esto vendría de una API
+    try {
+      console.log('🔍 Buscando jugador con ID:', playerId);
+      
+      // Primero intentar buscar en Supabase si el ID parece ser un UUID
+      if (typeof supabase !== 'undefined' && playerId && playerId.length > 10) {
+        console.log('📊 Buscando en Supabase...');
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', playerId)
+          .eq('user_type', 'jugador')
+          .single();
+
+        if (!error && profile) {
+          console.log('✅ Jugador encontrado en Supabase:', profile);
+          
+          // Convertir perfil de Supabase al formato esperado
+          return {
+            id: profile.id,
+            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.full_name || 'Jugador',
+            age: profile.birth_date ? this.calculateAge(profile.birth_date) : null,
+            primaryPosition: profile.position || 'No especificado',
+            secondaryPosition: profile.secondary_position || '',
+            nationality: profile.nationality || 'No especificado',
+            club: profile.current_club || 'Sin club',
+            league: profile.league || '',
+            height: profile.height || 0,
+            weight: profile.weight || 0,
+            foot: profile.preferred_foot || 'Derecho',
+            country: profile.country || profile.nationality || '',
+            state: profile.state || '',
+            city: profile.city || '',
+            birthDate: profile.birth_date || '',
+            birthPlace: profile.city ? `${profile.city}, ${profile.country || ''}` : '',
+            contract: {
+              status: profile.contract_status || 'amateur',
+              expires: profile.contract_expiry || '',
+              value: profile.market_value || ''
+            },
+            tags: [],
+            skills: {
+              technical: {},
+              mental: {},
+              physical: {}
+            },
+            careerHistory: [],
+            videos: {},
+            physicalVideos: {},
+            stats: {
+              matches: 0,
+              goals: 0,
+              assists: 0
+            },
+            bio: profile.bio || '',
+            email: profile.email,
+            phone: profile.phone
+          };
+        } else if (error) {
+          console.warn('⚠️ Error buscando en Supabase:', error);
+        }
+      }
+      
+      // Fallback a datos mock si no se encuentra en Supabase
+      console.log('📦 Usando datos mock...');
+      return this.getMockPlayerData(playerId);
+      
+    } catch (error) {
+      console.error('❌ Error en fetchPlayerData:', error);
+      return this.getMockPlayerData(playerId);
+    }
+  }
+
+  calculateAge(birthDate) {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  getMockPlayerData(playerId) {
+    // Mock data - datos de ejemplo para testing
     const mockPlayers = {
       '1': {
         id: 1,
@@ -112,10 +198,20 @@ class PlayerProfile {
           { year: '2023', team: 'River Plate Reserva', league: 'Reserva', matches: 32, goals: 12, assists: 14 },
           { year: '2022', team: 'River Plate Juveniles', league: 'Juvenil', matches: 25, goals: 8, assists: 11 }
         ],
-        videos: [
-          { title: 'Goles y Jugadas 2024', description: 'Mejores momentos de Miguel en mediocampo', url: 'https://youtube.com/watch?v=example1' },
-          { title: 'Pases y Visión', description: 'Compilación de asistencias y jugadas creativas', url: 'https://youtube.com/watch?v=example2' }
-        ],
+        videos: {
+          'control-pase': 'https://youtube.com/watch?v=example1',
+          'vision-juego': 'https://youtube.com/watch?v=example2',
+          'remates': 'https://youtube.com/watch?v=example3',
+          'regates': '',
+          'asistencias': 'https://youtube.com/watch?v=example4'
+        },
+        physicalVideos: {
+          'velocidad': 'https://youtube.com/watch?v=velocidad1',
+          'aceleracion': 'https://youtube.com/watch?v=aceleracion1',
+          'agilidad': 'https://youtube.com/watch?v=agilidad1',
+          'resistencia': '',
+          'salto': 'https://youtube.com/watch?v=salto1'
+        },
         stats: {
           matches: 28,
           goals: 6,
@@ -379,9 +475,6 @@ class PlayerProfile {
       }
       // Agregar más jugadores según sea necesario
     };
-
-    // Simular delay de red
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
     return mockPlayers[playerId] || null;
   }
@@ -393,10 +486,8 @@ class PlayerProfile {
     this.renderOverviewSection();
     this.renderPersonalSection();
     this.renderCareerSection();
-    this.renderSkillsSection();
     this.renderPhysicalSection();
     this.renderVideosSection();
-    this.renderPerformanceSection();
     // NO renderizar reportes en la inicialización - solo cuando se selecciona la pestaña
     // this.renderReportsSection();
     this.updateFollowButton();
@@ -564,32 +655,6 @@ class PlayerProfile {
     `).join('');
   }
 
-  renderSkillsSection() {
-    const player = this.playerData;
-    
-    const technicalSkills = document.getElementById('technicalSkills');
-    technicalSkills.innerHTML = Object.entries(player.skills.technical).map(([skill, value]) => `
-      <div class="skill-item">
-        <div class="skill-name">${skill}</div>
-        <div class="skill-bar">
-          <div class="skill-progress" style="width: ${value}%"></div>
-        </div>
-        <div class="skill-value">${value}/100</div>
-      </div>
-    `).join('');
-    
-    const mentalSkills = document.getElementById('mentalSkills');
-    mentalSkills.innerHTML = Object.entries(player.skills.mental).map(([skill, value]) => `
-      <div class="skill-item">
-        <div class="skill-name">${skill}</div>
-        <div class="skill-bar">
-          <div class="skill-progress" style="width: ${value}%"></div>
-        </div>
-        <div class="skill-value">${value}/100</div>
-      </div>
-    `).join('');
-  }
-
   renderPhysicalSection() {
     const player = this.playerData;
     
@@ -609,49 +674,145 @@ class PlayerProfile {
       </div>
     `;
     
+    // Características físicas con videos
+    const physicalVideoAttributes = [
+      { key: 'velocidad', title: '💨 Velocidad', icon: '💨' },
+      { key: 'aceleracion', title: '🚀 Aceleración', icon: '🚀' },
+      { key: 'agilidad', title: '🤸 Agilidad', icon: '🤸' },
+      { key: 'resistencia', title: '💪 Resistencia', icon: '💪' },
+      { key: 'salto', title: '⬆️ Salto', icon: '⬆️' }
+    ];
+    
     const physicalAttributes = document.getElementById('physicalAttributes');
-    physicalAttributes.innerHTML = Object.entries(player.skills.physical).map(([skill, value]) => `
-      <div class="skill-item">
-        <div class="skill-name">${skill}</div>
-        <div class="skill-bar">
-          <div class="skill-progress" style="width: ${value}%"></div>
-        </div>
-        <div class="skill-value">${value}/100</div>
+    physicalAttributes.innerHTML = `
+      <div class="physical-videos-grid">
+        ${physicalVideoAttributes.map(attr => {
+          const hasVideo = player.physicalVideos && player.physicalVideos[attr.key];
+          return `
+            <div class="physical-video-card ${hasVideo ? 'has-video' : 'no-video'}">
+              <div class="physical-icon">${attr.icon}</div>
+              <div class="physical-title">${attr.title}</div>
+              <div class="physical-video-status">
+                ${hasVideo ? 
+                  `<a href="${player.physicalVideos[attr.key]}" target="_blank" class="btn-watch-video">
+                    <i class="fas fa-play"></i> Ver video
+                  </a>` : 
+                  `<span class="no-video-label"><i class="fas fa-times"></i> Sin video</span>`
+                }
+              </div>
+            </div>
+          `;
+        }).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   renderVideosSection() {
     const player = this.playerData;
-    
     const videosGrid = document.getElementById('playerVideos');
-    if (player.videos && player.videos.length > 0) {
-      videosGrid.innerHTML = player.videos.map(video => `
-        <div class="video-item">
-          <div class="video-thumbnail" onclick="window.open('${video.url}', '_blank')">
-            <i class="fas fa-play"></i>
-          </div>
-          <div class="video-info">
-            <div class="video-title">${video.title}</div>
-            <div class="video-description">${video.description}</div>
-          </div>
-        </div>
-      `).join('');
-    } else {
-      videosGrid.innerHTML = '<p>No hay videos disponibles para este jugador.</p>';
-    }
-  }
-
-  renderPerformanceSection() {
-    const player = this.playerData;
     
-    const seasonStats = document.getElementById('seasonStats');
-    seasonStats.innerHTML = Object.entries(player.stats).map(([stat, value]) => `
-      <div class="stat-card">
-        <span class="stat-number">${value}</span>
-        <span class="stat-label">${this.getStatLabel(stat)}</span>
-      </div>
-    `).join('');
+    // Definir las facetas de video según la posición
+    const videoFacetsByPosition = {
+      'Portero': [
+        { key: 'reflejos', title: '🧤 Reflejos y atajadas', icon: '🧤' },
+        { key: 'salidas', title: '🏃 Salidas y uno contra uno', icon: '🏃' },
+        { key: 'pies', title: '⚽ Juego con los pies', icon: '⚽' },
+        { key: 'aereo', title: '🏀 Juego aéreo y despejes', icon: '🏀' },
+        { key: 'posicionamiento', title: '📍 Posicionamiento', icon: '📍' }
+      ],
+      'Defensa Central': [
+        { key: 'marcaje', title: '👥 Marcaje y anticipación', icon: '👥' },
+        { key: 'aereo', title: '🏀 Juego aéreo', icon: '🏀' },
+        { key: 'tackles', title: '💥 Tackles y entradas', icon: '💥' },
+        { key: 'pase-salida', title: '📡 Pase de salida', icon: '📡' },
+        { key: 'posicionamiento', title: '📍 Posicionamiento', icon: '📍' }
+      ],
+      'Lateral Derecho': [
+        { key: 'velocidad', title: '💨 Velocidad y recuperación', icon: '💨' },
+        { key: 'centros', title: '📍 Centros y asistencias', icon: '📍' },
+        { key: 'uno-vs-uno-def', title: '🎯 1vs1 defensivo', icon: '🎯' },
+        { key: 'cambios-ritmo', title: '🔄 Cambios de ritmo', icon: '🔄' },
+        { key: 'trabajo-equipo', title: '🤝 Trabajo con mediocampistas', icon: '🤝' }
+      ],
+      'Lateral Izquierdo': [
+        { key: 'velocidad', title: '💨 Velocidad y recuperación', icon: '💨' },
+        { key: 'centros', title: '📍 Centros y asistencias', icon: '📍' },
+        { key: 'uno-vs-uno-def', title: '🎯 1vs1 defensivo', icon: '🎯' },
+        { key: 'cambios-ritmo', title: '🔄 Cambios de ritmo', icon: '🔄' },
+        { key: 'trabajo-equipo', title: '🤝 Trabajo con mediocampistas', icon: '🤝' }
+      ],
+      'Mediocentro Defensivo': [
+        { key: 'recuperaciones', title: '⚙️ Recuperaciones y presión', icon: '⚙️' },
+        { key: 'control-pase', title: '🎯 Control y pase', icon: '🎯' },
+        { key: 'transiciones', title: '🔄 Transiciones', icon: '🔄' },
+        { key: 'marcaje-volante', title: '👥 Marcaje de volantes', icon: '👥' },
+        { key: 'pases-largos', title: '📡 Pases largos', icon: '📡' }
+      ],
+      'Mediocentro': [
+        { key: 'control-pase', title: '🎯 Control y pase', icon: '🎯' },
+        { key: 'recuperaciones', title: '⚙️ Recuperaciones y presión', icon: '⚙️' },
+        { key: 'transiciones', title: '🔄 Transiciones', icon: '🔄' },
+        { key: 'vision-juego', title: '👁️ Visión de juego', icon: '👁️' },
+        { key: 'conduccion', title: '🎮 Conducción', icon: '🎮' }
+      ],
+      'Mediocampista Ofensivo': [
+        { key: 'control-pase', title: '🎯 Control y pase', icon: '🎯' },
+        { key: 'vision-juego', title: '👁️ Visión de juego', icon: '👁️' },
+        { key: 'remates', title: '⚽ Remates y goles', icon: '⚽' },
+        { key: 'regates', title: '🎪 Regates y dribles', icon: '🎪' },
+        { key: 'asistencias', title: '🎁 Asistencias', icon: '🎁' }
+      ],
+      'Extremo Derecho': [
+        { key: 'regates-velocidad', title: '💨 Regates y velocidad', icon: '💨' },
+        { key: 'centros-asistencias', title: '📍 Centros y asistencias', icon: '📍' },
+        { key: 'definicion', title: '⚡ Definición y remates', icon: '⚡' },
+        { key: 'uno-contra-uno', title: '🎯 1vs1 ofensivo', icon: '🎯' },
+        { key: 'contraataques', title: '⚡ Contraataques', icon: '⚡' }
+      ],
+      'Extremo Izquierdo': [
+        { key: 'regates-velocidad', title: '💨 Regates y velocidad', icon: '💨' },
+        { key: 'centros-asistencias', title: '📍 Centros y asistencias', icon: '📍' },
+        { key: 'definicion', title: '⚡ Definición y remates', icon: '⚡' },
+        { key: 'uno-contra-uno', title: '🎯 1vs1 ofensivo', icon: '🎯' },
+        { key: 'contraataques', title: '⚡ Contraataques', icon: '⚡' }
+      ],
+      'Delantero Centro': [
+        { key: 'definicion-area', title: '⚽ Definición en área', icon: '⚽' },
+        { key: 'cabezazos', title: '🏀 Cabezazos y juego aéreo', icon: '🏀' },
+        { key: 'movimientos-area', title: '📦 Movimientos en área', icon: '📦' },
+        { key: 'control-espaldas', title: '🔄 Control de espaldas', icon: '🔄' },
+        { key: 'remates-distancia', title: '🎯 Remates de distancia', icon: '🎯' }
+      ]
+    };
+
+    // Obtener facetas según la posición principal del jugador
+    const facets = videoFacetsByPosition[player.primaryPosition] || [];
+    
+    if (facets.length > 0) {
+      videosGrid.innerHTML = `
+        <div class="video-facets-grid">
+          ${facets.map(facet => {
+            const hasVideo = player.videos && player.videos[facet.key];
+            return `
+              <div class="video-facet-card ${hasVideo ? 'has-video' : 'no-video'}">
+                <div class="facet-icon">${facet.icon}</div>
+                <div class="facet-title">${facet.title}</div>
+                <div class="facet-status">
+                  ${hasVideo ? 
+                    `<a href="${player.videos[facet.key]}" target="_blank" class="btn-watch-video">
+                      <i class="fas fa-play"></i> Ver video
+                    </a>` : 
+                    `<span class="no-video-label"><i class="fas fa-times"></i> Sin video</span>`
+                  }
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    } else {
+      videosGrid.innerHTML = '<p>No hay facetas de video definidas para esta posición.</p>';
+    }
   }
 
   switchSection(sectionName) {

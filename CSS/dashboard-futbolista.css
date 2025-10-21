@@ -59,6 +59,51 @@ body {
   width: auto;
 }
 
+/* Menú de navegación en el navbar */
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 40px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.nav-link svg {
+  stroke-width: 2;
+  transition: transform 0.3s ease;
+}
+
+.nav-link:hover {
+  background: rgba(0, 168, 89, 0.08);
+  color: var(--primary-color);
+}
+
+.nav-link:hover svg {
+  transform: scale(1.1);
+}
+
+.nav-link.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.nav-link.active:hover {
+  background: var(--primary-dark);
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -592,6 +637,16 @@ body {
 
 /* Responsive para tablets */
 @media (max-width: 768px) {
+  /* Ocultar menú de navegación en móviles */
+  .navbar-menu {
+    display: none;
+  }
+  
+  /* Mostrar hamburger menu */
+  .hamburger-menu {
+    display: flex;
+  }
+  
   .edit-form-tabs {
     flex-wrap: wrap;
   }
@@ -659,6 +714,20 @@ body {
 /* ===== SECCIÓN DE VIDEOS ===== */
 .videos-section {
   margin-bottom: 40px;
+}
+
+/* Sección de videos separada del perfil */
+.videos-section-separated {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 60px 0;
+  margin-top: 40px;
+  border-top: 3px solid #e0e0e0;
+}
+
+.videos-section-separated .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .videos-card {
