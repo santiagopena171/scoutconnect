@@ -701,3 +701,65 @@ body {
     width: 100%;
   }
 }
+/* Botones de agregar/eliminar items */
+.btn-add-item {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+}
+
+.btn-add-item:hover {
+  background: #5a67d8;
+  transform: scale(1.1);
+}
+
+.item-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.strength-input, .weakness-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.strength-input:focus, .weakness-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-remove-item {
+  background: #f56565;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.btn-remove-item:hover {
+  background: #e53e3e;
+  transform: scale(1.1);
+}

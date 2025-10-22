@@ -5,12 +5,12 @@ class PlayerProfile {
     this.playerId = null;
     this.playerData = null;
     this.watchlist = this.loadWatchlist();
-    this.reports = this.loadReports();
+    this.reports = [];
     this.activeSection = 'overview';
-    this.init();
+    // NO llamar init() aquí - se llama después de crear la instancia
   }
 
-  init() {
+  async init() {
     console.log('🎯 Iniciando Perfil de Jugador...');
     this.playerId = this.getPlayerIdFromURL();
     
@@ -19,7 +19,8 @@ class PlayerProfile {
       return;
     }
 
-    this.loadPlayerData();
+    await this.loadPlayerData();
+    this.reports = await this.loadReports();
     this.updateCounters();
     this.setupEventListeners();
     // Estado inicial de filtro de reportes: 'mine' para mostrar solo reportes del scout actual
@@ -1067,12 +1068,76 @@ class PlayerProfile {
     }
   }
 
-  loadReports() {
+  async loadReports() {
     try {
-      const reports = localStorage.getItem('generatedReports');
-      return reports ? JSON.parse(reports) : [];
+      console.log('📊 Cargando reportes del jugador...');
+      console.log('   - Player ID:', this.playerId);
+      console.log('   - Supabase disponible:', typeof supabase !== 'undefined');
+      
+      // Intentar cargar desde Supabase primero
+      if (typeof supabase !== 'undefined' && this.playerId) {
+        const reports = await this.loadReportsFromSupabase();
+        console.log('   - Reportes de Supabase:', reports);
+        if (reports && reports.length > 0) {
+          console.log(`✅ ${reports.length} reportes cargados desde Supabase`);
+          return reports;
+        } else {
+          console.log('   - No hay reportes en Supabase para este jugador');
+        }
+      }
+      
+      // Fallback: cargar desde localStorage
+      console.log('📦 Cargando reportes desde localStorage...');
+      const localReports = localStorage.getItem('generatedReports');
+      const allReports = localReports ? JSON.parse(localReports) : [];
+      
+      // Filtrar solo los reportes de este jugador
+      const playerReports = allReports.filter(r => r.playerId == this.playerId);
+      console.log(`✅ ${playerReports.length} reportes encontrados en localStorage`);
+      
+      return playerReports;
     } catch (error) {
-      console.error('Error al cargar reportes:', error);
+      console.error('❌ Error al cargar reportes:', error);
+      return [];
+    }
+  }
+
+  async loadReportsFromSupabase() {
+    try {
+      const { data: reports, error } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('player_id', this.playerId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('⚠️ Error cargando reportes desde Supabase:', error);
+        return [];
+      }
+
+      // Convertir formato de Supabase al formato esperado
+      return reports.map(r => ({
+        id: r.id,
+        playerId: r.player_id,
+        playerName: r.player_name,
+        playerPosition: r.player_position,
+        scoutName: 'Scout', // Se podría obtener del profile del scout
+        observationDate: r.match_date,
+        createdAt: r.created_at,
+        ratings: {
+          technical: r.technical_rating || 0,
+          physical: r.physical_rating || 0,
+          mental: r.mental_rating || 0,
+          tactical: r.tactical_rating || 0
+        },
+        overall: r.overall_rating || 0,
+        observations: r.detailed_analysis || '',
+        recommendation: r.recommendation || 'pending',
+        strengths: r.strengths || '',
+        weaknesses: r.weaknesses || ''
+      }));
+    } catch (error) {
+      console.error('❌ Error en loadReportsFromSupabase:', error);
       return [];
     }
   }
@@ -1113,6 +1178,12 @@ class PlayerProfile {
   }
 
   getPlayerReports() {
+    // Verificar que this.reports sea un array
+    if (!Array.isArray(this.reports)) {
+      console.warn('⚠️ this.reports no es un array:', this.reports);
+      return [];
+    }
+
     let results = this.reports.filter(report => {
       // Buscar por ID (numérico o string) o por nombre de jugador
       return report.playerId == this.playerId || 
@@ -1147,7 +1218,9 @@ class PlayerProfile {
   renderReportsSection() {
     console.log('📊 Renderizando sección de reportes...');
     console.log('   - Player ID:', this.playerId);
-    console.log('   - Total reportes en localStorage:', this.reports.length);
+    console.log('   - this.reports es array?', Array.isArray(this.reports));
+    console.log('   - Total reportes cargados:', Array.isArray(this.reports) ? this.reports.length : 'NO ES ARRAY');
+    console.log('   - Reportes:', this.reports);
     console.log('   - Usuario actual:', this.currentUser);
     console.log('   - Filtro activo:', this.reportsFilter);
     
@@ -1242,13 +1315,46 @@ class PlayerProfile {
 
   updateReportsStats(reports) {
     const totalReports = reports.length;
-    const avgRating = totalReports > 0 ? 
-      (reports.reduce((sum, r) => sum + r.overallRating, 0) / totalReports).toFixed(1) : '-';
-    const lastReportDate = totalReports > 0 ? 
-      new Date(Math.max(...reports.map(r => new Date(r.date)))).toLocaleDateString('es-ES') : '-';
+    
+    // Calcular rating promedio - soportar ambos formatos
+    let avgRating = '-';
+    if (totalReports > 0) {
+      const validRatings = reports
+        .map(r => {
+          // Intentar obtener overall rating de diferentes formas
+          if (r.overallRating) return r.overallRating;
+          if (r.overall) return r.overall;
+          // Calcular promedio de ratings individuales
+          if (r.ratings) {
+            const values = Object.values(r.ratings).filter(v => v > 0);
+            return values.length > 0 ? values.reduce((a, b) => a + b) / values.length : 0;
+          }
+          return 0;
+        })
+        .filter(r => r > 0);
+      
+      if (validRatings.length > 0) {
+        avgRating = (validRatings.reduce((sum, r) => sum + r, 0) / validRatings.length).toFixed(1);
+      }
+    }
+    
+    // Obtener última fecha de reporte - soportar diferentes formatos
+    let lastReportDate = '-';
+    if (totalReports > 0) {
+      const validDates = reports
+        .map(r => {
+          const dateStr = r.observationDate || r.date || r.createdAt;
+          return dateStr ? new Date(dateStr) : null;
+        })
+        .filter(d => d && !isNaN(d.getTime()));
+      
+      if (validDates.length > 0) {
+        lastReportDate = new Date(Math.max(...validDates)).toLocaleDateString('es-ES');
+      }
+    }
 
     document.getElementById('totalReports').textContent = totalReports;
-    document.getElementById('avgRating').textContent = avgRating !== '-' ? avgRating + '/10' : '-';
+    document.getElementById('avgRating').textContent = avgRating !== '-' ? avgRating + '/10' : avgRating;
     document.getElementById('lastReportDate').textContent = lastReportDate;
   }
 
@@ -1269,23 +1375,42 @@ class PlayerProfile {
   }
 
   createReportCard(report) {
+    // Extraer ratings - soportar ambos formatos (nuevo y legacy)
+    const technical = report.ratings?.technical || report.technicalRating || 0;
+    const physical = report.ratings?.physical || report.physicalRating || 0;
+    const mental = report.ratings?.mental || report.mentalRating || 0;
+    const tactical = report.ratings?.tactical || report.tacticalRating || 0;
+    
     const ratings = [
-      { label: 'Técnico', value: report.technicalRating },
-      { label: 'Físico', value: report.physicalRating },
-      { label: 'Mental', value: report.mentalRating },
-      { label: 'Táctico', value: report.tacticalRating }
+      { label: 'Técnico', value: technical },
+      { label: 'Físico', value: physical },
+      { label: 'Mental', value: mental },
+      { label: 'Táctico', value: tactical }
     ];
+
+    // Extraer fecha - soportar diferentes formatos
+    const dateStr = report.observationDate || report.date || report.createdAt;
+    const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('es-ES') : 'Invalid Date';
+    
+    // Extraer nombre del scout
+    const scoutName = report.scoutName || 'Scout Desconocido';
+    
+    // Extraer título
+    const title = report.title || 'Reporte de Scouting';
+    
+    // Extraer resumen/observaciones
+    const summary = report.summary || report.observations || 'Evaluación completa del rendimiento del jugador en diferentes aspectos técnicos y tácticos.';
 
     return `
       <div class="report-card" onclick="playerProfile.viewReport('${report.id}')">
         <div class="report-header">
-          <h4 class="report-title">${report.title}</h4>
-          <span class="report-date">${new Date(report.date).toLocaleDateString('es-ES')}</span>
+          <h4 class="report-title">${title}</h4>
+          <span class="report-date">${displayDate}</span>
         </div>
         
         <div class="report-scout">
           <i class="fas fa-user"></i>
-          <span>Scout: ${report.scoutName}</span>
+          <span>Scout: ${scoutName}</span>
         </div>
 
         <div class="report-ratings">
@@ -1304,7 +1429,7 @@ class PlayerProfile {
         </div>
 
         <div class="report-summary">
-          ${report.summary || 'Evaluación completa del rendimiento del jugador en diferentes aspectos técnicos y tácticos.'}
+          ${summary}
         </div>
 
         <div class="report-actions">
@@ -1319,14 +1444,14 @@ class PlayerProfile {
     `;
   }
 
-  setReportsFilter(filter) {
+  async setReportsFilter(filter) {
     if (filter !== 'all' && filter !== 'mine') return;
     this.reportsFilter = filter;
     // actualizar botones UI
     document.getElementById('filterAllReports')?.classList.toggle('active', filter === 'all');
     document.getElementById('filterMyReports')?.classList.toggle('active', filter === 'mine');
     // recargar y renderizar
-    this.reports = this.loadReports();
+    this.reports = await this.loadReports();
     this.renderReportsSection();
   }
 
@@ -1431,9 +1556,9 @@ class PlayerProfile {
     setTimeout(() => modal.classList.add('show'), 10);
   }
 
-  refreshReports() {
+  async refreshReports() {
     console.log('🔄 Actualizando reportes...');
-    this.reports = this.loadReports();
+    this.reports = await this.loadReports();
     this.currentUser = this.loadCurrentUser();
     console.log('   - Total reportes cargados:', this.reports.length);
     console.log('   - Usuario actual:', this.currentUser);
@@ -1442,7 +1567,7 @@ class PlayerProfile {
   }
 
   // Función para generar reportes de ejemplo (solo para desarrollo/demo)
-  generateSampleReports() {
+  async generateSampleReports() {
     if (!this.playerData) return;
 
     const sampleReports = [
@@ -1552,7 +1677,7 @@ class PlayerProfile {
       console.log('📊 Reportes de ejemplo generados para', this.playerData.name);
       
       // Recargar reportes
-      this.reports = this.loadReports();
+      this.reports = await this.loadReports();
       this.renderReportsSection();
       
       this.showNotification('Reportes de ejemplo cargados para demostración', 'info');
@@ -1733,9 +1858,10 @@ window.debugReports = debugReports;
 window.whoAmI = whoAmI;
 
 // Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 DOM cargado, iniciando Perfil de Jugador...');
   window.playerProfile = new PlayerProfile();
+  await window.playerProfile.init();
   console.log('');
   console.log('💡 Funciones de debug disponibles:');
   console.log('   - whoAmI()         → Ver tu identidad actual');

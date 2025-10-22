@@ -19,7 +19,7 @@ class ReportGenerator {
     this.displayPlayers();
   }
 
-  checkPreselectedPlayer() {
+  async checkPreselectedPlayer() {
     const urlParams = new URLSearchParams(window.location.search);
     const playerId = urlParams.get('playerId');
     
@@ -27,7 +27,7 @@ class ReportGenerator {
       console.log('🎯 Jugador preseleccionado detectado:', playerId);
       
       // Buscar el jugador en la lista de seguimiento
-      const player = this.watchedPlayers.find(p => p.id == playerId);
+      let player = this.watchedPlayers.find(p => p.id == playerId);
       
       if (player) {
         // El jugador ya está en la lista de seguimiento
@@ -38,16 +38,67 @@ class ReportGenerator {
           setTimeout(() => this.goToStep(2), 300);
         }, 100);
       } else {
-        // Si el jugador no está en seguimiento, cargarlo desde los datos
-        console.log('📥 Cargando jugador desde datos mock...');
-        this.loadPlayerFromId(playerId);
+        // Si el jugador no está en seguimiento, cargarlo desde Supabase o datos mock
+        console.log('📥 Cargando jugador desde base de datos...');
+        await this.loadPlayerFromId(playerId);
       }
     }
   }
 
   async loadPlayerFromId(playerId) {
     try {
-      // Buscar el jugador en los datos simulados (mock data)
+      console.log('🔍 Buscando jugador con ID:', playerId);
+      
+      // Primero intentar buscar en Supabase si el ID parece ser un UUID
+      if (typeof supabase !== 'undefined' && playerId && playerId.length > 10) {
+        console.log('📊 Buscando en Supabase...');
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', playerId)
+          .eq('user_type', 'jugador')
+          .single();
+
+        if (!error && profile) {
+          console.log('✅ Jugador encontrado en Supabase:', profile);
+          
+          // Convertir perfil de Supabase al formato esperado
+          const playerData = {
+            id: profile.id,
+            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.full_name || 'Jugador',
+            position: profile.position || 'No especificado',
+            age: profile.birth_date ? this.calculateAge(profile.birth_date) : null,
+            location: profile.city && profile.country ? `${profile.city}, ${profile.country}` : profile.country || '',
+            country: profile.nationality || profile.country || '',
+            club: profile.current_club || 'Sin club',
+            rating: 0, // Se calculará con el reporte
+            avatar: profile.avatar_url || 'imagenes/player-default.jpg'
+          };
+          
+          // Agregar temporalmente a la lista para poder seleccionarlo
+          if (!this.watchedPlayers.find(p => p.id == playerId)) {
+            this.watchedPlayers.push(playerData);
+          }
+          
+          // Actualizar la vista con el jugador agregado
+          this.displayPlayers();
+          
+          // Seleccionar el jugador automáticamente
+          setTimeout(() => {
+            this.selectPlayerById(playerId);
+            // Avanzar automáticamente al paso 2 después de un breve delay
+            setTimeout(() => this.goToStep(2), 300);
+          }, 100);
+          
+          return;
+        } else if (error) {
+          console.warn('⚠️ Error buscando en Supabase:', error);
+        }
+      }
+      
+      // Fallback: Buscar en datos mock
+      console.log('📦 Buscando en datos mock...');
       const mockPlayers = [
         {
           id: 1,
@@ -103,13 +154,25 @@ class ReportGenerator {
           setTimeout(() => this.goToStep(2), 300);
         }, 100);
       } else {
-        console.error('Jugador no encontrado con ID:', playerId);
+        console.error('❌ Jugador no encontrado con ID:', playerId);
         alert('No se pudo cargar la información del jugador seleccionado.');
       }
     } catch (error) {
-      console.error('Error al cargar jugador:', error);
-      alert('No se pudo cargar la información del jugador seleccionado.');
+      console.error('❌ Error al cargar jugador:', error);
+      alert('Error al cargar la información del jugador: ' + error.message);
     }
+  }
+
+  calculateAge(birthDate) {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   loadWatchedPlayers() {
@@ -440,12 +503,70 @@ class ReportGenerator {
     document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
   }
 
+  addStrength() {
+    const container = document.getElementById('strengthsContainer');
+    const newInput = document.createElement('div');
+    newInput.className = 'item-input-wrapper';
+    newInput.innerHTML = `
+      <input type="text" class="strength-input" placeholder="Ej: Excelente visión de juego" />
+      <button type="button" class="btn-remove-item" onclick="this.parentElement.remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    `;
+    container.appendChild(newInput);
+    // Focus en el nuevo input
+    newInput.querySelector('input').focus();
+  }
+
+  addWeakness() {
+    const container = document.getElementById('weaknessesContainer');
+    const newInput = document.createElement('div');
+    newInput.className = 'item-input-wrapper';
+    newInput.innerHTML = `
+      <input type="text" class="weakness-input" placeholder="Ej: Mejorar juego aéreo" />
+      <button type="button" class="btn-remove-item" onclick="this.parentElement.remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    `;
+    container.appendChild(newInput);
+    // Focus en el nuevo input
+    newInput.querySelector('input').focus();
+  }
+
+  collectStrengths() {
+    const inputs = document.querySelectorAll('.strength-input');
+    const strengths = [];
+    inputs.forEach(input => {
+      const value = input.value.trim();
+      if (value) {
+        strengths.push(value);
+      }
+    });
+    return strengths;
+  }
+
+  collectWeaknesses() {
+    const inputs = document.querySelectorAll('.weakness-input');
+    const weaknesses = [];
+    inputs.forEach(input => {
+      const value = input.value.trim();
+      if (value) {
+        weaknesses.push(value);
+      }
+    });
+    return weaknesses;
+  }
+
   generateFinalReport() {
     this.collectBasicInfo();
     this.collectEvaluations();
 
     const finalObservations = document.getElementById('finalObservations').value.trim();
-    const finalRecommendation = document.getElementById('finalRecommendation').value;
+    const finalStrengths = this.collectStrengths();
+    const finalWeaknesses = this.collectWeaknesses();
+    const finalRecommendationSelect = document.getElementById('finalRecommendation');
+    const finalRecommendation = finalRecommendationSelect.value;
+    const finalRecommendationText = finalRecommendationSelect.options[finalRecommendationSelect.selectedIndex].text;
 
     // Crear objeto de reporte completo
     const report = {
@@ -456,6 +577,7 @@ class ReportGenerator {
       playerAvatar: this.selectedPlayer.avatar || 'imagenes/default-avatar.png',
       playerAge: this.selectedPlayer.age,
       playerClub: this.selectedPlayer.club,
+      playerNationality: this.selectedPlayer.country || this.selectedPlayer.nationality || 'No especificado',
       title: this.reportData.title,
       type: this.reportData.type,
       priority: this.reportData.priority,
@@ -471,7 +593,10 @@ class ReportGenerator {
       },
       summary: finalObservations,
       observations: finalObservations,
+      strengths: finalStrengths.length > 0 ? finalStrengths : ['No especificadas'],
+      weaknesses: finalWeaknesses.length > 0 ? finalWeaknesses : ['No especificadas'],
       recommendation: finalRecommendation,
+      recommendationText: finalRecommendationText || 'Sin recomendación específica',
       status: 'completed',
       isFavorite: false,
       createdAt: new Date().toISOString(),
@@ -543,17 +668,116 @@ class ReportGenerator {
     }
   }
 
-  saveReport(report) {
+  async saveReport(report) {
     try {
+      // 1. Guardar en localStorage (fallback)
       const existingReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
       existingReports.push(report);
       localStorage.setItem('generatedReports', JSON.stringify(existingReports));
+      console.log('✅ Reporte guardado en localStorage');
       
-      console.log('✅ Reporte guardado:', report);
+      // 2. Guardar en Supabase si está disponible
+      if (typeof supabase !== 'undefined') {
+        await this.saveReportToSupabase(report);
+      } else {
+        console.warn('⚠️ Supabase no disponible, reporte solo guardado en localStorage');
+      }
+      
     } catch (error) {
       console.error('❌ Error al guardar reporte:', error);
       alert('Error al guardar el reporte. Por favor, intenta nuevamente.');
     }
+  }
+
+  async saveReportToSupabase(report) {
+    try {
+      console.log('☁️ Guardando reporte en Supabase...');
+      
+      // Obtener el usuario actual (scout)
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.warn('⚠️ No hay usuario autenticado en Supabase');
+        return false;
+      }
+      
+      // Preparar datos para Supabase (tabla reports)
+      const reportData = {
+        scout_id: user.id,
+        player_id: report.playerId,
+        player_name: report.playerName,
+        player_position: report.playerPosition,
+        match_date: report.observationDate || null,
+        match_competition: report.context || '',
+        match_teams: report.location || '',
+        overall_rating: this.calculateOverallRating(report.ratings),
+        technical_rating: report.ratings.technical || 0,
+        physical_rating: report.ratings.physical || 0,
+        tactical_rating: report.ratings.tactical || 0,
+        mental_rating: report.ratings.mental || 0,
+        strengths: this.extractStrengths(report.evaluations),
+        weaknesses: this.extractWeaknesses(report.evaluations),
+        detailed_analysis: report.observations || report.summary || '',
+        recommendation: report.recommendation || 'pending',
+        visibility: 'private',
+        created_at: new Date().toISOString()
+      };
+      
+      const { error: insertError } = await supabase
+        .from('reports')
+        .insert([reportData]);
+      
+      if (insertError) {
+        console.error('❌ Error insertando en Supabase:', insertError);
+        return false;
+      }
+      
+      console.log('✅ Reporte guardado en Supabase correctamente');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Error en saveReportToSupabase:', error);
+      return false;
+    }
+  }
+
+  calculateOverallRating(ratings) {
+    const values = Object.values(ratings).filter(v => v > 0);
+    if (values.length === 0) return 0;
+    const sum = values.reduce((a, b) => a + b, 0);
+    return parseFloat((sum / values.length).toFixed(1));
+  }
+
+  extractStrengths(evaluations) {
+    const strengths = [];
+    if (evaluations) {
+      Object.entries(evaluations).forEach(([category, skills]) => {
+        if (typeof skills === 'object') {
+          Object.entries(skills).forEach(([skill, rating]) => {
+            if (rating >= 7) {
+              strengths.push(`${skill}: ${rating}/10`);
+            }
+          });
+        }
+      });
+    }
+    return strengths.join(', ') || 'No especificado';
+  }
+
+  extractWeaknesses(evaluations) {
+    const weaknesses = [];
+    if (evaluations) {
+      Object.entries(evaluations).forEach(([category, skills]) => {
+        if (typeof skills === 'object') {
+          Object.entries(skills).forEach(([skill, rating]) => {
+            if (rating > 0 && rating < 5) {
+              weaknesses.push(`${skill}: ${rating}/10`);
+            }
+          });
+        }
+      });
+    }
+    return weaknesses.join(', ') || 'No especificado';
   }
 
   showConfirmation() {

@@ -2,13 +2,16 @@
 
 class WatchlistManager {
   constructor() {
-    this.watchlist = this.loadWatchlist();
-    this.filteredWatchlist = [...this.watchlist];
-    this.init();
+    this.currentUserId = null;
+    this.watchlist = [];
+    this.filteredWatchlist = [];
   }
 
-  init() {
+  async init() {
     console.log('🌟 Iniciando Lista de Seguimiento...');
+    await this.getCurrentUser();
+    await this.loadWatchlistFromSupabase();
+    this.filteredWatchlist = [...this.watchlist];
     this.setupEventListeners();
     this.updateStats();
     this.renderWatchlist();
@@ -16,19 +19,133 @@ class WatchlistManager {
     console.log('✅ Lista de Seguimiento inicializada');
   }
 
+  async loadWatchlistFromSupabase() {
+    try {
+      if (!this.currentUserId) {
+        console.log('⚠️ No hay usuario para cargar watchlist');
+        this.watchlist = [];
+        return;
+      }
+
+      console.log('📥 Cargando watchlist desde Supabase...');
+
+      // Primero obtener los IDs de la watchlist
+      const { data: watchlistData, error: watchlistError } = await supabase
+        .from('watchlist')
+        .select('*')
+        .eq('scout_id', this.currentUserId)
+        .order('added_date', { ascending: false });
+
+      if (watchlistError) {
+        console.error('❌ Error al cargar watchlist:', watchlistError);
+        this.watchlist = [];
+        return;
+      }
+
+      console.log('📊 Watchlist entries:', watchlistData?.length || 0);
+
+      if (!watchlistData || watchlistData.length === 0) {
+        console.log('📭 No hay jugadores en la lista');
+        this.watchlist = [];
+        return;
+      }
+
+      // Obtener los IDs de jugadores
+      const playerIds = watchlistData.map(item => item.player_id);
+      console.log('🎯 Player IDs:', playerIds);
+
+      // Obtener los datos de los jugadores
+      const { data: playersData, error: playersError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', playerIds);
+
+      if (playersError) {
+        console.error('❌ Error al cargar jugadores:', playersError);
+        this.watchlist = [];
+        return;
+      }
+
+      console.log('✅ Jugadores cargados:', playersData?.length || 0);
+
+      // Combinar los datos
+      this.watchlist = watchlistData.map(item => {
+        const player = playersData.find(p => p.id === item.player_id);
+        if (!player) {
+          console.warn('⚠️ Jugador no encontrado:', item.player_id);
+          return null;
+        }
+
+        return {
+          id: player.id,
+          player_id: item.player_id,
+          name: `${player.first_name || ''} ${player.last_name || ''}`.trim(),
+          first_name: player.first_name,
+          last_name: player.last_name,
+          primaryPosition: player.position,
+          secondaryPosition: player.secondary_position,
+          age: player.age,
+          nationality: player.nationality,
+          height: player.height,
+          weight: player.weight,
+          club: player.current_club || 'Sin club',
+          league: player.league || 'Sin liga',
+          city: player.city || '',
+          state: player.state || '',
+          addedDate: item.added_date,
+          addedTimestamp: new Date(item.added_date).getTime(),
+          tags: []
+        };
+      }).filter(item => item !== null);
+
+    } catch (error) {
+      console.error('❌ Error al cargar watchlist:', error);
+      this.watchlist = [];
+    }
+  }
+
+  async getCurrentUser() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      if (user) {
+        this.currentUserId = user.id;
+        console.log('👤 Usuario actual:', this.currentUserId);
+      }
+    } catch (error) {
+      console.error('❌ Error al obtener usuario:', error);
+    }
+  }
+
   loadWatchlist() {
     try {
-      const saved = localStorage.getItem('scoutconnect_watchlist');
-      return saved ? JSON.parse(saved) : [];
+      if (!this.currentUserId) {
+        console.log('⚠️ No hay usuario logueado');
+        return [];
+      }
+      const key = `scoutconnect_watchlist_${this.currentUserId}`;
+      const saved = localStorage.getItem(key);
+      console.log('📥 Cargando watchlist para usuario:', this.currentUserId);
+      console.log('🔑 Clave utilizada:', key);
+      console.log('💾 Datos guardados:', saved);
+      const parsed = saved ? JSON.parse(saved) : [];
+      console.log('📊 Jugadores cargados:', parsed.length);
+      return parsed;
     } catch (error) {
-      console.error('Error al cargar watchlist:', error);
+      console.error('❌ Error al cargar watchlist:', error);
       return [];
     }
   }
 
   saveWatchlist() {
     try {
-      localStorage.setItem('scoutconnect_watchlist', JSON.stringify(this.watchlist));
+      if (!this.currentUserId) {
+        console.error('⚠️ No se puede guardar: no hay usuario logueado');
+        return;
+      }
+      const key = `scoutconnect_watchlist_${this.currentUserId}`;
+      localStorage.setItem(key, JSON.stringify(this.watchlist));
+      console.log('💾 Watchlist guardada para usuario:', this.currentUserId, '- Items:', this.watchlist.length);
     } catch (error) {
       console.error('Error al guardar watchlist:', error);
     }
@@ -152,7 +269,7 @@ class WatchlistManager {
     const tags = player.tags ? player.tags.slice(0, 3) : [];
 
     return `
-      <div class="watchlist-player-card" onclick="watchlistManager.showPlayerProfile(${player.id})">
+      <div class="watchlist-player-card" onclick="watchlistManager.showPlayerProfile('${player.id}')"
         <div class="watchlist-card-header">
           <div class="watchlist-player-avatar">
             <i class="fas fa-user"></i>
@@ -195,10 +312,10 @@ class WatchlistManager {
         ` : ''}
 
         <div class="watchlist-player-actions">
-          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); watchlistManager.showPlayerProfile(${player.id})">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); watchlistManager.showPlayerProfile('${player.id}')">
             <i class="fas fa-eye"></i> Ver Perfil
           </button>
-          <button class="btn btn-remove btn-sm" onclick="event.stopPropagation(); watchlistManager.removeFromWatchlist(${player.id})">
+          <button class="btn btn-remove btn-sm" onclick="event.stopPropagation(); watchlistManager.removeFromWatchlist('${player.id}')">
             <i class="fas fa-star-of-life"></i> Quitar
           </button>
         </div>
@@ -249,20 +366,45 @@ class WatchlistManager {
     return tagEmojis[tagName] || '🏈';
   }
 
-  removeFromWatchlist(playerId) {
-    const player = this.watchlist.find(p => p.id === playerId);
+  async removeFromWatchlist(playerId) {
+    const player = this.watchlist.find(p => p.id === playerId || p.player_id === playerId);
     if (!player) return;
 
     if (confirm(`¿Estás seguro de que quieres quitar a ${player.name} de tu lista de seguimiento?`)) {
-      this.watchlist = this.watchlist.filter(p => p.id !== playerId);
-      this.saveWatchlist();
-      this.filteredWatchlist = this.filteredWatchlist.filter(p => p.id !== playerId);
-      
-      this.updateStats();
-      this.updateNavCounter();
-      this.renderWatchlist();
-      
-      this.showNotification(`${player.name} removido de la lista de seguimiento`, 'info');
+      try {
+        // Eliminar de Supabase
+        const { error } = await supabase
+          .from('watchlist')
+          .delete()
+          .eq('scout_id', this.currentUserId)
+          .eq('player_id', playerId);
+
+        if (error) {
+          console.error('❌ Error al eliminar de Supabase:', error);
+          this.showNotification('Error al eliminar de la lista', 'error');
+          return;
+        }
+
+        // Eliminar de las listas locales
+        this.watchlist = this.watchlist.filter(p => {
+          const pid = p.player_id || p.id;
+          return pid !== playerId;
+        });
+        this.filteredWatchlist = this.filteredWatchlist.filter(p => {
+          const pid = p.player_id || p.id;
+          return pid !== playerId;
+        });
+        
+        this.updateStats();
+        this.updateNavCounter();
+        this.renderWatchlist();
+        
+        this.showNotification(`${player.name} removido de la lista de seguimiento`, 'info');
+        console.log('✅ Jugador eliminado de watchlist');
+      } catch (error) {
+        console.error('❌ Error al eliminar:', error);
+        this.showNotification('Error al eliminar de la lista', 'error');
+      }
     }
   }
 
@@ -447,7 +589,8 @@ function closeModal(modalId) {
 }
 
 // Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 DOM cargado, iniciando Lista de Seguimiento...');
   window.watchlistManager = new WatchlistManager();
+  await window.watchlistManager.init();
 });

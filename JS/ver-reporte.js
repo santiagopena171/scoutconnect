@@ -109,7 +109,12 @@ class ReportViewer {
 
     // Título y meta información
     document.getElementById('reportTitle').textContent = this.report.title || 'Reporte de Scouting';
-    document.getElementById('reportDate').textContent = new Date(this.report.date).toLocaleDateString('es-ES');
+    
+    // Fecha - soportar diferentes formatos
+    const dateStr = this.report.observationDate || this.report.date || this.report.createdAt;
+    const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('es-ES') : 'Fecha no disponible';
+    document.getElementById('reportDate').textContent = displayDate;
+    
     document.getElementById('reportScout').textContent = this.report.scoutName || 'Scout';
     document.getElementById('reportPlayer').textContent = this.report.playerName || 'Jugador';
 
@@ -118,8 +123,14 @@ class ReportViewer {
       document.getElementById('currentUserName').textContent = this.currentUser.name || 'Scout';
     }
 
-    // Rating general
-    const overallRating = this.report.overallRating || 0;
+    // Rating general - calcular si no existe
+    let overallRating = this.report.overall || this.report.overallRating;
+    if (!overallRating && this.report.ratings) {
+      const values = Object.values(this.report.ratings).filter(v => v > 0);
+      overallRating = values.length > 0 ? values.reduce((a, b) => a + b) / values.length : 0;
+    }
+    overallRating = overallRating || 0;
+    
     document.getElementById('overallRating').textContent = overallRating.toFixed(1);
     this.renderStars(overallRating);
 
@@ -140,10 +151,13 @@ class ReportViewer {
 
     // Footer
     document.getElementById('footerScout').textContent = this.report.scoutName || 'Scout';
-    document.getElementById('footerDate').textContent = new Date(this.report.date).toLocaleDateString('es-ES');
+    
+    const footerDateStr = this.report.observationDate || this.report.date || this.report.createdAt;
+    const footerDate = footerDateStr ? new Date(footerDateStr).toLocaleDateString('es-ES') : '-';
+    document.getElementById('footerDate').textContent = footerDate;
 
     // Actualizar título de página
-    document.title = `${this.report.title} - ${this.report.playerName} - ScoutConnect`;
+    document.title = `${this.report.title || 'Reporte'} - ${this.report.playerName} - ScoutConnect`;
   }
 
   renderStars(rating) {
@@ -169,13 +183,17 @@ class ReportViewer {
   renderPlayerInfo() {
     const infoGrid = document.getElementById('playerInfoGrid');
     
+    // Fecha de observación/reporte
+    const dateStr = this.report.observationDate || this.report.date || this.report.createdAt;
+    const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('es-ES') : '-';
+    
     const playerInfo = [
       { label: 'Nombre', value: this.report.playerName || '-' },
       { label: 'Posición', value: this.report.playerPosition || '-' },
       { label: 'Edad', value: this.report.playerAge || '-' },
       { label: 'Club', value: this.report.playerClub || '-' },
       { label: 'Nacionalidad', value: this.report.playerNationality || '-' },
-      { label: 'Fecha del reporte', value: new Date(this.report.date).toLocaleDateString('es-ES') }
+      { label: 'Fecha del reporte', value: displayDate }
     ];
 
     infoGrid.innerHTML = playerInfo.map(info => `
@@ -187,23 +205,53 @@ class ReportViewer {
   }
 
   renderEvaluations() {
-    // Técnico
-    this.renderCategory('technical', 'technicalRating', 'technicalSkills', this.report.technicalEvals);
+    // Técnico - soportar ambos formatos
+    const technicalRating = this.report.ratings?.technical || this.report.technicalRating || 0;
+    const technicalEvals = this.report.technicalEvals || this.extractEvaluations(this.report.evaluations, 'technical');
+    this.renderCategory('technical', 'technicalRating', 'technicalSkills', technicalEvals, technicalRating);
     
     // Físico
-    this.renderCategory('physical', 'physicalRating', 'physicalSkills', this.report.physicalEvals);
+    const physicalRating = this.report.ratings?.physical || this.report.physicalRating || 0;
+    const physicalEvals = this.report.physicalEvals || this.extractEvaluations(this.report.evaluations, 'physical');
+    this.renderCategory('physical', 'physicalRating', 'physicalSkills', physicalEvals, physicalRating);
     
     // Mental
-    this.renderCategory('mental', 'mentalRating', 'mentalSkills', this.report.mentalEvals);
+    const mentalRating = this.report.ratings?.mental || this.report.mentalRating || 0;
+    const mentalEvals = this.report.mentalEvals || this.extractEvaluations(this.report.evaluations, 'mental');
+    this.renderCategory('mental', 'mentalRating', 'mentalSkills', mentalEvals, mentalRating);
     
     // Táctico
-    this.renderCategory('tactical', 'tacticalRating', 'tacticalSkills', this.report.tacticalEvals);
+    const tacticalRating = this.report.ratings?.tactical || this.report.tacticalRating || 0;
+    const tacticalEvals = this.report.tacticalEvals || this.extractEvaluations(this.report.evaluations, 'tactical');
+    this.renderCategory('tactical', 'tacticalRating', 'tacticalSkills', tacticalEvals, tacticalRating);
   }
 
-  renderCategory(categoryKey, ratingId, skillsId, evaluations) {
-    // Rating de la categoría
-    const rating = this.report[categoryKey + 'Rating'] || 0;
-    document.getElementById(ratingId).textContent = `${rating.toFixed(1)}/10`;
+  extractEvaluations(evaluations, category) {
+    if (!evaluations) return {};
+    
+    const categoryMap = {
+      'technical': ['ballControl', 'shortPass', 'longPass', 'finishing', 'dribbling', 'firstTouch'],
+      'physical': ['speed', 'stamina', 'strength', 'agility', 'jumping', 'balance'],
+      'mental': ['concentration', 'decisions', 'leadership', 'teamwork', 'pressure', 'motivation'],
+      'tactical': ['positioning', 'vision', 'marking', 'anticipation']
+    };
+    
+    const skills = categoryMap[category] || [];
+    const result = {};
+    
+    skills.forEach(skill => {
+      if (evaluations[skill] !== undefined) {
+        result[skill] = evaluations[skill];
+      }
+    });
+    
+    return result;
+  }
+
+  renderCategory(categoryKey, ratingId, skillsId, evaluations, rating) {
+    // Rating de la categoría - usar el parámetro pasado
+    const displayRating = rating || 0;
+    document.getElementById(ratingId).textContent = `${displayRating.toFixed(1)}/10`;
 
     // Skills de la categoría
     const skillsContainer = document.getElementById(skillsId);
@@ -212,7 +260,7 @@ class ReportViewer {
       skillsContainer.innerHTML = '<p style="color: #6b7280; font-size: 14px;">No hay evaluaciones detalladas</p>';
       return;
     }
-
+    
     skillsContainer.innerHTML = Object.entries(evaluations).map(([skill, value]) => {
       const percentage = (value / 10) * 100;
       const ratingClass = this.getRatingClass(value);
@@ -240,14 +288,24 @@ class ReportViewer {
 
   renderSummary() {
     const summaryContainer = document.getElementById('reportSummary');
-    const summary = this.report.summary || 'No hay resumen disponible para este reporte.';
+    const summary = this.report.summary || this.report.observations || 'No hay resumen disponible para este reporte.';
     summaryContainer.innerHTML = `<p>${summary}</p>`;
   }
 
   renderStrengthsWeaknesses() {
     // Fortalezas
     const strengthsList = document.getElementById('strengthsList');
-    const strengths = this.report.strengths || this.generateStrengthsFromEvals();
+    let strengths = [];
+    
+    // Si strengths es un string, convertirlo a array
+    if (typeof this.report.strengths === 'string' && this.report.strengths.trim() !== '' && this.report.strengths !== 'No especificadas') {
+      // Dividir por saltos de línea, comas o puntos
+      strengths = this.report.strengths.split(/[\n,•-]+/).map(s => s.trim()).filter(s => s.length > 0);
+    } else if (Array.isArray(this.report.strengths)) {
+      strengths = this.report.strengths;
+    } else {
+      strengths = this.generateStrengthsFromEvals();
+    }
     
     if (strengths.length === 0) {
       strengthsList.innerHTML = '<li>No hay fortalezas identificadas</li>';
@@ -257,7 +315,17 @@ class ReportViewer {
 
     // Debilidades
     const weaknessesList = document.getElementById('weaknessesList');
-    const weaknesses = this.report.weaknesses || this.generateWeaknessesFromEvals();
+    let weaknesses = [];
+    
+    // Si weaknesses es un string, convertirlo a array
+    if (typeof this.report.weaknesses === 'string' && this.report.weaknesses.trim() !== '' && this.report.weaknesses !== 'No especificadas') {
+      // Dividir por saltos de línea, comas o puntos
+      weaknesses = this.report.weaknesses.split(/[\n,•-]+/).map(w => w.trim()).filter(w => w.length > 0);
+    } else if (Array.isArray(this.report.weaknesses)) {
+      weaknesses = this.report.weaknesses;
+    } else {
+      weaknesses = this.generateWeaknessesFromEvals();
+    }
     
     if (weaknesses.length === 0) {
       weaknessesList.innerHTML = '<li>No hay áreas de mejora identificadas</li>';
@@ -305,32 +373,72 @@ class ReportViewer {
   renderRecommendation() {
     const recContainer = document.getElementById('recommendationContent');
     const recommendation = this.report.recommendation || '';
-    const overallRating = this.report.overallRating || 0;
+    
+    // Mapeo de valores del select a badge visual
+    const recommendationMap = {
+      'sign': {
+        class: '',
+        text: 'Recomendar fichaje inmediato',
+        icon: 'fa-star'
+      },
+      'monitor': {
+        class: 'consider',
+        text: 'Continuar monitoreando',
+        icon: 'fa-eye'
+      },
+      'trial': {
+        class: 'consider',
+        text: 'Ofrecer periodo de prueba',
+        icon: 'fa-clock'
+      },
+      'contact': {
+        class: 'consider',
+        text: 'Contactar para más información',
+        icon: 'fa-phone'
+      },
+      'development': {
+        class: 'consider',
+        text: 'Potencial a largo plazo',
+        icon: 'fa-seedling'
+      },
+      'reject': {
+        class: 'not-recommended',
+        text: 'No recomendado',
+        icon: 'fa-times-circle'
+      }
+    };
 
-    let badgeClass = 'recommendation-badge';
-    let badgeText = 'Recomendado';
-    let badgeIcon = 'fa-thumbs-up';
+    // Obtener configuración del badge según la recomendación
+    const badgeConfig = recommendationMap[recommendation] || {
+      class: 'consider',
+      text: 'Sin recomendación específica',
+      icon: 'fa-info-circle'
+    };
 
-    if (overallRating >= 7.5) {
-      badgeClass += '';
-      badgeText = 'Altamente Recomendado';
-      badgeIcon = 'fa-star';
-    } else if (overallRating >= 6) {
-      badgeClass += ' consider';
-      badgeText = 'A Considerar';
-      badgeIcon = 'fa-check-circle';
-    } else {
-      badgeClass += ' not-recommended';
-      badgeText = 'No Recomendado';
-      badgeIcon = 'fa-times-circle';
+    let badgeClass = 'recommendation-badge ' + badgeConfig.class;
+    let badgeIcon = badgeConfig.icon;
+    
+    // Determinar el texto a mostrar
+    let badgeText = badgeConfig.text; // Usar el texto del mapeo por defecto
+    
+    // Si existe recommendationText y NO es el texto por defecto del select, usarlo
+    if (this.report.recommendationText && 
+        this.report.recommendationText !== 'Seleccionar recomendación' &&
+        this.report.recommendationText !== '') {
+      badgeText = this.report.recommendationText;
     }
+
+    console.log('📝 Recomendación:', {
+      recommendation: this.report.recommendation,
+      recommendationText: this.report.recommendationText,
+      badgeText: badgeText
+    });
 
     recContainer.innerHTML = `
       <div class="${badgeClass}">
         <i class="fas ${badgeIcon}"></i>
         <span>${badgeText}</span>
       </div>
-      <p class="recommendation-text">${recommendation || 'El scout no ha dejado una recomendación específica.'}</p>
     `;
   }
 

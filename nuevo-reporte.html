@@ -376,10 +376,50 @@
                     <!-- Resumen del reporte se generará aquí -->
                 </div>
 
+                <div class="strengths-weaknesses-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <!-- Fortalezas -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0;"><i class="fas fa-thumbs-up"></i> Fortalezas</h3>
+                            <button type="button" class="btn-add-item" onclick="reportGenerator.addStrength()" title="Agregar fortaleza">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="strengthsContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                            <div class="item-input-wrapper">
+                                <input type="text" class="strength-input" placeholder="Ej: Excelente visión de juego" />
+                                <button type="button" class="btn-remove-item" onclick="this.parentElement.remove()" style="visibility: hidden;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <small style="color: #6b7280; font-size: 0.85rem; display: block; margin-top: 8px;">Agrega los puntos fuertes más destacados</small>
+                    </div>
+                    
+                    <!-- Áreas de Mejora -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0;"><i class="fas fa-exclamation-triangle"></i> Áreas de Mejora</h3>
+                            <button type="button" class="btn-add-item" onclick="reportGenerator.addWeakness()" title="Agregar área de mejora">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="weaknessesContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                            <div class="item-input-wrapper">
+                                <input type="text" class="weakness-input" placeholder="Ej: Mejorar juego aéreo" />
+                                <button type="button" class="btn-remove-item" onclick="this.parentElement.remove()" style="visibility: hidden;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <small style="color: #6b7280; font-size: 0.85rem; display: block; margin-top: 8px;">Indica aspectos que debe desarrollar</small>
+                    </div>
+                </div>
+
                 <div class="final-observations">
                     <h3>Observaciones Adicionales</h3>
                     <textarea id="finalObservations" rows="6" 
-                              placeholder="Agrega observaciones, comentarios adicionales, puntos fuertes, áreas de mejora, recomendaciones..."></textarea>
+                              placeholder="Agrega observaciones generales, contexto del partido, comentarios sobre el rendimiento..."></textarea>
                 </div>
 
                 <div class="recommendation-section">
@@ -428,6 +468,9 @@
         </div>
     </div>
 
+    <!-- Scripts - Orden correcto de carga -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="JS/supabase-config.js"></script>
     <script src="JS/nuevo-reporte.js"></script>
 </body>
 </html>
