@@ -76,6 +76,18 @@ class WatchlistManager {
           return null;
         }
 
+        // Calcular edad desde birth_date si no está disponible
+        let age = player.age;
+        if (!age && player.birth_date) {
+          const birthDate = new Date(player.birth_date);
+          const today = new Date();
+          age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+        }
+
         return {
           id: player.id,
           player_id: item.player_id,
@@ -84,7 +96,7 @@ class WatchlistManager {
           last_name: player.last_name,
           primaryPosition: player.position,
           secondaryPosition: player.secondary_position,
-          age: player.age,
+          age: age || 0,
           nationality: player.nationality,
           height: player.height,
           weight: player.weight,
@@ -288,7 +300,7 @@ class WatchlistManager {
         <div class="watchlist-player-details">
           <div class="watchlist-detail-item">
             <span class="watchlist-detail-label">Edad:</span>
-            <span class="watchlist-detail-value">${player.age} años</span>
+            <span class="watchlist-detail-value">${player.age > 0 ? player.age + ' años' : 'No disponible'}</span>
           </div>
           <div class="watchlist-detail-item">
             <span class="watchlist-detail-label">Nacionalidad:</span>
