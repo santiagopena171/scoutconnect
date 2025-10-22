@@ -1104,6 +1104,21 @@ class PlayerProfile {
 
   async loadReportsFromSupabase() {
     try {
+      console.log('📊 Cargando reportes del jugador desde Supabase...');
+      console.log('🎯 Player ID:', this.playerId);
+
+      // Obtener el usuario actual (scout)
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.warn('⚠️ No hay usuario autenticado');
+        return [];
+      }
+
+      console.log('👤 Scout ID:', user.id);
+
+      // La política RLS ya filtra automáticamente por scout_id = auth.uid()
+      // Solo necesitamos filtrar por player_id
       const { data: reports, error } = await supabase
         .from('reports')
         .select('*')
@@ -1115,12 +1130,15 @@ class PlayerProfile {
         return [];
       }
 
+      console.log(`✅ ${reports.length} reportes cargados para este jugador (creados por ti)`);
+
       // Convertir formato de Supabase al formato esperado
       return reports.map(r => ({
         id: r.id,
         playerId: r.player_id,
         playerName: r.player_name,
         playerPosition: r.player_position,
+        scoutId: r.scout_id, // ⭐ IMPORTANTE: mapear scout_id para el filtro
         scoutName: 'Scout', // Se podría obtener del profile del scout
         observationDate: r.match_date,
         createdAt: r.created_at,

@@ -1021,15 +1021,69 @@ class ScoutDashboard {
     this.loadGeneratedReports();
   }
 
-  loadGeneratedReports() {
-    // Cargar reportes generados desde localStorage
-    const savedReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+  async loadGeneratedReports() {
+    console.log('📊 Cargando reportes del scout desde Supabase...');
     
-    // Actualizar estadísticas
-    this.updateReportsStats(savedReports);
-    
-    // Renderizar lista de reportes
-    this.renderReportsList(savedReports);
+    try {
+      // Obtener el usuario actual autenticado
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.error('❌ Error obteniendo usuario:', authError);
+        this.updateReportsStats([]);
+        this.renderReportsList([]);
+        return;
+      }
+
+      console.log('👤 Scout ID:', user.id);
+
+      // Cargar reportes del scout desde Supabase
+      const { data: reports, error } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('scout_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('❌ Error cargando reportes desde Supabase:', error);
+        this.updateReportsStats([]);
+        this.renderReportsList([]);
+        return;
+      }
+
+      console.log(`✅ ${reports.length} reportes cargados desde Supabase`);
+
+      // Convertir formato de Supabase al formato esperado por el dashboard
+      const formattedReports = reports.map(r => ({
+        id: r.id,
+        playerId: r.player_id,
+        playerName: r.player_name,
+        playerPosition: r.player_position,
+        observationDate: r.match_date,
+        createdAt: r.created_at,
+        ratings: {
+          technical: r.technical_rating || 0,
+          physical: r.physical_rating || 0,
+          mental: r.mental_rating || 0,
+          tactical: r.tactical_rating || 0
+        },
+        overall: r.overall_rating || 0,
+        recommendation: r.recommendation || 'pending',
+        status: 'completed', // Todos los reportes guardados están completados
+        isFavorite: false
+      }));
+
+      // Actualizar estadísticas
+      this.updateReportsStats(formattedReports);
+      
+      // Renderizar lista de reportes
+      this.renderReportsList(formattedReports);
+      
+    } catch (error) {
+      console.error('❌ Error en loadGeneratedReports:', error);
+      this.updateReportsStats([]);
+      this.renderReportsList([]);
+    }
   }
 
   updateReportsStats(reports) {
