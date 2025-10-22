@@ -1,0 +1,165 @@
+/* ============================================
+   COMPONENT: ChatHeader
+   ============================================ */
+
+.chat-header {
+  height: 64px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+}
+
+.header-back-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.2s;
+}
+
+.header-back-btn:hover {
+  color: #00A859;
+}
+
+.header-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.header-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  overflow: hidden;
+}
+
+.header-avatar-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-online-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #00A859;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.header-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-badge.scout {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.role-badge.player {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.header-status {
+  font-size: 13px;
+  color: #666;
+}
+
+.header-status.online {
+  color: #00A859;
+  font-weight: 500;
+}
+
+.header-status.typing {
+  color: #00A859;
+  font-style: italic;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-action-btn {
+  background: none;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.header-action-btn:hover {
+  background: #f5f5f5;
+  color: #00A859;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-back-btn {
+    display: block;
+  }
+  
+  .header-actions {
+    gap: 4px;
+  }
+  
+  .header-action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}

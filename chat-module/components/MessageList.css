@@ -1,0 +1,137 @@
+/* ============================================
+   COMPONENT: MessageList
+   ============================================ */
+
+.message-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  background: #f9fafb;
+}
+
+/* Load More */
+.load-more-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  color: #6b7280;
+}
+
+.load-more-indicator i {
+  font-size: 18px;
+  color: #00A859;
+}
+
+.load-more-btn {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  color: #00A859;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover {
+  background: #f0fdf7;
+  border-color: #00A859;
+}
+
+/* Date Divider */
+.message-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-divider {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 16px 0 8px;
+}
+
+.date-divider span {
+  background: #e5f6ef;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* Empty State */
+.message-list.empty {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.empty-state-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #6b7280;
+}
+
+.empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: #e5f6ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00A859;
+  font-size: 32px;
+}
+
+.empty-state-messages h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.empty-state-messages p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Typing Indicator spacing */
+.typing-indicator-wrapper {
+  padding: 0 16px 16px;
+}
+
+/* Scrollbar */
+.message-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.message-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-list::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+
+.message-list::-webkit-scrollbar-thumb:hover {
+  background: #cbd5f5;
+}
+
+@media (max-width: 768px) {
+  .message-list {
+    padding: 12px;
+  }
+}
