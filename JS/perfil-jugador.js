@@ -23,10 +23,13 @@ class PlayerProfile {
     this.reports = await this.loadReports();
     this.updateCounters();
     this.setupEventListeners();
-    // Estado inicial de filtro de reportes: 'mine' para mostrar solo reportes del scout actual
-    this.reportsFilter = 'mine';
+    
     // Intentar detectar scout/usuario actual
     this.currentUser = this.loadCurrentUser();
+    
+    // Estado inicial de filtro de reportes: 'mine' para mostrar solo reportes del scout actual
+    this.reportsFilter = 'mine';
+    
     // Aplicar filtro inicial (actualiza botones y lista)
     this.setReportsFilter(this.reportsFilter);
     console.log('✅ Perfil de Jugador inicializado');
@@ -1076,24 +1079,35 @@ class PlayerProfile {
       
       // Intentar cargar desde Supabase primero
       if (typeof supabase !== 'undefined' && this.playerId) {
+        console.log('   - Intentando cargar desde Supabase...');
         const reports = await this.loadReportsFromSupabase();
         console.log('   - Reportes de Supabase:', reports);
         if (reports && reports.length > 0) {
           console.log(`✅ ${reports.length} reportes cargados desde Supabase`);
           return reports;
         } else {
-          console.log('   - No hay reportes en Supabase para este jugador');
+          console.log('   - No hay reportes en Supabase para este jugador o sin acceso');
         }
       }
       
       // Fallback: cargar desde localStorage
-      console.log('📦 Cargando reportes desde localStorage...');
+      console.log('📦 Intentando cargar reportes desde localStorage...');
       const localReports = localStorage.getItem('generatedReports');
+      console.log('   - Datos en localStorage:', localReports ? 'Encontrados' : 'No encontrados');
+      
       const allReports = localReports ? JSON.parse(localReports) : [];
+      console.log('   - Total reportes en localStorage:', allReports.length);
       
       // Filtrar solo los reportes de este jugador
-      const playerReports = allReports.filter(r => r.playerId == this.playerId);
-      console.log(`✅ ${playerReports.length} reportes encontrados en localStorage`);
+      const playerReports = allReports.filter(r => {
+        const match = r.playerId == this.playerId;
+        if (match) {
+          console.log('   - Reporte encontrado:', r.title || r.playerName);
+        }
+        return match;
+      });
+      
+      console.log(`✅ ${playerReports.length} reportes encontrados en localStorage para este jugador`);
       
       return playerReports;
     } catch (error) {
@@ -1111,14 +1125,55 @@ class PlayerProfile {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
-        console.warn('⚠️ No hay usuario autenticado');
-        return [];
+        console.warn('⚠️ No hay usuario autenticado en Supabase');
+        console.log('   - AuthError:', authError);
+        console.log('   - User:', user);
+        // Si no hay usuario autenticado, intentar cargar todos los reportes del jugador
+        // (esto puede estar restringido por RLS, pero intentamos)
+        const { data: reports, error: reportError } = await supabase
+          .from('reports')
+          .select('*')
+          .eq('player_id', this.playerId)
+          .order('created_at', { ascending: false });
+          
+        if (reportError) {
+          console.error('⚠️ Error cargando reportes (sin auth):', reportError);
+          return [];
+        }
+        
+        console.log(`📋 ${reports.length} reportes cargados sin autenticación`);
+        console.log('   - Reportes encontrados:', reports.map(r => ({ id: r.id, title: r.title, player_name: r.player_name })));
+        
+        // Mapear reportes sin información del scout
+        return reports.map(r => ({
+          id: r.id,
+          playerId: r.player_id,
+          playerName: r.player_name,
+          playerPosition: r.player_position,
+          title: r.title || `Reporte de ${r.player_name}`,
+          type: r.type || 'Reporte de Scouting',
+          scoutId: r.scout_id,
+          scoutName: 'Scout',
+          observationDate: r.match_date,
+          createdAt: r.created_at,
+          ratings: {
+            technical: r.technical_rating || 0,
+            physical: r.physical_rating || 0,
+            mental: r.mental_rating || 0,
+            tactical: r.tactical_rating || 0
+          },
+          overall: r.overall_rating || 0,
+          observations: r.detailed_analysis || '',
+          recommendation: r.recommendation || 'pending',
+          strengths: r.strengths || '',
+          weaknesses: r.weaknesses || ''
+        }));
       }
 
       console.log('👤 Scout ID:', user.id);
 
       // La política RLS ya filtra automáticamente por scout_id = auth.uid()
-      // Solo necesitamos filtrar por player_id
+      // Consulta simple que funcionaba antes
       const { data: reports, error } = await supabase
         .from('reports')
         .select('*')
@@ -1133,27 +1188,38 @@ class PlayerProfile {
       console.log(`✅ ${reports.length} reportes cargados para este jugador (creados por ti)`);
 
       // Convertir formato de Supabase al formato esperado
-      return reports.map(r => ({
-        id: r.id,
-        playerId: r.player_id,
-        playerName: r.player_name,
-        playerPosition: r.player_position,
-        scoutId: r.scout_id, // ⭐ IMPORTANTE: mapear scout_id para el filtro
-        scoutName: 'Scout', // Se podría obtener del profile del scout
-        observationDate: r.match_date,
-        createdAt: r.created_at,
-        ratings: {
-          technical: r.technical_rating || 0,
-          physical: r.physical_rating || 0,
-          mental: r.mental_rating || 0,
-          tactical: r.tactical_rating || 0
-        },
-        overall: r.overall_rating || 0,
-        observations: r.detailed_analysis || '',
-        recommendation: r.recommendation || 'pending',
-        strengths: r.strengths || '',
-        weaknesses: r.weaknesses || ''
-      }));
+      return reports.map(r => {
+        // Obtener nombre del scout desde el perfil o usar fallback
+        const scoutName = r.profiles?.full_name || 
+                         r.profiles?.email?.split('@')[0] || 
+                         user.user_metadata?.full_name || 
+                         user.email?.split('@')[0] || 
+                         'Scout';
+        
+        return {
+          id: r.id,
+          playerId: r.player_id,
+          playerName: r.player_name,
+          playerPosition: r.player_position,
+          title: r.title || `Reporte de ${r.player_name}`,
+          type: r.type || 'Reporte de Scouting',
+          scoutId: r.scout_id,
+          scoutName: scoutName,
+          observationDate: r.match_date,
+          createdAt: r.created_at,
+          ratings: {
+            technical: r.technical_rating || 0,
+            physical: r.physical_rating || 0,
+            mental: r.mental_rating || 0,
+            tactical: r.tactical_rating || 0
+          },
+          overall: r.overall_rating || 0,
+          observations: r.detailed_analysis || '',
+          recommendation: r.recommendation || 'pending',
+          strengths: r.strengths || '',
+          weaknesses: r.weaknesses || ''
+        };
+      });
     } catch (error) {
       console.error('❌ Error en loadReportsFromSupabase:', error);
       return [];
@@ -1413,8 +1479,11 @@ class PlayerProfile {
     // Extraer nombre del scout
     const scoutName = report.scoutName || 'Scout Desconocido';
     
+    // Extraer tipo de reporte
+    const reportType = report.type || report.reportType || 'Reporte de Scouting';
+    
     // Extraer título
-    const title = report.title || 'Reporte de Scouting';
+    const title = report.title || `Reporte de ${this.playerData?.name || 'Jugador'}`;
     
     // Extraer resumen/observaciones
     const summary = report.summary || report.observations || 'Evaluación completa del rendimiento del jugador en diferentes aspectos técnicos y tácticos.';
@@ -1427,6 +1496,11 @@ class PlayerProfile {
         </div>
         
         <div class="report-scout">
+          <i class="fas fa-clipboard-list"></i>
+          <span>Tipo: ${reportType}</span>
+        </div>
+        
+        <div class="report-author">
           <i class="fas fa-user"></i>
           <span>Scout: ${scoutName}</span>
         </div>
@@ -1456,6 +1530,9 @@ class PlayerProfile {
           </button>
           <button class="report-btn primary" onclick="event.stopPropagation(); playerProfile.viewReport('${report.id}')">
             <i class="fas fa-eye"></i> Ver Completo
+          </button>
+          <button class="report-btn danger" onclick="event.stopPropagation(); playerProfile.deleteReport('${report.id}', '${title}')" title="Eliminar reporte">
+            <i class="fas fa-trash"></i> Eliminar
           </button>
         </div>
       </div>
@@ -1505,6 +1582,71 @@ class PlayerProfile {
     // Redirigir a edición con datos precargados
     const reportUrl = `nuevo-reporte.html?editId=${reportId}`;
     window.location.href = reportUrl;
+  }
+
+  async deleteReport(reportId, reportTitle) {
+    // Confirmar eliminación
+    const confirmed = confirm(
+      `¿Estás seguro de que quieres eliminar el reporte "${reportTitle}"?\n\n` +
+      `Esta acción no se puede deshacer.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      console.log('🗑️ Eliminando reporte:', reportId);
+      
+      let deleted = false;
+      
+      // 1. Intentar eliminar de Supabase primero
+      if (typeof supabase !== 'undefined' && supabase) {
+        try {
+          const { error } = await supabase
+            .from('reports')
+            .delete()
+            .eq('id', reportId);
+          
+          if (!error) {
+            console.log('✅ Reporte eliminado de Supabase');
+            deleted = true;
+          } else {
+            console.warn('⚠️ Error eliminando de Supabase:', error);
+          }
+        } catch (supabaseError) {
+          console.warn('⚠️ Error con Supabase:', supabaseError);
+        }
+      }
+      
+      // 2. Eliminar de localStorage (como fallback o backup)
+      try {
+        const reportsStr = localStorage.getItem('generatedReports');
+        if (reportsStr) {
+          const reports = JSON.parse(reportsStr);
+          const updatedReports = reports.filter(r => r.id !== reportId);
+          localStorage.setItem('generatedReports', JSON.stringify(updatedReports));
+          console.log('✅ Reporte eliminado de localStorage');
+          deleted = true;
+        }
+      } catch (localError) {
+        console.warn('⚠️ Error eliminando de localStorage:', localError);
+      }
+      
+      if (deleted) {
+        // Mostrar notificación de éxito
+        this.showNotification(`Reporte "${reportTitle}" eliminado correctamente`, 'success');
+        
+        // Recargar la lista de reportes
+        this.reports = await this.loadReports();
+        this.renderReportsSection();
+        this.updateReportsCounter();
+      } else {
+        throw new Error('No se pudo eliminar el reporte');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error al eliminar reporte:', error);
+      this.showNotification('Error al eliminar el reporte. Inténtalo nuevamente.', 'error');
+    }
   }
 
   showReportModal(report) {

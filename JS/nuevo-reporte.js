@@ -568,6 +568,11 @@ class ReportGenerator {
     const finalRecommendation = finalRecommendationSelect.value;
     const finalRecommendationText = finalRecommendationSelect.options[finalRecommendationSelect.selectedIndex].text;
 
+    console.log('📝 Datos recolectados del formulario:');
+    console.log('Fortalezas:', finalStrengths);
+    console.log('Debilidades:', finalWeaknesses);
+    console.log('Observaciones:', finalObservations);
+
     // Crear objeto de reporte completo
     const report = {
       id: Date.now().toString(),
@@ -593,8 +598,8 @@ class ReportGenerator {
       },
       summary: finalObservations,
       observations: finalObservations,
-      strengths: finalStrengths.length > 0 ? finalStrengths : ['No especificadas'],
-      weaknesses: finalWeaknesses.length > 0 ? finalWeaknesses : ['No especificadas'],
+      strengths: finalStrengths, // No usar valor por defecto, guardar array vacío si no hay
+      weaknesses: finalWeaknesses, // No usar valor por defecto, guardar array vacío si no hay
       recommendation: finalRecommendation,
       recommendationText: finalRecommendationText || 'Sin recomendación específica',
       status: 'completed',
@@ -707,6 +712,11 @@ class ReportGenerator {
         player_id: report.playerId,
         player_name: report.playerName,
         player_position: report.playerPosition,
+        player_age: report.playerAge,
+        player_club: report.playerClub,
+        player_nationality: report.playerNationality,
+        title: report.title || 'Reporte de Scouting',
+        type: report.type || 'Reporte General',
         match_date: report.observationDate || null,
         match_competition: report.context || '',
         match_teams: report.location || '',
@@ -715,8 +725,8 @@ class ReportGenerator {
         physical_rating: report.ratings.physical || 0,
         tactical_rating: report.ratings.tactical || 0,
         mental_rating: report.ratings.mental || 0,
-        strengths: this.extractStrengths(report.evaluations),
-        weaknesses: this.extractWeaknesses(report.evaluations),
+        strengths: report.strengths || [], // Usar las fortalezas del reporte directamente
+        weaknesses: report.weaknesses || [], // Usar las debilidades del reporte directamente
         detailed_analysis: report.observations || report.summary || '',
         recommendation: report.recommendation || 'pending',
         visibility: 'private',

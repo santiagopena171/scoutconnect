@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Reportes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .debug-title { color: #333; margin-bottom: 15px; }
+        .debug-content { background: #f5f5f5; padding: 15px; border-radius: 4px; white-space: pre-wrap; }
+        .error { color: red; }
+        .success { color: green; }
+        .warning { color: orange; }
+        button { padding: 10px 20px; margin: 10px 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Debug - Reportes ScoutConnect</h1>
+    
+    <div class="debug-section">
+        <h3 class="debug-title">Información del Usuario Actual</h3>
+        <div id="userInfo" class="debug-content">Cargando...</div>
+        <button class="btn-primary" onclick="loadUserInfo()">Recargar Info Usuario</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3 class="debug-title">Reportes en localStorage</h3>
+        <div id="reportsInfo" class="debug-content">Cargando...</div>
+        <button class="btn-success" onclick="loadReportsInfo()">Recargar Reportes</button>
+        <button class="btn-warning" onclick="createTestReport()">Crear Reporte de Prueba</button>
+        <button class="btn-danger" onclick="clearReports()">Limpiar Reportes</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3 class="debug-title">Prueba de Ver Reporte</h3>
+        <div id="testResults" class="debug-content">Selecciona un reporte para probar...</div>
+        <div id="reportsList"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3 class="debug-title">Acciones</h3>
+        <button class="btn-primary" onclick="setTestUser()">Establecer Usuario de Prueba</button>
+        <button class="btn-success" onclick="goToReports()">Ir a Perfil de Jugador</button>
+        <button class="btn-warning" onclick="goToNewReport()">Crear Nuevo Reporte</button>
+    </div>
+
+    <script>
+        function loadUserInfo() {
+            const userInfo = document.getElementById('userInfo');
+            let content = '';
+            
+            try {
+                // Verificar diferentes claves de usuario
+                const keys = ['scoutConnectUser', 'scoutconnect_user', 'currentUser'];
+                
+                keys.forEach(key => {
+                    const data = localStorage.getItem(key);
+                    content += `${key}: ${data ? JSON.stringify(JSON.parse(data), null, 2) : 'null'}\n\n`;
+                });
+                
+                userInfo.textContent = content || 'No se encontró información de usuario';
+            } catch (error) {
+                userInfo.textContent = 'Error al cargar información: ' + error.message;
+                userInfo.className = 'debug-content error';
+            }
+        }
+        
+        function loadReportsInfo() {
+            const reportsInfo = document.getElementById('reportsInfo');
+            const reportsList = document.getElementById('reportsList');
+            
+            try {
+                const reportsData = localStorage.getItem('generatedReports');
+                const reports = reportsData ? JSON.parse(reportsData) : [];
+                
+                reportsInfo.textContent = `Total de reportes: ${reports.length}\n\n${JSON.stringify(reports, null, 2)}`;
+                
+                // Crear botones para probar cada reporte
+                reportsList.innerHTML = reports.map(report => 
+                    `<button class="btn-primary" onclick="testReport('${report.id}')" style="display: block; margin: 5px 0;">
+                        Probar Reporte: ${report.playerName} (ID: ${report.id})
+                    </button>`
+                ).join('');
+                
+            } catch (error) {
+                reportsInfo.textContent = 'Error al cargar reportes: ' + error.message;
+                reportsInfo.className = 'debug-content error';
+            }
+        }
+        
+        function createTestReport() {
+            try {
+                const testReport = {
+                    id: Date.now().toString(),
+                    title: 'Reporte de Prueba',
+                    playerName: 'Jugador Test',
+                    playerPosition: 'Delantero',
+                    playerAge: '20',
+                    playerClub: 'Club Test',
+                    playerNationality: 'Argentina',
+                    observationDate: new Date().toISOString().split('T')[0],
+                    location: 'Estadio Test',
+                    context: 'Partido amistoso',
+                    ratings: {
+                        technical: 7,
+                        physical: 8,
+                        tactical: 6,
+                        mental: 7
+                    },
+                    evaluations: [],
+                    observations: 'Observaciones de prueba para depuración',
+                    summary: 'Resumen del reporte de prueba',
+                    recommendation: 'Recomendado para seguimiento',
+                    scoutName: 'Scout Test',
+                    scoutId: 'test_scout_123',
+                    scoutEmail: 'scout@test.com',
+                    status: 'completed',
+                    createdAt: new Date().toISOString()
+                };
+                
+                const existingReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+                existingReports.push(testReport);
+                localStorage.setItem('generatedReports', JSON.stringify(existingReports));
+                
+                alert('Reporte de prueba creado con ID: ' + testReport.id);
+                loadReportsInfo();
+            } catch (error) {
+                alert('Error al crear reporte de prueba: ' + error.message);
+            }
+        }
+        
+        function clearReports() {
+            if (confirm('¿Estás seguro de que quieres limpiar todos los reportes?')) {
+                localStorage.removeItem('generatedReports');
+                alert('Reportes limpiados');
+                loadReportsInfo();
+            }
+        }
+        
+        function testReport(reportId) {
+            const testResults = document.getElementById('testResults');
+            let content = `Probando reporte con ID: ${reportId}\n\n`;
+            
+            try {
+                // Simular el proceso de ver-reporte.js
+                const reportsStr = localStorage.getItem('generatedReports');
+                const reports = reportsStr ? JSON.parse(reportsStr) : [];
+                
+                content += `Total de reportes encontrados: ${reports.length}\n`;
+                content += `IDs disponibles: ${reports.map(r => r.id).join(', ')}\n\n`;
+                
+                const report = reports.find(r => r.id === reportId);
+                
+                if (!report) {
+                    content += `❌ PROBLEMA: Reporte no encontrado con ID: ${reportId}\n`;
+                    content += `Comparación de tipos:\n`;
+                    reports.forEach(r => {
+                        content += `  - Reporte ID: "${r.id}" (tipo: ${typeof r.id})\n`;
+                        content += `  - Buscado: "${reportId}" (tipo: ${typeof reportId})\n`;
+                        content += `  - Igualdad estricta: ${r.id === reportId}\n`;
+                        content += `  - Igualdad no estricta: ${r.id == reportId}\n\n`;
+                    });
+                } else {
+                    content += `✅ Reporte encontrado!\n`;
+                    content += `Datos del reporte:\n${JSON.stringify(report, null, 2)}\n\n`;
+                    
+                    // Verificar información del scout
+                    const currentUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+                    content += `Usuario actual: ${currentUser ? JSON.stringify(currentUser, null, 2) : 'null'}\n\n`;
+                    
+                    if (currentUser) {
+                        const scoutIdentifier = currentUser.name || currentUser.email || currentUser.id;
+                        const isAuthor = 
+                            report.scoutName === scoutIdentifier ||
+                            report.scoutId == currentUser.id ||
+                            report.scoutEmail === currentUser.email;
+                        
+                        content += `Validación de acceso:\n`;
+                        content += `  - Scout actual: "${scoutIdentifier}"\n`;
+                        content += `  - Scout del reporte: "${report.scoutName}"\n`;
+                        content += `  - ID Scout actual: "${currentUser.id}"\n`;
+                        content += `  - ID Scout del reporte: "${report.scoutId}"\n`;
+                        content += `  - Es autor: ${isAuthor}\n`;
+                    }
+                }
+                
+                testResults.textContent = content;
+                testResults.className = report ? 'debug-content success' : 'debug-content error';
+                
+            } catch (error) {
+                content += `❌ Error durante la prueba: ${error.message}`;
+                testResults.textContent = content;
+                testResults.className = 'debug-content error';
+            }
+        }
+        
+        function setTestUser() {
+            const testUser = {
+                id: 'test_scout_123',
+                name: 'Scout Test',
+                email: 'scout@test.com',
+                fullName: 'Scout Test',
+                userType: 'scout'
+            };
+            
+            localStorage.setItem('scoutConnectUser', JSON.stringify(testUser));
+            alert('Usuario de prueba establecido');
+            loadUserInfo();
+        }
+        
+        function goToReports() {
+            // Buscar un jugador de prueba
+            const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+            if (reports.length > 0) {
+                // Usar el primer reporte para obtener un ID de jugador
+                window.location.href = `perfil-jugador.html?id=test_player_123`;
+            } else {
+                alert('No hay reportes. Crea uno de prueba primero.');
+            }
+        }
+        
+        function goToNewReport() {
+            window.location.href = 'nuevo-reporte.html';
+        }
+        
+        // Cargar información inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
+            loadReportsInfo();
+        });
+    </script>
+</body>
+</html>

@@ -9,6 +9,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="CSS/styles.css">
     <link rel="stylesheet" href="CSS/ver-reporte.css">
+    
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <!-- Navegación Principal -->
@@ -74,12 +77,19 @@
             <i class="fas fa-exclamation-triangle"></i>
             <h2>Reporte No Encontrado</h2>
             <p>El reporte solicitado no existe o ha sido eliminado.</p>
+            <div id="debugInfo" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: left; font-family: monospace; font-size: 12px; color: #6c757d; display: none;">
+                <strong>Información de depuración:</strong><br>
+                <span id="debugContent">Cargando información...</span>
+            </div>
             <div class="error-actions">
                 <a href="busqueda-avanzada.html" class="btn btn-primary">
                     <i class="fas fa-search"></i> Ir a Búsqueda
                 </a>
                 <button onclick="window.history.back()" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Volver
+                </button>
+                <button onclick="showDebugInfo()" class="btn btn-outline" style="font-size: 12px;">
+                    <i class="fas fa-bug"></i> Debug
                 </button>
             </div>
         </div>
@@ -242,6 +252,68 @@
     </main>
 
     <!-- Scripts -->
+    <script>
+        function showDebugInfo() {
+            const debugInfo = document.getElementById('debugInfo');
+            const debugContent = document.getElementById('debugContent');
+            
+            let content = '';
+            
+            try {
+                // URL y parámetros
+                const urlParams = new URLSearchParams(window.location.search);
+                const reportId = urlParams.get('id');
+                content += `URL: ${window.location.href}\n`;
+                content += `Report ID solicitado: "${reportId}"\n\n`;
+                
+                // Reportes en localStorage
+                const reportsStr = localStorage.getItem('generatedReports');
+                const reports = reportsStr ? JSON.parse(reportsStr) : [];
+                content += `Total de reportes en localStorage: ${reports.length}\n`;
+                
+                if (reports.length > 0) {
+                    content += `IDs disponibles en localStorage:\n`;
+                    reports.forEach((r, i) => {
+                        content += `  ${i + 1}. "${r.id}" - ${r.playerName} (${r.scoutName})\n`;
+                    });
+                } else {
+                    content += `No hay reportes en localStorage.\n`;
+                }
+                
+                content += `\n`;
+                
+                // Usuario actual
+                const currentUser = localStorage.getItem('scoutConnectUser');
+                content += `Usuario actual: ${currentUser || 'null'}\n\n`;
+                
+                // Estado de Supabase
+                content += `Supabase disponible: ${typeof supabase !== 'undefined' ? 'Sí' : 'No'}\n`;
+                
+                if (typeof supabase !== 'undefined' && supabase) {
+                    // Intentar obtener usuario de Supabase
+                    supabase.auth.getUser().then(({ data: { user }, error }) => {
+                        if (user) {
+                            content += `Usuario Supabase: ${user.email} (ID: ${user.id})\n`;
+                            debugContent.textContent = content;
+                        } else {
+                            content += `Usuario Supabase: No autenticado\n`;
+                            debugContent.textContent = content;
+                        }
+                    });
+                } else {
+                    content += `Usuario Supabase: No disponible\n`;
+                }
+                
+                debugContent.textContent = content;
+                debugInfo.style.display = 'block';
+                
+            } catch (error) {
+                debugContent.textContent = `Error al generar debug info: ${error.message}`;
+                debugInfo.style.display = 'block';
+            }
+        }
+    </script>
+    <script src="JS/supabase-config.js"></script>
     <script src="JS/ver-reporte.js"></script>
 </body>
 </html>

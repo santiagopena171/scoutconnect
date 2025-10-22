@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Supabase - Ver Reporte</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .action-btn { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            margin: 10px 5px; 
+            background: #007bff; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .action-btn:hover { background: #0056b3; }
+        .action-btn.success { background: #28a745; }
+        .action-btn.warning { background: #ffc107; color: black; }
+        .action-btn.danger { background: #dc3545; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .warning { color: orange; }
+        .result { 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            background: #f8f9fa; 
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .section { 
+            margin: 30px 0; 
+            padding: 20px; 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+        }
+        .section h3 { margin-top: 0; color: #495057; }
+    </style>
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba Supabase - Ver Reporte</h1>
+        
+        <div class="section">
+            <h3>1. Estado de Conexión</h3>
+            <button class="action-btn" onclick="checkSupabaseConnection()">Verificar Conexión a Supabase</button>
+            <div id="connectionResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h3>2. Autenticación</h3>
+            <button class="action-btn" onclick="checkAuth()">Verificar Usuario Autenticado</button>
+            <button class="action-btn warning" onclick="loginWithTest()">Login de Prueba</button>
+            <div id="authResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h3>3. Reportes en Supabase</h3>
+            <button class="action-btn" onclick="listSupabaseReports()">Listar Reportes de Supabase</button>
+            <button class="action-btn success" onclick="createSupabaseReport()">Crear Reporte de Prueba</button>
+            <div id="reportsResult" class="result" style="display: none;"></div>
+            <div id="reportLinks" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="section">
+            <h3>4. Prueba de Ver Reporte</h3>
+            <input type="text" id="reportIdInput" placeholder="ID del reporte a probar" style="padding: 8px; width: 300px; margin-right: 10px;">
+            <button class="action-btn" onclick="testViewReport()">Probar Ver Reporte</button>
+            <div id="testResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h3>5. Utilidades</h3>
+            <button class="action-btn danger" onclick="clearSupabaseReports()">Limpiar Reportes de Supabase</button>
+            <button class="action-btn" onclick="showFullDebug()">Debug Completo</button>
+            <div id="debugResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h3>6. Enlaces Rápidos</h3>
+            <a href="ver-reporte.html" class="action-btn" target="_blank">Página Ver Reporte</a>
+            <a href="nuevo-reporte.html" class="action-btn" target="_blank">Crear Nuevo Reporte</a>
+            <a href="test-ver-reporte.html" class="action-btn" target="_blank">Test Anterior</a>
+        </div>
+    </div>
+
+    <script src="JS/supabase-config.js"></script>
+    <script>
+        let supabaseInitialized = false;
+
+        async function checkSupabaseConnection() {
+            const result = document.getElementById('connectionResult');
+            let content = '';
+            
+            try {
+                content += 'Estado de Supabase:\n';
+                content += `- Librería cargada: ${typeof window.supabase !== 'undefined'}\n`;
+                content += `- Función initSupabase: ${typeof initSupabase !== 'undefined'}\n`;
+                
+                if (typeof initSupabase !== 'undefined') {
+                    const client = initSupabase();
+                    content += `- Cliente inicializado: ${client !== null}\n`;
+                    
+                    if (client) {
+                        supabaseInitialized = true;
+                        window.supabase = client;
+                        content += `- URL: ${client.supabaseUrl}\n`;
+                        content += `✅ Conexión exitosa\n`;
+                    } else {
+                        content += `❌ Error en inicialización\n`;
+                    }
+                } else {
+                    content += `❌ No se pudo cargar supabase-config.js\n`;
+                }
+                
+                result.textContent = content;
+                result.className = 'result success';
+                
+            } catch (error) {
+                content += `❌ Error: ${error.message}\n`;
+                result.textContent = content;
+                result.className = 'result error';
+            }
+            
+            result.style.display = 'block';
+        }
+
+        async function checkAuth() {
+            const result = document.getElementById('authResult');
+            let content = '';
+            
+            try {
+                if (!supabaseInitialized) {
+                    await checkSupabaseConnection();
+                }
+                
+                if (!window.supabase) {
+                    content += '❌ Supabase no disponible\n';
+                    result.textContent = content;
+                    result.className = 'result error';
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const { data: { user }, error } = await window.supabase.auth.getUser();
+                
+                if (error) {
+                    content += `❌ Error de autenticación: ${error.message}\n`;
+                } else if (user) {
+                    content += `✅ Usuario autenticado:\n`;
+                    content += `- ID: ${user.id}\n`;
+                    content += `- Email: ${user.email}\n`;
+                    content += `- Nombre: ${user.user_metadata?.full_name || 'No especificado'}\n`;
+                    content += `- Último login: ${user.last_sign_in_at}\n`;
+                } else {
+                    content += `⚠️ No hay usuario autenticado\n`;
+                }
+                
+                result.textContent = content;
+                result.className = user ? 'result success' : 'result warning';
+                
+            } catch (error) {
+                content += `❌ Error: ${error.message}\n`;
+                result.textContent = content;
+                result.className = 'result error';
+            }
+            
+            result.style.display = 'block';
+        }
+
+        async function loginWithTest() {
+            const result = document.getElementById('authResult');
+            
+            try {
+                if (!window.supabase) {
+                    alert('Supabase no está disponible');
+                    return;
+                }
+                
+                // Intentar login con credenciales de prueba
+                const { data, error } = await window.supabase.auth.signInWithPassword({
+                    email: 'santiago@test.com',
+                    password: 'test123456'
+                });
+                
+                if (error) {
+                    result.textContent = `❌ Error en login: ${error.message}`;
+                    result.className = 'result error';
+                } else {
+                    result.textContent = `✅ Login exitoso: ${data.user.email}`;
+                    result.className = 'result success';
+                }
+                
+                result.style.display = 'block';
+                
+            } catch (error) {
+                result.textContent = `❌ Error: ${error.message}`;
+                result.className = 'result error';
+                result.style.display = 'block';
+            }
+        }
+
+        async function listSupabaseReports() {
+            const result = document.getElementById('reportsResult');
+            const linksDiv = document.getElementById('reportLinks');
+            let content = '';
+            
+            try {
+                if (!window.supabase) {
+                    content += '❌ Supabase no disponible\n';
+                    result.textContent = content;
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+                
+                if (authError || !user) {
+                    content += '❌ Usuario no autenticado\n';
+                    result.textContent = content;
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const { data: reports, error } = await window.supabase
+                    .from('reports')
+                    .select('*')
+                    .eq('scout_id', user.id)
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    content += `❌ Error al cargar reportes: ${error.message}\n`;
+                } else {
+                    content += `✅ Reportes encontrados: ${reports.length}\n\n`;
+                    
+                    if (reports.length > 0) {
+                        reports.forEach((report, i) => {
+                            content += `${i + 1}. ID: ${report.id}\n`;
+                            content += `   Jugador: ${report.player_name}\n`;
+                            content += `   Posición: ${report.player_position}\n`;
+                            content += `   Fecha: ${report.created_at.split('T')[0]}\n`;
+                            content += `   Rating: ${report.overall_rating}/10\n\n`;
+                        });
+                        
+                        // Crear enlaces para probar
+                        linksDiv.innerHTML = '<strong>Probar Ver Reporte:</strong><br>' +
+                            reports.map(r => 
+                                `<a href="ver-reporte.html?id=${r.id}" class="action-btn" target="_blank" style="font-size: 12px;">Ver ${r.player_name}</a>`
+                            ).join(' ');
+                            
+                        // Poner el primer ID en el input
+                        document.getElementById('reportIdInput').value = reports[0].id;
+                    } else {
+                        content += 'No hay reportes guardados.\n';
+                        linksDiv.innerHTML = '';
+                    }
+                }
+                
+                result.textContent = content;
+                result.className = 'result';
+                
+            } catch (error) {
+                content += `❌ Error: ${error.message}\n`;
+                result.textContent = content;
+                result.className = 'result error';
+            }
+            
+            result.style.display = 'block';
+        }
+
+        async function createSupabaseReport() {
+            const result = document.getElementById('reportsResult');
+            
+            try {
+                if (!window.supabase) {
+                    result.textContent = '❌ Supabase no disponible';
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+                
+                if (authError || !user) {
+                    result.textContent = '❌ Usuario no autenticado';
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const testReport = {
+                    scout_id: user.id,
+                    player_id: 'test_player_' + Date.now(),
+                    player_name: 'Kylian Mbappé Jr.',
+                    player_position: 'Delantero',
+                    match_date: new Date().toISOString().split('T')[0],
+                    match_competition: 'Liga de Jóvenes',
+                    match_teams: 'PSG Academy vs Real Madrid Academy',
+                    overall_rating: 8.5,
+                    technical_rating: 9,
+                    physical_rating: 8,
+                    tactical_rating: 8,
+                    mental_rating: 9,
+                    strengths: ['Velocidad excepcional', 'Finalización precisa', 'Visión de juego'],
+                    weaknesses: ['Defensivo', 'Juego aéreo'],
+                    detailed_analysis: 'Jugador excepcional con gran potencial de desarrollo. Destaca por su velocidad y capacidad de finalización.',
+                    recommendation: 'altamente_recomendado',
+                    visibility: 'private'
+                };
+                
+                const { data, error } = await window.supabase
+                    .from('reports')
+                    .insert([testReport])
+                    .select();
+                
+                if (error) {
+                    result.textContent = `❌ Error al crear reporte: ${error.message}`;
+                    result.className = 'result error';
+                } else {
+                    result.textContent = `✅ Reporte creado exitosamente!\nID: ${data[0].id}\nJugador: ${data[0].player_name}`;
+                    result.className = 'result success';
+                    
+                    // Actualizar lista
+                    setTimeout(listSupabaseReports, 1000);
+                }
+                
+            } catch (error) {
+                result.textContent = `❌ Error: ${error.message}`;
+                result.className = 'result error';
+            }
+            
+            result.style.display = 'block';
+        }
+
+        async function testViewReport() {
+            const reportId = document.getElementById('reportIdInput').value.trim();
+            const result = document.getElementById('testResult');
+            
+            if (!reportId) {
+                result.textContent = '❌ Por favor ingresa un ID de reporte';
+                result.className = 'result error';
+                result.style.display = 'block';
+                return;
+            }
+            
+            // Abrir en nueva ventana para probar
+            window.open(`ver-reporte.html?id=${reportId}`, '_blank');
+            
+            result.textContent = `🚀 Abriendo ver-reporte.html?id=${reportId}`;
+            result.className = 'result info';
+            result.style.display = 'block';
+        }
+
+        async function clearSupabaseReports() {
+            if (!confirm('¿Estás seguro de que quieres eliminar TODOS los reportes de Supabase?')) {
+                return;
+            }
+            
+            const result = document.getElementById('reportsResult');
+            
+            try {
+                if (!window.supabase) {
+                    result.textContent = '❌ Supabase no disponible';
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+                
+                if (authError || !user) {
+                    result.textContent = '❌ Usuario no autenticado';
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const { error } = await window.supabase
+                    .from('reports')
+                    .delete()
+                    .eq('scout_id', user.id);
+                
+                if (error) {
+                    result.textContent = `❌ Error al limpiar reportes: ${error.message}`;
+                    result.className = 'result error';
+                } else {
+                    result.textContent = '✅ Todos los reportes han sido eliminados';
+                    result.className = 'result success';
+                    document.getElementById('reportLinks').innerHTML = '';
+                }
+                
+            } catch (error) {
+                result.textContent = `❌ Error: ${error.message}`;
+                result.className = 'result error';
+            }
+            
+            result.style.display = 'block';
+        }
+
+        async function showFullDebug() {
+            const result = document.getElementById('debugResult');
+            let content = '';
+            
+            try {
+                content += '=== DEBUG COMPLETO ===\n\n';
+                
+                // Supabase
+                content += '1. SUPABASE:\n';
+                content += `- Librería: ${typeof window.supabase !== 'undefined'}\n`;
+                content += `- Inicializado: ${supabaseInitialized}\n`;
+                
+                if (window.supabase) {
+                    const { data: { user } } = await window.supabase.auth.getUser();
+                    content += `- Usuario: ${user ? user.email : 'No autenticado'}\n`;
+                }
+                
+                content += '\n2. LOCALSTORAGE:\n';
+                content += `- scoutConnectUser: ${localStorage.getItem('scoutConnectUser') ? 'Sí' : 'No'}\n`;
+                content += `- generatedReports: ${localStorage.getItem('generatedReports') ? 'Sí' : 'No'}\n`;
+                
+                content += '\n3. URL ACTUAL:\n';
+                content += `${window.location.href}\n`;
+                
+                result.textContent = content;
+                result.className = 'result';
+                
+            } catch (error) {
+                result.textContent = `❌ Error en debug: ${error.message}`;
+                result.className = 'result error';
+            }
+            
+            result.style.display = 'block';
+        }
+
+        // Auto-inicializar al cargar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSupabaseConnection();
+            await checkAuth();
+        });
+    </script>
+</body>
+</html>

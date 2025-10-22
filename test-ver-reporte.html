@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Rápida - Ver Reporte</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .action-btn { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            margin: 10px 5px; 
+            background: #007bff; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            border: none;
+            cursor: pointer;
+        }
+        .action-btn:hover { background: #0056b3; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .result { 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            background: #f8f9fa; 
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Prueba Rápida - Ver Reporte</h1>
+        
+        <div style="margin: 20px 0;">
+            <h3>Paso 1: Configurar usuario de prueba</h3>
+            <button class="action-btn" onclick="setupTestUser()">Crear Usuario de Prueba</button>
+            <div id="userResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Paso 2: Crear reporte de prueba</h3>
+            <button class="action-btn" onclick="createTestReport()">Crear Reporte de Prueba</button>
+            <div id="reportResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Paso 3: Probar visualización</h3>
+            <button class="action-btn" onclick="listReports()">Listar Reportes</button>
+            <div id="listResult" class="result" style="display: none;"></div>
+            <div id="testLinks" style="margin-top: 10px;"></div>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Utilidades</h3>
+            <button class="action-btn" onclick="clearAll()">Limpiar Todo</button>
+            <button class="action-btn" onclick="showDebugInfo()">Mostrar Info Debug</button>
+            <div id="debugResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Enlaces Rápidos</h3>
+            <a href="debug-reportes.html" class="action-btn">Debug Completo</a>
+            <a href="nuevo-reporte.html" class="action-btn">Crear Nuevo Reporte</a>
+            <a href="perfil-jugador.html?id=test_player_123" class="action-btn">Perfil de Jugador</a>
+        </div>
+    </div>
+
+    <script>
+        function setupTestUser() {
+            const testUser = {
+                id: 'scout_test_123',
+                name: 'Scout Test',
+                email: 'scout@test.com',
+                fullName: 'Scout Test',
+                userType: 'scout'
+            };
+            
+            localStorage.setItem('scoutConnectUser', JSON.stringify(testUser));
+            
+            const result = document.getElementById('userResult');
+            result.innerHTML = `<span class="success">✅ Usuario de prueba creado:</span><br>${JSON.stringify(testUser, null, 2)}`;
+            result.style.display = 'block';
+        }
+
+        function createTestReport() {
+            const testReport = {
+                id: Date.now().toString(),
+                title: 'Reporte de Prueba ' + new Date().toLocaleTimeString(),
+                playerName: 'Lionel Messi Jr.',
+                playerPosition: 'Delantero',
+                playerAge: '18',
+                playerClub: 'FC Barcelona Academy',
+                playerNationality: 'Argentina',
+                observationDate: new Date().toISOString().split('T')[0],
+                location: 'Estadio Johan Cruyff',
+                context: 'Partido de reserva',
+                ratings: {
+                    technical: 9,
+                    physical: 7,
+                    tactical: 8,
+                    mental: 9
+                },
+                evaluations: [
+                    { category: 'Técnico', rating: 9, notes: 'Excelente técnica individual' },
+                    { category: 'Físico', rating: 7, notes: 'Buena resistencia' },
+                    { category: 'Táctico', rating: 8, notes: 'Entiende bien el juego' },
+                    { category: 'Mental', rating: 9, notes: 'Gran concentración' }
+                ],
+                observations: 'Jugador excepcional con gran potencial. Destaca por su visión de juego y técnica depurada.',
+                summary: 'Recomendado altamente para seguimiento continuo',
+                recommendation: 'Firmar inmediatamente',
+                scoutName: 'Scout Test',
+                scoutId: 'scout_test_123',
+                scoutEmail: 'scout@test.com',
+                status: 'completed',
+                createdAt: new Date().toISOString()
+            };
+
+            const existingReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+            existingReports.push(testReport);
+            localStorage.setItem('generatedReports', JSON.stringify(existingReports));
+
+            const result = document.getElementById('reportResult');
+            result.innerHTML = `<span class="success">✅ Reporte creado con ID: ${testReport.id}</span><br>Jugador: ${testReport.playerName}<br>Scout: ${testReport.scoutName}`;
+            result.style.display = 'block';
+
+            // Actualizar la lista automáticamente
+            setTimeout(listReports, 500);
+        }
+
+        function listReports() {
+            const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+            const result = document.getElementById('listResult');
+            const linksDiv = document.getElementById('testLinks');
+            
+            if (reports.length === 0) {
+                result.innerHTML = '<span class="error">❌ No hay reportes. Crea uno primero.</span>';
+                linksDiv.innerHTML = '';
+            } else {
+                result.innerHTML = `<span class="success">✅ Reportes encontrados: ${reports.length}</span><br><br>` +
+                    reports.map((r, i) => `${i + 1}. ID: "${r.id}"<br>   Jugador: ${r.playerName}<br>   Scout: ${r.scoutName}<br>`).join('<br>');
+                
+                // Crear enlaces de prueba
+                linksDiv.innerHTML = '<strong>Probar Ver Reporte:</strong><br>' +
+                    reports.map(r => 
+                        `<a href="ver-reporte.html?id=${r.id}" class="action-btn" target="_blank">Ver ${r.playerName}</a>`
+                    ).join(' ');
+            }
+            
+            result.style.display = 'block';
+        }
+
+        function clearAll() {
+            localStorage.removeItem('generatedReports');
+            localStorage.removeItem('scoutConnectUser');
+            alert('✅ Todos los datos han sido limpiados');
+            
+            // Limpiar resultados
+            ['userResult', 'reportResult', 'listResult', 'debugResult'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            document.getElementById('testLinks').innerHTML = '';
+        }
+
+        function showDebugInfo() {
+            const result = document.getElementById('debugResult');
+            let content = '';
+            
+            // Usuario actual
+            const user = localStorage.getItem('scoutConnectUser');
+            content += 'Usuario actual:\n' + (user || 'null') + '\n\n';
+            
+            // Reportes
+            const reports = localStorage.getItem('generatedReports');
+            content += 'Reportes:\n' + (reports || 'null') + '\n\n';
+            
+            // URL actual
+            content += 'URL actual: ' + window.location.href + '\n';
+            
+            result.innerHTML = content;
+            result.style.display = 'block';
+        }
+
+        // Auto-cargar información al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            listReports();
+        });
+    </script>
+</body>
+</html>

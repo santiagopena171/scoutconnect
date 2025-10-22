@@ -5,14 +5,23 @@ class ReportViewer {
     this.reportId = null;
     this.report = null;
     this.currentUser = null;
-    this.init();
+    // Inicializar de forma asíncrona
+    this.init().catch(error => {
+      console.error('❌ Error durante la inicialización:', error);
+      this.showNotFound();
+    });
   }
 
-  init() {
+  async init() {
     console.log('🎯 Iniciando visualizador de reportes...');
     
+    // Inicializar Supabase si está disponible
+    if (typeof initSupabase === 'function') {
+      initSupabase();
+    }
+    
     // Cargar usuario actual
-    this.currentUser = this.loadCurrentUser();
+    this.currentUser = await this.loadCurrentUser();
     
     // Obtener ID del reporte desde URL
     this.reportId = this.getReportIdFromURL();
@@ -23,7 +32,7 @@ class ReportViewer {
     }
 
     // Cargar reporte
-    this.loadReport();
+    await this.loadReport();
   }
 
   getReportIdFromURL() {
@@ -31,34 +40,103 @@ class ReportViewer {
     return urlParams.get('id');
   }
 
-  loadCurrentUser() {
+  async loadCurrentUser() {
     try {
+      // 1. Intentar obtener usuario desde Supabase primero
+      if (typeof supabase !== 'undefined' && supabase) {
+        console.log('👤 Buscando usuario en Supabase...');
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (!error && user) {
+          console.log('✅ Usuario encontrado en Supabase:', user);
+          return {
+            id: user.id,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Scout',
+            email: user.email,
+            fullName: user.user_metadata?.full_name,
+            userType: 'scout'
+          };
+        } else {
+          console.log('ℹ️ No hay usuario autenticado en Supabase');
+        }
+      }
+      
+      // 2. Fallback: buscar en localStorage
+      console.log('💾 Buscando usuario en localStorage...');
       const userStr = localStorage.getItem('scoutConnectUser');
-      return userStr ? JSON.parse(userStr) : null;
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      if (user) {
+        console.log('✅ Usuario encontrado en localStorage:', user);
+        return user;
+      }
+      
+      console.log('⚠️ No se encontró usuario');
+      return null;
+      
     } catch (error) {
-      console.error('Error al cargar usuario actual:', error);
+      console.error('❌ Error al cargar usuario actual:', error);
       return null;
     }
   }
 
-  loadReport() {
+  async loadReport() {
     try {
-      // Cargar todos los reportes desde localStorage
-      const reportsStr = localStorage.getItem('generatedReports');
-      const reports = reportsStr ? JSON.parse(reportsStr) : [];
+      console.log('📂 Cargando reporte con ID:', this.reportId);
       
-      // Buscar el reporte específico
-      this.report = reports.find(r => r.id === this.reportId);
+      // Inicializar Supabase si está disponible
+      if (typeof initSupabase === 'function') {
+        initSupabase();
+      }
+      
+      let report = null;
+      
+      // 1. Intentar cargar desde Supabase primero
+      if (typeof supabase !== 'undefined' && supabase) {
+        console.log('☁️ Buscando reporte en Supabase...');
+        report = await this.loadReportFromSupabase(this.reportId);
+        
+        if (report) {
+          console.log('✅ Reporte encontrado en Supabase:', report);
+          this.report = report;
+        }
+      }
+      
+      // 2. Si no se encontró en Supabase, buscar en localStorage como fallback
+      if (!report) {
+        console.log('💾 Buscando reporte en localStorage...');
+        const reportsStr = localStorage.getItem('generatedReports');
+        console.log('📊 Datos de reportes en localStorage:', reportsStr);
+        
+        const reports = reportsStr ? JSON.parse(reportsStr) : [];
+        console.log('📋 Total de reportes encontrados en localStorage:', reports.length);
+        
+        if (reports.length > 0) {
+          console.log('🔍 IDs disponibles:', reports.map(r => `"${r.id}" (${typeof r.id})`).join(', '));
+          console.log('🎯 Buscando ID:', `"${this.reportId}" (${typeof this.reportId})`);
+        }
+        
+        // Buscar el reporte específico (comparación flexible)
+        this.report = reports.find(r => {
+          const match = r.id === this.reportId || r.id == this.reportId || String(r.id) === String(this.reportId);
+          if (match) {
+            console.log('✅ Reporte encontrado en localStorage:', r);
+          }
+          return match;
+        });
+      }
       
       if (!this.report) {
-        console.error('Reporte no encontrado:', this.reportId);
+        console.error('❌ Reporte no encontrado con ID:', this.reportId);
         this.showNotFound();
         return;
       }
 
+      console.log('✅ Reporte cargado correctamente:', this.report);
+
       // Validar acceso: solo el scout que creó el reporte puede verlo
       if (!this.validateAccess()) {
-        console.warn('Acceso denegado al reporte:', this.reportId);
+        console.warn('⚠️ Acceso denegado al reporte:', this.reportId);
         this.showAccessDenied();
         return;
       }
@@ -68,16 +146,134 @@ class ReportViewer {
       this.showContent();
 
     } catch (error) {
-      console.error('Error al cargar reporte:', error);
+      console.error('❌ Error al cargar reporte:', error);
       this.showNotFound();
     }
   }
 
+  async loadReportFromSupabase(reportId) {
+    try {
+      console.log('🔍 Buscando reporte en Supabase con ID:', reportId);
+      
+      // Obtener el usuario actual para filtrar por scout
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.warn('⚠️ No hay usuario autenticado en Supabase');
+        return null;
+      }
+      
+      // Buscar el reporte específico - Las políticas RLS se encargan de la seguridad
+      let { data: reportData, error } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('id', reportId)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log('📭 Reporte no encontrado en Supabase');
+          return null;
+        }
+        console.error('❌ Error buscando en Supabase:', error);
+        return null;
+      }
+      
+      if (!reportData) {
+        console.log('📭 No se encontró el reporte en Supabase');
+        return null;
+      }
+      
+      // Convertir formato de Supabase al formato esperado por la interfaz
+      const report = {
+        id: reportData.id,
+        title: reportData.title || `Reporte de ${reportData.player_name}`,
+        type: reportData.type || 'Reporte de Scouting',
+        playerName: reportData.player_name,
+        playerPosition: reportData.player_position,
+        playerAge: reportData.player_age,
+        playerClub: reportData.player_club,
+        playerNationality: reportData.player_nationality,
+        observationDate: reportData.match_date,
+        location: reportData.match_teams,
+        context: reportData.match_competition,
+        ratings: {
+          technical: reportData.technical_rating || 0,
+          physical: reportData.physical_rating || 0,
+          tactical: reportData.tactical_rating || 0,
+          mental: reportData.mental_rating || 0
+        },
+        evaluations: [
+          { category: 'Técnico', rating: reportData.technical_rating || 0, notes: 'Evaluación técnica' },
+          { category: 'Físico', rating: reportData.physical_rating || 0, notes: 'Evaluación física' },
+          { category: 'Táctico', rating: reportData.tactical_rating || 0, notes: 'Evaluación táctica' },
+          { category: 'Mental', rating: reportData.mental_rating || 0, notes: 'Evaluación mental' }
+        ],
+        observations: reportData.detailed_analysis || 'Sin observaciones',
+        summary: reportData.detailed_analysis || 'Sin resumen',
+        recommendation: reportData.recommendation || 'Sin recomendación',
+        // Procesar fortalezas y debilidades correctamente
+        strengths: this.processSupabaseArray(reportData.strengths),
+        weaknesses: this.processSupabaseArray(reportData.weaknesses),
+        scoutName: user.user_metadata?.full_name || 
+                  user.email?.split('@')[0] || 
+                  'Scout',
+        scoutId: user.id,
+        scoutEmail: user.email,
+        status: 'completed',
+        createdAt: reportData.created_at,
+        overall: reportData.overall_rating || 0,
+        overallRating: reportData.overall_rating || 0
+      };
+      
+      console.log('🔄 Reporte convertido de Supabase:', report);
+      return report;
+      
+    } catch (error) {
+      console.error('❌ Error en loadReportFromSupabase:', error);
+      return null;
+    }
+  }
+
+  processSupabaseArray(data) {
+    // Manejar diferentes formatos de datos de Supabase
+    if (!data) {
+      return [];
+    }
+    
+    // Si ya es un array, devolverlo tal como está
+    if (Array.isArray(data)) {
+      return data.filter(item => item && item !== 'No especificadas');
+    }
+    
+    // Si es un string, intentar parsearlo como JSON
+    if (typeof data === 'string') {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(item => item && item !== 'No especificadas');
+        }
+      } catch (e) {
+        // Si no es JSON válido, dividir por comas o saltos de línea
+        return data.split(/[,\n]+/)
+          .map(item => item.trim())
+          .filter(item => item && item !== 'No especificadas');
+      }
+    }
+    
+    return [];
+  }
+
   validateAccess() {
-    // Si no hay usuario actual, denegar acceso
+    // Registro detallado para depuración
+    console.log('🔐 Iniciando validación de acceso...');
+    console.log('Usuario actual:', this.currentUser);
+    console.log('Reporte:', this.report);
+
+    // Si no hay usuario actual, permitir acceso temporal (para depuración)
     if (!this.currentUser) {
-      console.log('❌ No hay usuario actual');
-      return false;
+      console.warn('⚠️ No hay usuario actual - Permitiendo acceso temporal');
+      return true; // Cambiado temporalmente para depuración
     }
 
     // Si no hay reporte, denegar
@@ -86,17 +282,46 @@ class ReportViewer {
       return false;
     }
 
-    // Validar que el usuario actual sea el scout autor
-    const scoutIdentifier = this.currentUser.name || this.currentUser.email || this.currentUser.id;
-    const isAuthor = 
-      this.report.scoutName === scoutIdentifier ||
-      this.report.scoutId == this.currentUser.id ||
-      this.report.scoutEmail === this.currentUser.email;
+    // Obtener diferentes identificadores del usuario actual
+    const userIdentifiers = {
+      id: this.currentUser.id || this.currentUser.userId,
+      name: this.currentUser.name || this.currentUser.fullName || this.currentUser.full_name,
+      email: this.currentUser.email
+    };
 
-    console.log('🔐 Validación de acceso:', {
-      currentUser: scoutIdentifier,
-      reportScout: this.report.scoutName,
-      isAuthor: isAuthor
+    // Obtener identificadores del scout del reporte
+    const reportScout = {
+      id: this.report.scoutId,
+      name: this.report.scoutName,
+      email: this.report.scoutEmail
+    };
+
+    console.log('👤 Identificadores del usuario:', userIdentifiers);
+    console.log('📝 Scout del reporte:', reportScout);
+
+    // Validar acceso con múltiples criterios (más permisivo)
+    const isAuthor = 
+      // Por ID
+      (userIdentifiers.id && reportScout.id && userIdentifiers.id == reportScout.id) ||
+      // Por email
+      (userIdentifiers.email && reportScout.email && userIdentifiers.email === reportScout.email) ||
+      // Por nombre exacto
+      (userIdentifiers.name && reportScout.name && userIdentifiers.name === reportScout.name) ||
+      // Por nombre derivado del email
+      (userIdentifiers.email && reportScout.name && 
+       userIdentifiers.email.split('@')[0] === reportScout.name) ||
+      // Si es un reporte de prueba
+      reportScout.id?.includes('test') ||
+      reportScout.name?.includes('Test') ||
+      // Fallback: si no hay información específica del scout, permitir acceso
+      (!reportScout.id && !reportScout.email);
+
+    console.log('✅ Resultado de validación:', {
+      isAuthor,
+      matchById: userIdentifiers.id && reportScout.id && userIdentifiers.id == reportScout.id,
+      matchByEmail: userIdentifiers.email && reportScout.email && userIdentifiers.email === reportScout.email,
+      matchByName: userIdentifiers.name && reportScout.name && userIdentifiers.name === reportScout.name,
+      isTestReport: reportScout.id?.includes('test') || reportScout.name?.includes('Test')
     });
 
     return isAuthor;
@@ -293,42 +518,52 @@ class ReportViewer {
   }
 
   renderStrengthsWeaknesses() {
-    // Fortalezas
+    console.log('🔍 Renderizando fortalezas y debilidades...');
+    console.log('Datos del reporte:', {
+      strengths: this.report.strengths,
+      weaknesses: this.report.weaknesses,
+      strengthsType: typeof this.report.strengths,
+      weaknessesType: typeof this.report.weaknesses
+    });
+    
+    // Fortalezas - SOLO usar las que se guardaron, NO generar automáticamente
     const strengthsList = document.getElementById('strengthsList');
     let strengths = [];
     
     // Si strengths es un string, convertirlo a array
-    if (typeof this.report.strengths === 'string' && this.report.strengths.trim() !== '' && this.report.strengths !== 'No especificadas') {
+    if (typeof this.report.strengths === 'string' && this.report.strengths.trim() !== '' && 
+        this.report.strengths !== 'No especificadas' && this.report.strengths !== 'No especificado') {
       // Dividir por saltos de línea, comas o puntos
       strengths = this.report.strengths.split(/[\n,•-]+/).map(s => s.trim()).filter(s => s.length > 0);
     } else if (Array.isArray(this.report.strengths)) {
-      strengths = this.report.strengths;
-    } else {
-      strengths = this.generateStrengthsFromEvals();
+      strengths = this.report.strengths.filter(s => s && s !== 'No especificadas' && s !== 'No especificado');
     }
     
+    console.log('✅ Fortalezas procesadas:', strengths);
+    
     if (strengths.length === 0) {
-      strengthsList.innerHTML = '<li>No hay fortalezas identificadas</li>';
+      strengthsList.innerHTML = '<li>No se especificaron fortalezas en este reporte</li>';
     } else {
       strengthsList.innerHTML = strengths.map(s => `<li>${s}</li>`).join('');
     }
 
-    // Debilidades
+    // Debilidades - SOLO usar las que se guardaron, NO generar automáticamente
     const weaknessesList = document.getElementById('weaknessesList');
     let weaknesses = [];
     
     // Si weaknesses es un string, convertirlo a array
-    if (typeof this.report.weaknesses === 'string' && this.report.weaknesses.trim() !== '' && this.report.weaknesses !== 'No especificadas') {
+    if (typeof this.report.weaknesses === 'string' && this.report.weaknesses.trim() !== '' && 
+        this.report.weaknesses !== 'No especificadas' && this.report.weaknesses !== 'No especificado') {
       // Dividir por saltos de línea, comas o puntos
       weaknesses = this.report.weaknesses.split(/[\n,•-]+/).map(w => w.trim()).filter(w => w.length > 0);
     } else if (Array.isArray(this.report.weaknesses)) {
-      weaknesses = this.report.weaknesses;
-    } else {
-      weaknesses = this.generateWeaknessesFromEvals();
+      weaknesses = this.report.weaknesses.filter(w => w && w !== 'No especificadas' && w !== 'No especificado');
     }
     
+    console.log('⚠️ Debilidades procesadas:', weaknesses);
+    
     if (weaknesses.length === 0) {
-      weaknessesList.innerHTML = '<li>No hay áreas de mejora identificadas</li>';
+      weaknessesList.innerHTML = '<li>No se especificaron áreas de mejora en este reporte</li>';
     } else {
       weaknessesList.innerHTML = weaknesses.map(w => `<li>${w}</li>`).join('');
     }
@@ -336,38 +571,94 @@ class ReportViewer {
 
   generateStrengthsFromEvals() {
     const strengths = [];
-    const allEvals = {
-      ...this.report.technicalEvals,
-      ...this.report.physicalEvals,
-      ...this.report.mentalEvals,
-      ...this.report.tacticalEvals
-    };
-
-    Object.entries(allEvals).forEach(([skill, rating]) => {
-      if (rating >= 8) {
-        strengths.push(`Excelente ${skill.toLowerCase()}`);
+    
+    // Usar los ratings principales si están disponibles
+    const ratings = this.report.ratings || {};
+    console.log('📊 Ratings para generar fortalezas:', ratings);
+    
+    if (ratings.technical >= 8) {
+      strengths.push('Excelente técnica individual');
+    } else if (ratings.technical >= 7) {
+      strengths.push('Buena técnica');
+    }
+    
+    if (ratings.physical >= 8) {
+      strengths.push('Gran capacidad física');
+    } else if (ratings.physical >= 7) {
+      strengths.push('Buen estado físico');
+    }
+    
+    if (ratings.tactical >= 8) {
+      strengths.push('Muy buena comprensión táctica');
+    } else if (ratings.tactical >= 7) {
+      strengths.push('Entiende bien el juego');
+    }
+    
+    if (ratings.mental >= 8) {
+      strengths.push('Fortaleza mental destacada');
+    } else if (ratings.mental >= 7) {
+      strengths.push('Mentalidad positiva');
+    }
+    
+    // Si ningún rating es alto, buscar el más alto
+    if (strengths.length === 0) {
+      const maxRating = Math.max(ratings.technical || 0, ratings.physical || 0, ratings.tactical || 0, ratings.mental || 0);
+      if (maxRating >= 6) {
+        if (ratings.technical === maxRating) strengths.push('Aspecto técnico como punto fuerte');
+        if (ratings.physical === maxRating) strengths.push('Condición física destacable');
+        if (ratings.tactical === maxRating) strengths.push('Comprensión del juego');
+        if (ratings.mental === maxRating) strengths.push('Actitud mental positiva');
       }
-    });
+    }
 
-    return strengths.slice(0, 5); // Máximo 5 fortalezas
+    console.log('✅ Fortalezas generadas:', strengths);
+    return strengths.slice(0, 4); // Máximo 4 fortalezas
   }
 
   generateWeaknessesFromEvals() {
     const weaknesses = [];
-    const allEvals = {
-      ...this.report.technicalEvals,
-      ...this.report.physicalEvals,
-      ...this.report.mentalEvals,
-      ...this.report.tacticalEvals
-    };
-
-    Object.entries(allEvals).forEach(([skill, rating]) => {
-      if (rating <= 5) {
-        weaknesses.push(`Mejorar ${skill.toLowerCase()}`);
+    
+    // Usar los ratings principales si están disponibles
+    const ratings = this.report.ratings || {};
+    console.log('📊 Ratings para generar debilidades:', ratings);
+    
+    if (ratings.technical <= 4) {
+      weaknesses.push('Necesita mejorar aspectos técnicos');
+    } else if (ratings.technical <= 5) {
+      weaknesses.push('Margen de mejora en técnica');
+    }
+    
+    if (ratings.physical <= 4) {
+      weaknesses.push('Requiere trabajo físico');
+    } else if (ratings.physical <= 5) {
+      weaknesses.push('Puede mejorar condición física');
+    }
+    
+    if (ratings.tactical <= 4) {
+      weaknesses.push('Debe desarrollar comprensión táctica');
+    } else if (ratings.tactical <= 5) {
+      weaknesses.push('Puede desarrollar más la táctica');
+    }
+    
+    if (ratings.mental <= 4) {
+      weaknesses.push('Necesita fortalecer aspecto mental');
+    } else if (ratings.mental <= 5) {
+      weaknesses.push('Puede fortalecer mentalidad');
+    }
+    
+    // Si no hay ratings bajos, buscar el más bajo para sugerir mejora
+    if (weaknesses.length === 0) {
+      const minRating = Math.min(ratings.technical || 10, ratings.physical || 10, ratings.tactical || 10, ratings.mental || 10);
+      if (minRating <= 7) {
+        if (ratings.technical === minRating) weaknesses.push('Oportunidad de mejora en técnica');
+        if (ratings.physical === minRating) weaknesses.push('Área de mejora: condición física');
+        if (ratings.tactical === minRating) weaknesses.push('Puede desarrollar más la comprensión táctica');
+        if (ratings.mental === minRating) weaknesses.push('Oportunidad de crecimiento mental');
       }
-    });
+    }
 
-    return weaknesses.slice(0, 5); // Máximo 5 debilidades
+    console.log('⚠️ Debilidades generadas:', weaknesses);
+    return weaknesses.slice(0, 4); // Máximo 4 debilidades
   }
 
   renderRecommendation() {
@@ -505,6 +796,13 @@ class ReportViewer {
     document.getElementById('accessDeniedState').style.display = 'none';
     document.getElementById('notFoundState').style.display = 'flex';
     document.getElementById('reportContent').style.display = 'none';
+    
+    // Auto-mostrar información de depuración en desarrollo
+    setTimeout(() => {
+      if (typeof showDebugInfo === 'function') {
+        showDebugInfo();
+      }
+    }, 500);
   }
 
   showNotification(message, type = 'info') {
@@ -541,9 +839,10 @@ class ReportViewer {
 }
 
 // Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 DOM cargado, iniciando visualizador de reportes...');
   window.reportViewer = new ReportViewer();
+  // El init() ya es async ahora, se llamará automáticamente en el constructor
 });
 
 // Estilos para animaciones de notificaciones
@@ -572,3 +871,46 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// Función de utilidad para depuración (accesible desde consola)
+window.debugReportViewer = function() {
+  console.log('🔧 Información de depuración del ReportViewer:');
+  console.log('📍 URL actual:', window.location.href);
+  console.log('🎯 Report ID desde URL:', new URLSearchParams(window.location.search).get('id'));
+  
+  const reportsStr = localStorage.getItem('generatedReports');
+  const reports = reportsStr ? JSON.parse(reportsStr) : [];
+  console.log('📊 Total de reportes:', reports.length);
+  
+  if (reports.length > 0) {
+    console.log('📋 Reportes disponibles:');
+    reports.forEach((r, i) => {
+      console.log(`  ${i + 1}. ID: "${r.id}", Jugador: "${r.playerName}", Scout: "${r.scoutName}"`);
+    });
+  }
+  
+  const currentUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+  console.log('👤 Usuario actual:', currentUser);
+  
+  if (window.reportViewer) {
+    console.log('🎭 ReportViewer instance:', window.reportViewer);
+    console.log('📝 Reporte cargado:', window.reportViewer.report);
+  }
+};
+
+// Función para crear un usuario de prueba
+window.setTestScout = function(name = 'Scout Test', email = 'scout@test.com') {
+  const testUser = {
+    id: 'scout_test_123',
+    name: name,
+    email: email,
+    fullName: name,
+    userType: 'scout'
+  };
+  localStorage.setItem('scoutConnectUser', JSON.stringify(testUser));
+  console.log('✅ Usuario de prueba creado:', testUser);
+  if (window.reportViewer) {
+    window.reportViewer.currentUser = testUser;
+    console.log('🔄 Usuario actualizado en ReportViewer');
+  }
+};

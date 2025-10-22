@@ -1393,6 +1393,15 @@ body {
 .report-scout {
   font-size: 0.9rem;
   color: var(--gray-600);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.report-author {
+  font-size: 0.85rem;
+  color: var(--gray-500);
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -1494,6 +1503,18 @@ body {
 
 .report-btn.secondary:hover {
   background: var(--gray-200);
+  transform: translateY(-1px);
+}
+
+.report-btn.danger {
+  background: var(--danger-color);
+  color: white;
+  border: 1px solid var(--danger-color);
+}
+
+.report-btn.danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
   transform: translateY(-1px);
 }
 
