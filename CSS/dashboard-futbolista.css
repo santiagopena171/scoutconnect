@@ -637,16 +637,6 @@ body {
 
 /* Responsive para tablets */
 @media (max-width: 768px) {
-  /* Ocultar menú de navegación en móviles */
-  .navbar-menu {
-    display: none;
-  }
-  
-  /* Mostrar hamburger menu */
-  .hamburger-menu {
-    display: flex;
-  }
-  
   .edit-form-tabs {
     flex-wrap: wrap;
   }
@@ -1490,6 +1480,10 @@ body {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+
+  .config-section {
+    grid-column: span 1;
+  }
   
   .profile-header {
     flex-direction: column;
@@ -1507,44 +1501,69 @@ body {
 }
 
 @media (max-width: 768px) {
+  .dashboard-navbar {
+    height: auto;
+    padding: 12px 0;
+  }
+
   .dashboard-container {
     padding: 0 15px;
   }
   
   .navbar-container {
     padding: 0 15px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .navbar-logo {
+    flex: 1 1 auto;
   }
   
   /* Show hamburger menu on mobile */
   .hamburger-menu {
     display: flex;
+    margin-left: auto;
   }
   
-  /* Hide user info on mobile by default */
+  /* Stack mobile navigation */
+  .navbar-menu {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .navbar-menu.mobile-active {
+    display: flex;
+  }
+
+  .nav-link {
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Mobile account drawer */
   .user-info {
     display: none;
-    position: fixed;
-    top: 70px;
-    left: 0;
-    right: 0;
+    width: 100%;
     background: var(--background-light);
-    border-bottom: 1px solid var(--border-color);
-    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    padding: 20px 0;
     flex-direction: column;
     gap: 20px;
-    z-index: 999;
-    box-shadow: var(--shadow-medium);
   }
   
-  /* Show user info when mobile menu is active */
   .user-info.mobile-active {
     display: flex;
   }
-  
-  /* Reorganize user profile for mobile */
+
   .user-profile {
     justify-content: center;
-    padding: 20px 0;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--border-color);
   }
   
@@ -1553,7 +1572,6 @@ body {
     font-size: 18px;
   }
   
-  /* Mobile notifications and menu */
   .notifications,
   .user-menu {
     width: 100%;
