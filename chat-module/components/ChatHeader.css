@@ -13,18 +13,22 @@
 }
 
 .header-back-btn {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   font-size: 20px;
   color: #666;
   cursor: pointer;
   padding: 8px;
-  transition: color 0.2s;
+  border-radius: 50%;
+  transition: color 0.2s, background-color 0.2s;
 }
 
 .header-back-btn:hover {
   color: #00A859;
+  background: #f2f2f2;
 }
 
 .header-avatar {
@@ -36,20 +40,26 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e0e0e0;
+  background: linear-gradient(135deg, #00a859, #2dd4bf);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   font-weight: 600;
-  color: white;
+  color: #ffffff;
   overflow: hidden;
+  text-transform: uppercase;
 }
 
 .header-avatar-img img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.chat-header.empty .header-avatar-img {
+  background: #e0e0e0;
+  color: #666;
 }
 
 .header-online-indicator {
@@ -94,16 +104,11 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #ffffff;
 }
 
-.role-badge.scout {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.role-badge.player {
-  background: #dcfce7;
-  color: #166534;
+.role-badge i {
+  font-size: 12px;
 }
 
 .header-status {
@@ -116,9 +121,8 @@
   font-weight: 500;
 }
 
-.header-status.typing {
-  color: #00A859;
-  font-style: italic;
+.header-status.empty {
+  color: #999;
 }
 
 .header-actions {
@@ -150,7 +154,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .header-back-btn {
-    display: block;
+    display: flex;
   }
   
   .header-actions {

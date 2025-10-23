@@ -38,7 +38,7 @@
                     Reportes Generados
                     <span id="navReportsCount" class="nav-counter" style="display: none;">0</span>
                 </a>
-                <a href="chat.html" class="nav-link">
+                <a href="chat.html" class="nav-link" data-open-chat>
                     <i class="fas fa-comments"></i>
                     Mensajes
                 </a>
@@ -107,6 +107,9 @@
                 <div class="header-actions">
                     <button id="followBtn" class="btn btn-secondary" onclick="playerProfile.toggleFollow()">
                         <i class="fas fa-star"></i> Seguir
+                    </button>
+                    <button id="startChatBtn" class="btn btn-primary" data-open-chat disabled>
+                        <i class="fas fa-comments"></i> Iniciar chat
                     </button>
                     <button class="btn btn-primary" onclick="playerProfile.createNewReport()">
                         <i class="fas fa-file-alt"></i> Generar Reporte
@@ -370,6 +373,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="JS/supabase-config.js"></script>
     <script src="JS/perfil-jugador.js"></script>
+    <script src="JS/chat-integration.js"></script>
     
     <!-- Script de depuración -->
     <script>

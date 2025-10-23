@@ -12,24 +12,50 @@ interface ChatHeaderProps {
   onBack?: () => void;
 }
 
+function resolveProfileName(profile: Profile | null): string {
+  if (!profile) {
+    return 'Usuario';
+  }
+
+  if (profile.full_name && profile.full_name.trim().length > 0) {
+    return profile.full_name.trim();
+  }
+
+  const raw = profile as unknown as Record<string, unknown>;
+  const candidate = [
+    typeof raw.first_name === 'string' ? raw.first_name.trim() : '',
+    typeof raw.last_name === 'string' ? raw.last_name.trim() : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  if (candidate.length > 0) {
+    return candidate;
+  }
+
+  const username = typeof raw.username === 'string' ? raw.username.trim() : '';
+  if (username.length > 0) {
+    return username;
+  }
+
+  const email = typeof raw.email === 'string' ? raw.email.trim() : '';
+  if (email.length > 0) {
+    return email;
+  }
+
+  return 'Usuario';
+}
+
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   participant,
   presenceState,
   onBack,
 }) => {
-  if (!participant) {
-    return (
-      <div className="chat-header empty">
-        <div className="header-placeholder">
-          Seleccioná una conversación
-        </div>
-      </div>
-    );
-  }
-
-  const isOnline = presenceState.online_users.some(
-    u => u.user_id === participant.id
-  );
+  const participantName = resolveProfileName(participant);
+  const isOnline = participant
+    ? presenceState.online_users.some((u) => u.user_id === participant.id)
+    : false;
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -44,58 +70,59 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     }
   };
 
-  const roleBadge = getRoleBadge(participant.role);
+  const roleBadge = participant ? getRoleBadge(participant.role) : null;
 
   const getLastSeenText = () => {
-    if (isOnline) return 'En línea';
-    
-    // Could fetch last_active_at from conversation_presence
+    if (!participant) {
+      return 'Seleccioná una conversación';
+    }
+
+    if (isOnline) {
+      return 'En línea';
+    }
+
     return 'Última vez hace un momento';
   };
 
   return (
-    <div className="chat-header">
+    <div className={`chat-header ${participant ? '' : 'empty'}`}>
       {onBack && (
-        <button className="back-button" onClick={onBack}>
-          <i className="fas fa-arrow-left"></i>
+        <button className="header-back-btn" onClick={onBack} aria-label="Volver">
+          <span aria-hidden="true">←</span>
         </button>
       )}
 
-      {/* Avatar */}
       <div className="header-avatar">
-        {participant.avatar_url ? (
-          <img src={participant.avatar_url} alt={participant.full_name} />
-        ) : (
-          <div className="avatar-placeholder">
-            <i className="fas fa-user"></i>
-          </div>
-        )}
-        {isOnline && <span className="online-indicator"></span>}
+        <div className="header-avatar-img" aria-hidden={!participant}>
+          {participant?.avatar_url ? (
+            <img src={participant.avatar_url} alt={participantName} />
+          ) : (
+            <span>{participantName.charAt(0).toUpperCase()}</span>
+          )}
+        </div>
+        {participant && isOnline && <span className="header-online-indicator"></span>}
       </div>
 
-      {/* Info */}
       <div className="header-info">
-        <h2 className="header-name">{participant.full_name}</h2>
-        <div className="header-meta">
-          <span 
-            className="role-badge" 
-            style={{ backgroundColor: roleBadge.color }}
-          >
-            <i className={`fas ${roleBadge.icon}`}></i>
-            {roleBadge.text}
-          </span>
-          <span className="status-text">
-            {getLastSeenText()}
-          </span>
+        <div className="header-name-row">
+          <span className="header-name">{participantName}</span>
+          {participant && roleBadge && (
+            <span className={`role-badge role-${participant.role}`} style={{ backgroundColor: roleBadge.color }}>
+              <i className={`fas ${roleBadge.icon}`}></i>
+              {roleBadge.text}
+            </span>
+          )}
+        </div>
+        <div className={`header-status ${participant ? (isOnline ? 'online' : '') : 'empty'}`}>
+          {getLastSeenText()}
         </div>
       </div>
 
-      {/* Actions */}
       <div className="header-actions">
-        <button className="icon-button" title="Buscar en conversación">
+        <button className="header-action-btn" title="Buscar en conversación" type="button">
           <i className="fas fa-search"></i>
         </button>
-        <button className="icon-button" title="Más opciones">
+        <button className="header-action-btn" title="Más opciones" type="button">
           <i className="fas fa-ellipsis-v"></i>
         </button>
       </div>

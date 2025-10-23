@@ -508,6 +508,20 @@ class PlayerProfile {
     document.getElementById('playerAge').textContent = player.age;
     document.getElementById('playerNationality').textContent = player.nationality;
     document.getElementById('playerClub').textContent = player.club;
+
+    const startChatBtn = document.getElementById('startChatBtn');
+    if (startChatBtn) {
+      const isValidId = typeof player.id === 'string' && player.id.length > 20;
+      if (isValidId) {
+        startChatBtn.dataset.chatPlayerId = player.id;
+        startChatBtn.disabled = false;
+        startChatBtn.title = 'Iniciar conversación con este jugador';
+      } else {
+        startChatBtn.dataset.chatPlayerId = '';
+        startChatBtn.disabled = true;
+        startChatBtn.title = 'Disponible para jugadores registrados';
+      }
+    }
     
     document.title = `${player.name} - Perfil de Jugador - ScoutConnect`;
   }

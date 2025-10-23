@@ -27,7 +27,7 @@
         <i class="fas fa-bell"></i>
         <span class="notification-badge">3</span>
       </button>
-      <button class="action-btn" id="messagesBtn">
+  <button class="action-btn" id="messagesBtn" data-open-chat>
         <i class="fas fa-envelope"></i>
         <span class="notification-badge">5</span>
       </button>
@@ -104,7 +104,7 @@
         <span>Notificaciones</span>
         <span class="nav-badge urgent">12</span>
       </a>
-      <a href="chat.html" class="nav-item">
+  <a href="chat.html" class="nav-item" data-open-chat>
         <i class="fas fa-comments"></i>
         <span>Mensajes</span>
         <span class="nav-badge new">8</span>
@@ -1250,5 +1250,6 @@
   
   <!-- Script principal del dashboard -->
   <script src="JS/dashboard-scout.js"></script>
+  <script src="JS/chat-integration.js"></script>
 </body>
 </html>

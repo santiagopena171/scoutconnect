@@ -25,6 +25,32 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export function buildProfileName(profile: Record<string, any>): string {
+  const fullName = typeof profile.full_name === 'string' ? profile.full_name.trim() : '';
+  if (fullName.length > 0) {
+    return fullName;
+  }
+
+  const first = typeof profile.first_name === 'string' ? profile.first_name.trim() : '';
+  const last = typeof profile.last_name === 'string' ? profile.last_name.trim() : '';
+  const fallback = `${first} ${last}`.trim();
+  if (fallback.length > 0) {
+    return fallback;
+  }
+
+  const username = typeof profile.username === 'string' ? profile.username.trim() : '';
+  if (username.length > 0) {
+    return username;
+  }
+
+  const email = typeof profile.email === 'string' ? profile.email.trim() : '';
+  if (email.length > 0) {
+    return email;
+  }
+
+  return 'Usuario';
+}
+
 // ============================================
 // HELPER: Get current user ID
 // ============================================
@@ -151,18 +177,18 @@ export async function listConversations(): Promise<ConversationWithDetails[]> {
   // Enrich with participants, last message, unread count
   const enrichedConversations = await Promise.all(
     conversations.map(async (conv) => {
-      // Get participants
-      const { data: participantsData } = await supabase
-        .from('conversation_participants')
-        .select('user_id')
-        .eq('conversation_id', conv.id);
+      // Get participants via RPC to respect RLS while ensuring membership
+      const { data: participantRows, error: participantsError } = await supabase.rpc(
+        'get_conversation_contacts',
+        { conversation_id: conv.id }
+      );
 
-      const participantIds = participantsData?.map((p) => p.user_id) || [];
+      if (participantsError) throw participantsError;
 
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', participantIds);
+      const normalizedProfiles = (participantRows || []).map((profile: Record<string, any>) => ({
+        ...profile,
+        full_name: buildProfileName(profile),
+      }));
 
       // Get last message
       const { data: lastMsg } = await supabase
@@ -178,13 +204,13 @@ export async function listConversations(): Promise<ConversationWithDetails[]> {
       if (lastMsg) {
         const { data: senderProfile } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('*')
           .eq('id', lastMsg.sender_id)
           .single();
 
         lastMessage = {
           body: lastMsg.body,
-          sender_name: senderProfile?.full_name || 'Unknown',
+          sender_name: senderProfile ? buildProfileName(senderProfile) : 'Usuario',
           created_at: lastMsg.created_at,
         };
       }
@@ -215,7 +241,7 @@ export async function listConversations(): Promise<ConversationWithDetails[]> {
 
       return {
         ...conv,
-        participants: profiles || [],
+        participants: normalizedProfiles,
         last_message: lastMessage,
         unread_count: unreadCount,
       };
@@ -265,8 +291,10 @@ export async function fetchMessages(
     if (statusError) throw statusError;
 
     if (statusRows) {
-      statusRows.forEach((row) => {
-        statusMap.set(row.message_id, row.status);
+      statusRows.forEach((row: { message_id: string; status: string | null }) => {
+        if (row && row.message_id) {
+          statusMap.set(row.message_id, row.status);
+        }
       });
     }
   }

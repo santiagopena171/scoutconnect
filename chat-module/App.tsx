@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   supabase,
   listConversations,
@@ -36,6 +36,7 @@ export default function App() {
   const [lastSeenMessageId, setLastSeenMessageId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [conversationsVersion, setConversationsVersion] = useState(0);
+  const [backUrl, setBackUrl] = useState<string | null>(null);
 
   const { messages, setMessages } = useRealtimeMessages(selectedConversationId);
   const statusesMap = useMessageStatus(selectedConversationId);
@@ -60,6 +61,24 @@ export default function App() {
     return () => {
       subscription.subscription.unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const referrer = document.referrer;
+    let normalizedReferrer: string | null = null;
+
+    if (referrer) {
+      try {
+        const refUrl = new URL(referrer, window.location.origin);
+        if (refUrl.origin === window.location.origin) {
+          normalizedReferrer = refUrl.toString();
+        }
+      } catch (error) {
+        console.warn('Could not parse document.referrer', error);
+      }
+    }
+
+    setBackUrl(normalizedReferrer);
   }, []);
 
   useEffect(() => {
@@ -159,7 +178,14 @@ export default function App() {
 
     const convs = await listConversations();
     setConversations(convs);
-    return convs.find((conv) => conv.id === conversationId) || null;
+    const found = convs.find((conv) => conv.id === conversationId) || null;
+    
+    // Actualizar activeConversation si encontramos la conversación
+    if (found) {
+      setActiveConversation(found);
+    }
+    
+    return found;
   };
 
   const updatePaginationState = (fetchedMessages: MessageWithSender[]) => {
@@ -273,9 +299,81 @@ export default function App() {
     alert('Funcionalidad de reporte próximamente');
   };
 
-  const participant = activeConversation && currentUserId
-    ? getOtherParticipant(activeConversation, currentUserId)
-    : null;
+  const handleBack = useCallback(() => {
+    if (backUrl) {
+      window.location.href = backUrl;
+      return;
+    }
+
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    window.location.href = 'index.html';
+  }, [backUrl]);
+
+  const handleSelectConversationRef = useRef(handleSelectConversation);
+
+  useEffect(() => {
+    handleSelectConversationRef.current = handleSelectConversation;
+  }, [handleSelectConversation]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const conversationIdFromQuery = params.get('conversationId') ?? params.get('conversation_id');
+    const fn = handleSelectConversationRef.current;
+    if (conversationIdFromQuery && fn) {
+      fn(conversationIdFromQuery);
+    }
+  }, [currentUserId]);
+
+  useEffect(() => {
+    const listener = (event: Event) => {
+      const customEvent = event as CustomEvent<{ conversationId?: string }>;
+      const conversationId = customEvent.detail?.conversationId;
+      const fn = handleSelectConversationRef.current;
+      if (conversationId && fn) {
+        fn(conversationId);
+      }
+    };
+
+    window.addEventListener('sc:open-conversation', listener as EventListener);
+    return () => {
+      window.removeEventListener('sc:open-conversation', listener as EventListener);
+    };
+  }, []);
+
+  // Obtener participant: primero de activeConversation, sino de conversations, sino del primer mensaje
+  const participant = (() => {
+    if (activeConversation && currentUserId) {
+      return getOtherParticipant(activeConversation, currentUserId);
+    }
+    
+    // Fallback: buscar en conversations
+    if (selectedConversationId && currentUserId) {
+      const conv = conversations.find((c) => c.id === selectedConversationId);
+      if (conv) {
+        return getOtherParticipant(conv, currentUserId);
+      }
+    }
+    
+    // Último fallback: obtener del primer mensaje si existe
+    if (messages.length > 0 && currentUserId) {
+      const firstMessage = messages[0];
+      if (firstMessage.sender_id !== currentUserId) {
+        return firstMessage.sender;
+      }
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.sender_id !== currentUserId) {
+        return lastMessage.sender;
+      }
+    }
+    
+    return null;
+  })();
 
   const canSend = canSendMessage();
 
@@ -311,6 +409,7 @@ export default function App() {
         <ChatHeader
           participant={participant}
           presenceState={presenceState}
+          onBack={handleBack}
         />
 
         {selectedConversationId ? (

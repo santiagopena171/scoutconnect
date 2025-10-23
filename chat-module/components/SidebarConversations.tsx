@@ -14,6 +14,39 @@ interface SidebarConversationsProps {
   onSelectConversation: (conversationId: string) => void;
 }
 
+function resolveProfileName(
+  profile: ConversationWithDetails['participants'][number] | undefined
+): string {
+  if (!profile) {
+    return 'Usuario';
+  }
+
+  if (profile.full_name && profile.full_name.trim().length > 0) {
+    return profile.full_name.trim();
+  }
+
+  const raw = profile as unknown as Record<string, unknown>;
+  const first = typeof raw.first_name === 'string' ? raw.first_name.trim() : '';
+  const last = typeof raw.last_name === 'string' ? raw.last_name.trim() : '';
+  const fallback = `${first} ${last}`.trim();
+
+  if (fallback.length > 0) {
+    return fallback;
+  }
+
+  const username = typeof raw.username === 'string' ? raw.username.trim() : '';
+  if (username.length > 0) {
+    return username;
+  }
+
+  const email = typeof raw.email === 'string' ? raw.email.trim() : '';
+  if (email.length > 0) {
+    return email;
+  }
+
+  return 'Usuario';
+}
+
 export const SidebarConversations: React.FC<SidebarConversationsProps> = ({
   currentUserId,
   conversations,
@@ -29,7 +62,7 @@ export const SidebarConversations: React.FC<SidebarConversationsProps> = ({
 
     return conversations.filter((conv) => {
       const participantMatch = conv.participants.some((p) =>
-        p.full_name.toLowerCase().includes(query)
+        resolveProfileName(p).toLowerCase().includes(query)
       );
 
       const messageMatch = conv.last_message?.body
@@ -104,6 +137,7 @@ export const SidebarConversations: React.FC<SidebarConversationsProps> = ({
         ) : (
           filteredConversations.map((conv) => {
             const otherParticipant = getOtherParticipant(conv);
+            const otherName = resolveProfileName(otherParticipant);
             const isSelected = conv.id === selectedConversationId;
 
             return (
@@ -117,7 +151,7 @@ export const SidebarConversations: React.FC<SidebarConversationsProps> = ({
                   {otherParticipant?.avatar_url ? (
                     <img 
                       src={otherParticipant.avatar_url} 
-                      alt={otherParticipant.full_name}
+                      alt={otherName}
                     />
                   ) : (
                     <div className="avatar-placeholder">
@@ -135,7 +169,7 @@ export const SidebarConversations: React.FC<SidebarConversationsProps> = ({
                     <h4 className="conversation-name">
                       {conv.is_group 
                         ? conv.title 
-                        : otherParticipant?.full_name || 'Usuario'}
+                        : otherName}
                     </h4>
                     {conv.last_message && (
                       <span className="conversation-time">
@@ -146,7 +180,7 @@ export const SidebarConversations: React.FC<SidebarConversationsProps> = ({
                   
                   {conv.last_message && (
                     <p className="conversation-preview">
-                      {conv.last_message.sender_name === otherParticipant?.full_name
+                      {conv.last_message.sender_name === otherName
                         ? conv.last_message.body
                         : `Vos: ${conv.last_message.body}`}
                     </p>
