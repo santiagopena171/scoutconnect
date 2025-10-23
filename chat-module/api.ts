@@ -75,75 +75,14 @@ async function getCurrentUserId(): Promise<string> {
 export async function createOrGetDirectConversation(
   targetUserId: string
 ): Promise<Conversation> {
-  const currentUserId = await getCurrentUserId();
+  const { data, error } = await supabase.rpc('get_or_create_direct_conversation', {
+    target_user_id: targetUserId,
+  });
 
-  // Check if conversation already exists
-  const { data: existingConvs, error: searchError } = await supabase
-    .from('conversation_participants')
-    .select('conversation_id')
-    .eq('user_id', currentUserId);
+  if (error) throw error;
+  if (!data) throw new Error('No se pudo obtener la conversación');
 
-  if (searchError) throw searchError;
-
-  if (existingConvs && existingConvs.length > 0) {
-    const conversationIds = existingConvs.map((p) => p.conversation_id);
-
-    // Find conversation with exactly 2 participants (current + target)
-    const { data: targetParticipants, error: targetError } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', targetUserId)
-      .in('conversation_id', conversationIds);
-
-    if (targetError) throw targetError;
-
-    if (targetParticipants && targetParticipants.length > 0) {
-      // Found existing conversation
-      const conversationId = targetParticipants[0].conversation_id;
-
-      const { data: conversation, error: convError } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', conversationId)
-        .eq('is_group', false)
-        .single();
-
-      if (convError) throw convError;
-      if (conversation) return conversation;
-    }
-  }
-
-  // Create new conversation
-  const { data: newConv, error: createError } = await supabase
-    .from('conversations')
-    .insert({
-      is_group: false,
-      created_by: currentUserId,
-    })
-    .select()
-    .single();
-
-  if (createError) throw createError;
-
-  // Add participants
-  const { error: participantsError } = await supabase
-    .from('conversation_participants')
-    .insert([
-      {
-        conversation_id: newConv.id,
-        user_id: currentUserId,
-        role_in_conversation: 'owner',
-      },
-      {
-        conversation_id: newConv.id,
-        user_id: targetUserId,
-        role_in_conversation: 'member',
-      },
-    ]);
-
-  if (participantsError) throw participantsError;
-
-  return newConv;
+  return data as Conversation;
 }
 
 // ============================================
@@ -162,7 +101,7 @@ export async function listConversations(): Promise<ConversationWithDetails[]> {
   if (participantError) throw participantError;
   if (!participantData || participantData.length === 0) return [];
 
-  const conversationIds = participantData.map((p) => p.conversation_id);
+  const conversationIds = Array.from(new Set(participantData.map((p) => p.conversation_id))).filter(Boolean);
 
   // Get conversations
   const { data: conversations, error: convsError } = await supabase

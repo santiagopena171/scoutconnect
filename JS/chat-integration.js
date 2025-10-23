@@ -29,88 +29,21 @@
 
     const currentUserId = user.id;
 
-    const { data: existingConversations, error: participantsError } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', currentUserId);
-
-    if (participantsError) {
-      throw participantsError;
-    }
-
-    if (existingConversations && existingConversations.length > 0) {
-      const ids = existingConversations.map((row) => row.conversation_id);
-      const { data: sharedConversations, error: sharedError } = await supabase
-        .from('conversation_participants')
-        .select('conversation_id')
-        .eq('user_id', targetUserId)
-        .in('conversation_id', ids);
-
-      if (sharedError) {
-        throw sharedError;
-      }
-
-      if (sharedConversations && sharedConversations.length > 0) {
-        return sharedConversations[0].conversation_id;
-      }
-
-    }
-
-    const conversationId = generateUuid();
-
-    const { error: createError } = await supabase
-      .from('conversations')
-      .insert(
-        {
-          id: conversationId,
-          is_group: false,
-          created_by: currentUserId,
-        },
-        { returning: 'minimal' }
-      );
-
-    if (createError) {
-      throw createError;
-    }
-
-    const participantsPayload = [
-      {
-        conversation_id: conversationId,
-        user_id: currentUserId,
-        role_in_conversation: 'owner',
-      },
-    ];
-
-    if (targetUserId !== currentUserId) {
-      participantsPayload.push({
-        conversation_id: conversationId,
-        user_id: targetUserId,
-        role_in_conversation: 'member',
-      });
-    }
-
-    const { error: addParticipantsError } = await supabase
-      .from('conversation_participants')
-      .insert(participantsPayload);
-
-    if (addParticipantsError) {
-      throw addParticipantsError;
-    }
-
-    return conversationId;
-  }
-
-  function generateUuid() {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-
-    const template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx';
-    return template.replace(/[xy]/g, (char) => {
-      const rand = (Math.random() * 16) | 0;
-      const value = char === 'x' ? rand : (rand & 0x3) | 0x8;
-      return value.toString(16);
+    const { data, error } = await supabase.rpc('get_or_create_direct_conversation', {
+      target_user_id: targetUserId,
     });
+
+    if (error) {
+      throw error;
+    }
+
+    const conversation = Array.isArray(data) ? data[0] : data;
+
+    if (!conversation || !conversation.id) {
+      throw new Error('No se pudo obtener la conversación.');
+    }
+
+    return conversation.id;
   }
 
   function redirectToChat(conversationId) {
