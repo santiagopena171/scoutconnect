@@ -273,6 +273,20 @@ body {
   z-index: 999;
 }
 
+/* Overlay used on mobile when sidebar is open */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 998;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Sidebar toggle button visibility on mobile */
+.sidebar-toggle { display: none; }
+
 .sidebar-header {
   padding: var(--spacing-xl) var(--spacing-lg);
   border-bottom: 1px solid var(--border-light);
@@ -395,6 +409,42 @@ body {
   margin-top: var(--navbar-height);
   padding: var(--spacing-xl);
   min-height: calc(100vh - var(--navbar-height));
+}
+
+/* Responsive: collapse sidebar into off-canvas drawer on smaller screens */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(0);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar-toggle { display: inline-flex; }
+
+  /* When not open, hide sidebar off-canvas */
+  body:not(.sidebar-open) .sidebar {
+    transform: translateX(-110%);
+  }
+
+  body.sidebar-open .sidebar-overlay {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Make main content full width when sidebar closed */
+  body:not(.sidebar-open) .main-content {
+    margin-left: 0;
+    padding: var(--spacing-lg);
+  }
+}
+
+/* Prevent background scrolling when sidebar (drawer) is open */
+body.sidebar-open {
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .sidebar { width: 260px; }
+  .sidebar-toggle { display: inline-flex; }
 }
 
 .content-section {
@@ -674,6 +724,95 @@ body {
   color: var(--text-primary);
   margin-bottom: 2px;
 }
+
+/* Responsive adjustments for grids */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .page-header .header-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .global-search { display: none; } /* hide large search on very small screens */
+}
+
+@media (max-width: 480px) {
+  /* hide the whole search container (lupa) on very small screens */
+  .search-container { display: none; }
+  /* ensure messages button remains visible in the top actions */
+  .navbar-actions #messagesBtn { display: inline-flex; }
+}
+
+/* Mobile menu (for very small screens) - a full-screen panel used by the hamburger menu */
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  z-index: 1002;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+body.mobile-menu-open .mobile-menu {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .mobile-menu { padding: var(--spacing-sm); }
+}
+
+/* Ensure the cloned sidebar-inner content inside mobile menu looks correct */
+.mobile-menu .sidebar-inner {
+  padding: var(--spacing-md) 0;
+}
+
+.mobile-menu .sidebar-nav .nav-item {
+  padding: 12px 8px;
+  border-radius: var(--radius-md);
+}
+
+.mobile-menu .sidebar-footer {
+  position: static;
+  background: transparent;
+  border-top: none;
+  padding-top: var(--spacing-md);
+}
+
 
 .evaluation-info p {
   font-size: 12px;
@@ -1825,6 +1964,19 @@ body {
 .notification-item:last-child {
   border-bottom: none;
 }
+
+/* hide the red count badge specifically for the top messages button (we show only icon) */
+.navbar-actions #messagesBtn .notification-badge {
+  display: none;
+}
+
+.messages-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+}
+
+.messages-icon path { stroke: var(--text-secondary); }
 
 .notification-item.unread {
   background: rgba(102, 126, 234, 0.02);

@@ -1525,9 +1525,13 @@ body {
   .hamburger-menu {
     display: flex;
     margin-left: auto;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* keep it above the centered menu */
+    z-index: 1003;
   }
   
-  /* Stack mobile navigation */
+  /* Stack mobile navigation - use a centered panel variant to avoid full-width stretching */
   .navbar-menu {
     display: none;
     flex-direction: column;
@@ -1537,13 +1541,37 @@ body {
     border-top: 1px solid var(--border-color);
   }
 
-  .navbar-menu.mobile-active {
+  /* Provide a convenience class for full-width mobile menus (option B) */
+  .navbar-menu.mobile-full {
+    display: none; /* controlled by navbar-fix positioning/visibility */
+  }
+
+  .navbar-menu.mobile-active,
+  .navbar-menu.mobile-full.mobile-active {
     display: flex;
   }
 
   .nav-link {
     justify-content: center;
     width: 100%;
+  }
+
+  /* utility to show certain nav items only on mobile (like logout) */
+  .mobile-only {
+    display: none;
+  }
+
+  .logout-link svg {
+    opacity: 0.9;
+  }
+
+  /* show mobile-only items on small screens */
+  .mobile-only.mobile-visible,
+  .navbar-menu .mobile-only {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
   }
 
   /* Mobile account drawer */

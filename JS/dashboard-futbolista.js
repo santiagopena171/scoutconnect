@@ -780,6 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       if (navbarMenu) {
         navbarMenu.classList.remove('mobile-active');
+          navbarMenu.classList.remove('mobile-full');
       }
     };
     
@@ -789,7 +790,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hamburgerMenu.classList.toggle('active');
         userInfo.classList.toggle('mobile-active');
         if (navbarMenu) {
+          // toggle both the legacy mobile-active and the new mobile-panel variant
           navbarMenu.classList.toggle('mobile-active');
+            navbarMenu.classList.toggle('mobile-full');
         }
       });
       userInfo.addEventListener('click', (event) => event.stopPropagation());
@@ -845,6 +848,17 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', () => {
           closeMobileMenu();
         });
+      });
+    }
+
+    // Mobile logout button inside navbar (close menu after clicking)
+    const mobileLogout = document.getElementById('mobileLogout');
+    if (mobileLogout) {
+      mobileLogout.addEventListener('click', (e) => {
+        e.preventDefault();
+        // forward to existing logout function (which asks confirmation)
+        logout();
+        closeMobileMenu();
       });
     }
 

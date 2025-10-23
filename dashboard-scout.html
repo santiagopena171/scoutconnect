@@ -28,8 +28,15 @@
         <span class="notification-badge">3</span>
       </button>
   <button class="action-btn" id="messagesBtn" data-open-chat>
-        <i class="fas fa-envelope"></i>
+        <!-- inline SVG chat icon (fallback, no external file needed) -->
+        <svg class="messages-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
         <span class="notification-badge">5</span>
+      </button>
+      <!-- Sidebar toggle visible on mobile -->
+      <button class="action-btn sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú" title="Abrir menú">
+        <i class="fas fa-bars"></i>
       </button>
       <div class="profile-dropdown">
         <img src="imagenes/scout-avatar.png" alt="Scout" class="profile-avatar" id="profileToggle">
@@ -54,6 +61,8 @@
 
   <!-- Sidebar de Navegación -->
   <aside class="sidebar">
+    <!-- Accessible role and focusable container -->
+    <div class="sidebar-inner" role="navigation" aria-label="Navegación principal" tabindex="-1">
     <div class="sidebar-header">
       <h3><i class="fas fa-binoculars"></i> Scout Panel</h3>
     </div>
@@ -123,7 +132,75 @@
         </div>
       </div>
     </div>
+    </div>
   </aside>
+
+  <!-- Overlay for mobile sidebar -->
+  <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
+
+  <!-- Mobile menu (cloned sidebar nav for small screens) -->
+  <div id="mobileMenu" class="mobile-menu" aria-hidden="true"></div>
+
+  <script>
+    (function(){
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const overlay = document.getElementById('sidebarOverlay');
+      const body = document.body;
+
+      const sidebarInner = document.querySelector('.sidebar-inner');
+
+      const mobileMenu = document.getElementById('mobileMenu');
+
+      function openSidebar(){
+        // For small screens, prefer mobile menu overlay
+        if (window.innerWidth <= 480 && mobileMenu) {
+          body.classList.add('mobile-menu-open');
+          overlay.setAttribute('aria-hidden', 'false');
+          if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'true');
+          // clone sidebar content once
+          if (!mobileMenu.hasChildNodes()) {
+            const clone = document.querySelector('.sidebar-inner').cloneNode(true);
+            // remove any IDs that might conflict
+            clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+            // remove the messages nav-item inside the clone (we keep messages button in top bar on mobile)
+            const msgItem = clone.querySelector('[data-open-chat], .nav-item[data-open-chat], .nav-item .fa-comments');
+            if (msgItem) {
+              // if the selector matched an icon inside the link, walk up to .nav-item
+              const navItem = msgItem.closest('.nav-item') || msgItem;
+              navItem.remove();
+            }
+            mobileMenu.appendChild(clone);
+          }
+          mobileMenu.setAttribute('aria-hidden', 'false');
+          // focus mobile menu
+          mobileMenu.focus && mobileMenu.focus();
+          return;
+        }
+
+        // desktop/tablet behaviour (off-canvas sidebar)
+        body.classList.add('sidebar-open');
+        overlay.setAttribute('aria-hidden', 'false');
+        if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'true');
+        if (sidebarInner) sidebarInner.focus({ preventScroll: true });
+      }
+
+      function closeSidebar(){
+        body.classList.remove('sidebar-open');
+        body.classList.remove('mobile-menu-open');
+        overlay.setAttribute('aria-hidden', 'true');
+        if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'false');
+        if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
+      }
+
+      if (sidebarToggle) sidebarToggle.addEventListener('click', (e) => { e.stopPropagation(); openSidebar(); });
+      if (overlay) overlay.addEventListener('click', () => closeSidebar());
+
+      // close on ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && body.classList.contains('sidebar-open')) closeSidebar();
+      });
+    })();
+  </script>
 
   <!-- Contenido Principal -->
   <main class="main-content">

@@ -51,24 +51,49 @@ body {
     display: flex !important;
   }
   
+  /* Mobile menu: center the dropdown and support both .active and .mobile-active
+     Use a centered, fixed panel so it looks good on narrow viewports (iPhone mock). */
   .navbar-menu {
     position: fixed !important;
-    top: 70px !important;
-    left: 0 !important;
-    right: 0 !important;
+    /* place just below the navbar (default navbar height is 70px) */
+    top: calc(70px + 8px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(-12px) !important;
+    width: min(380px, calc(100% - 40px)) !important;
     background: #fff !important;
     flex-direction: column !important;
-    gap: 0 !important;
-    padding: 20px !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-    transform: translateY(-110%) !important;
+    gap: 8px !important;
+    padding: 12px 16px !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+    border-radius: 12px !important;
     opacity: 0 !important;
     visibility: hidden !important;
-    transition: all 0.3s ease !important;
-    z-index: 999 !important;
+    transition: transform 0.25s ease, opacity 0.25s ease !important;
+    z-index: 1001 !important;
   }
-  
-  .navbar-menu.active {
+
+  /* make it visible when toggled by either `.active` (legacy) or `.mobile-active` */
+  .navbar-menu.active,
+  .navbar-menu.mobile-active {
+    transform: translateX(-50%) translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Full-width mobile option (preferred by the user - option B)
+     When `.mobile-full` is used the menu occupies the full viewport width below the navbar.
+     This avoids the centered panel and behaves like a classic mobile nav drawer. */
+  .navbar-menu.mobile-full {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    transform: translateY(-8px) !important;
+    border-radius: 0 !important;
+    padding: 12px 16px !important;
+  }
+
+  .navbar-menu.mobile-full.active,
+  .navbar-menu.mobile-full.mobile-active {
     transform: translateY(0) !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -89,9 +114,7 @@ body {
     border-bottom: none !important;
   }
   
-  body {
-    padding-top: 70px !important;
-  }
+  /* avoid forcing a global top padding on body here (causes layout/centering issues) */
 }
 
 /* HERO SECTION MOBILE FIXES */

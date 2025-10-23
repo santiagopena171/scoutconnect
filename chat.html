@@ -5,9 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat - ScoutConnect</title>
   <link rel="stylesheet" href="chat-build/chat-app.css">
+  <link rel="stylesheet" href="chat-build/chat-back.css">
 </head>
 <body>
   <div id="chat-root"></div>
+  <!-- Back button for mobile: goes back to dashboard or history.back() -->
+  <button id="chatBackBtn" class="chat-back-btn" aria-label="Volver al dashboard" title="Volver">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="#111" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
   <script type="module" src="chat-build/chat-app.js"></script>
+  <script>
+    (function(){
+      const btn = document.getElementById('chatBackBtn');
+      if (!btn) return;
+      btn.addEventListener('click', function(){
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'dashboard-scout.html';
+      });
+      // only show on small screens (double-check) - CSS covers this but keep a guard
+      function update(){
+        btn.style.display = (window.innerWidth <= 480) ? 'flex' : 'none';
+      }
+      update();
+      window.addEventListener('resize', update);
+    })();
+  </script>
 </body>
 </html>
