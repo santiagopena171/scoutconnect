@@ -1,5 +1,22 @@
 (function () {
-  const CHAT_PAGE_PATH = 'chat.html';
+  function computeBasePath() {
+    const path = window.location.pathname || '/';
+    const segments = path.split('/');
+    if (segments.length <= 1) {
+      return '/';
+    }
+
+    segments.pop();
+    const base = segments.join('/') || '';
+    if (!base || base === '/') {
+      return '/';
+    }
+
+    return base.endsWith('/') ? base : `${base}/`;
+  }
+
+  const BASE_PATH = computeBasePath();
+  const CHAT_PAGE_PATH = `${BASE_PATH}chat.html`;
   const LOADING_ATTRIBUTE = 'data-chat-loading';
   const EVENT_NAME = 'sc:open-conversation';
 
