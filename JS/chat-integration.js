@@ -1,18 +1,19 @@
 (function () {
   function computeBasePath() {
-    const path = window.location.pathname || '/';
-    const segments = path.split('/');
-    if (segments.length <= 1) {
+    const parts = (window.location.pathname || '/').split('/').filter(Boolean);
+
+    if (parts.length === 0) {
       return '/';
     }
 
-    segments.pop();
-    const base = segments.join('/') || '';
-    if (!base || base === '/') {
+    const firstSegment = parts[0];
+
+    // If the first segment looks like a file (contains a dot), assume we're at root
+    if (!firstSegment || firstSegment.includes('.')) {
       return '/';
     }
 
-    return base.endsWith('/') ? base : `${base}/`;
+    return `/${firstSegment}/`;
   }
 
   const BASE_PATH = computeBasePath();
