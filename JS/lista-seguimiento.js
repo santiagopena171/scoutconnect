@@ -8,7 +8,7 @@ class WatchlistManager {
   }
 
   async init() {
-    console.log('🌟 Iniciando Lista de Seguimiento...');
+    
     await this.getCurrentUser();
     await this.loadWatchlistFromSupabase();
     this.filteredWatchlist = [...this.watchlist];
@@ -16,18 +16,18 @@ class WatchlistManager {
     this.updateStats();
     this.renderWatchlist();
     this.updateNavCounter();
-    console.log('✅ Lista de Seguimiento inicializada');
+    
   }
 
   async loadWatchlistFromSupabase() {
     try {
       if (!this.currentUserId) {
-        console.log('⚠️ No hay usuario para cargar watchlist');
+        
         this.watchlist = [];
         return;
       }
 
-      console.log('📥 Cargando watchlist desde Supabase...');
+      
 
       // Primero obtener los IDs de la watchlist
       const { data: watchlistData, error: watchlistError } = await supabase
@@ -42,17 +42,17 @@ class WatchlistManager {
         return;
       }
 
-      console.log('📊 Watchlist entries:', watchlistData?.length || 0);
+      
 
       if (!watchlistData || watchlistData.length === 0) {
-        console.log('📭 No hay jugadores en la lista');
+        
         this.watchlist = [];
         return;
       }
 
       // Obtener los IDs de jugadores
       const playerIds = watchlistData.map(item => item.player_id);
-      console.log('🎯 Player IDs:', playerIds);
+      
 
       // Obtener los datos de los jugadores
       const { data: playersData, error: playersError } = await supabase
@@ -66,7 +66,7 @@ class WatchlistManager {
         return;
       }
 
-      console.log('✅ Jugadores cargados:', playersData?.length || 0);
+      
 
       // Combinar los datos
       this.watchlist = watchlistData.map(item => {
@@ -122,7 +122,7 @@ class WatchlistManager {
       if (error) throw error;
       if (user) {
         this.currentUserId = user.id;
-        console.log('👤 Usuario actual:', this.currentUserId);
+        
       }
     } catch (error) {
       console.error('❌ Error al obtener usuario:', error);
@@ -132,16 +132,16 @@ class WatchlistManager {
   loadWatchlist() {
     try {
       if (!this.currentUserId) {
-        console.log('⚠️ No hay usuario logueado');
+        
         return [];
       }
       const key = `scoutconnect_watchlist_${this.currentUserId}`;
       const saved = localStorage.getItem(key);
-      console.log('📥 Cargando watchlist para usuario:', this.currentUserId);
-      console.log('🔑 Clave utilizada:', key);
-      console.log('💾 Datos guardados:', saved);
+      
+      
+      
       const parsed = saved ? JSON.parse(saved) : [];
-      console.log('📊 Jugadores cargados:', parsed.length);
+      
       return parsed;
     } catch (error) {
       console.error('❌ Error al cargar watchlist:', error);
@@ -157,7 +157,7 @@ class WatchlistManager {
       }
       const key = `scoutconnect_watchlist_${this.currentUserId}`;
       localStorage.setItem(key, JSON.stringify(this.watchlist));
-      console.log('💾 Watchlist guardada para usuario:', this.currentUserId, '- Items:', this.watchlist.length);
+      
     } catch (error) {
       console.error('Error al guardar watchlist:', error);
     }
@@ -412,7 +412,7 @@ class WatchlistManager {
         this.renderWatchlist();
         
         this.showNotification(`${player.name} removido de la lista de seguimiento`, 'info');
-        console.log('✅ Jugador eliminado de watchlist');
+        
       } catch (error) {
         console.error('❌ Error al eliminar:', error);
         this.showNotification('Error al eliminar de la lista', 'error');
@@ -602,7 +602,7 @@ function closeModal(modalId) {
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 DOM cargado, iniciando Lista de Seguimiento...');
+  
   window.watchlistManager = new WatchlistManager();
   await window.watchlistManager.init();
 });

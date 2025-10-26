@@ -5,18 +5,18 @@
 // Ejecutar en la consola del navegador (F12 → Console)
 
 function migrateReports() {
-  console.log('🔄 Iniciando migración de reportes...');
+  
   
   try {
     // Cargar reportes existentes
     const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
     
     if (reports.length === 0) {
-      console.log('ℹ️ No hay reportes para migrar');
+      
       return;
     }
     
-    console.log(`📊 Encontrados ${reports.length} reportes`);
+    
     
     // Obtener información del usuario actual
     let currentUser = null;
@@ -30,7 +30,7 @@ function migrateReports() {
           name: scoutConnectUser.fullName || scoutConnectUser.full_name || scoutConnectUser.name,
           email: scoutConnectUser.email
         };
-        console.log('✅ Usuario encontrado en scoutConnectUser:', currentUser);
+        
       }
     } catch (e) {}
     
@@ -44,7 +44,7 @@ function migrateReports() {
             name: userProfile.name || userProfile.fullName,
             email: userProfile.email
           };
-          console.log('✅ Usuario encontrado en scoutconnect_user:', currentUser);
+          
         }
       } catch (e) {}
     }
@@ -55,7 +55,7 @@ function migrateReports() {
       const email = prompt('📧 Ingresa tu email:', 'scout@scoutconnect.com');
       
       if (!name || !email) {
-        console.log('❌ Migración cancelada');
+        
         return;
       }
       
@@ -79,7 +79,7 @@ function migrateReports() {
       localStorage.setItem('scoutconnect_user', JSON.stringify(userData));
     }
     
-    console.log('👤 Usuario para migración:', currentUser);
+    
     
     // Migrar reportes
     let migratedCount = 0;
@@ -102,8 +102,8 @@ function migrateReports() {
     // Guardar reportes actualizados
     localStorage.setItem('generatedReports', JSON.stringify(updatedReports));
     
-    console.log(`✅ Migración completada: ${migratedCount} reportes actualizados`);
-    console.log('💡 Recarga la página para ver los cambios');
+    
+    
     
     return {
       total: reports.length,
@@ -126,11 +126,11 @@ function clearAllReports() {
   
   if (confirm === 'CONFIRMAR') {
     localStorage.removeItem('generatedReports');
-    console.log('✅ Todos los reportes han sido eliminados');
-    console.log('💡 Recarga la página para ver los cambios');
+    
+    
     return true;
   } else {
-    console.log('❌ Operación cancelada');
+    
     return false;
   }
 }
@@ -143,9 +143,9 @@ function getReportsByPlayer(playerId) {
   const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
   const playerReports = reports.filter(r => r.playerId == playerId);
   
-  console.log(`📊 Reportes del jugador ID ${playerId}:`, playerReports.length);
+  
   playerReports.forEach((r, i) => {
-    console.log(`   [${i}] ${r.title} - ${r.scoutName} (${new Date(r.createdAt || r.date).toLocaleDateString()})`);
+    
   });
   
   return playerReports;
@@ -156,7 +156,7 @@ function getReportsByPlayer(playerId) {
 // =============================================
 
 function createTestReports(playerId, count = 3) {
-  console.log(`🧪 Creando ${count} reportes de prueba para jugador ${playerId}...`);
+  
   
   // Obtener usuario actual
   let currentUser = null;
@@ -174,7 +174,7 @@ function createTestReports(playerId, count = 3) {
   } catch (e) {}
   
   if (!currentUser) {
-    console.log('⚠️ No hay usuario configurado. Ejecuta primero: setTestScout()');
+    
     return;
   }
   
@@ -217,8 +217,8 @@ function createTestReports(playerId, count = 3) {
   }
   
   localStorage.setItem('generatedReports', JSON.stringify(reports));
-  console.log(`✅ ${count} reportes de prueba creados`);
-  console.log('💡 Recarga la página o ejecuta: playerProfile.refreshReports()');
+  
+  
 }
 
 // Exponer funciones globalmente
@@ -227,8 +227,8 @@ window.clearAllReports = clearAllReports;
 window.getReportsByPlayer = getReportsByPlayer;
 window.createTestReports = createTestReports;
 
-console.log('🛠️ Herramientas de migración cargadas:');
-console.log('   - migrateReports()         → Actualizar reportes antiguos');
-console.log('   - getReportsByPlayer(id)   → Ver reportes de un jugador');
-console.log('   - createTestReports(id, n) → Crear reportes de prueba');
-console.log('   - clearAllReports()        → Eliminar todos (¡cuidado!)');
+
+
+
+
+

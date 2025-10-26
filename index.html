@@ -22,13 +22,13 @@
       const navbarToggle = document.getElementById('navbarToggle');
       const navbarMenu = document.getElementById('navbarMenu');
       
-      console.log('Navbar elements:', { navbarToggle, navbarMenu });
+      
       
       if (navbarToggle && navbarMenu) {
-        console.log('Setting up hamburger menu functionality');
+        
         navbarToggle.addEventListener('click', (e) => {
           e.preventDefault();
-          console.log('Hamburger clicked');
+          
           navbarToggle.classList.toggle('active');
           navbarMenu.classList.toggle('active');
           console.log('Classes after toggle:', {
@@ -45,7 +45,7 @@
           });
         });
       } else {
-        console.log('ERROR: Navbar elements not found');
+        
       }
     });
   </script>

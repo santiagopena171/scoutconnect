@@ -14,11 +14,11 @@ class ChatApp {
   }
 
   init() {
-    console.log('🚀 Inicializando Chat App...');
+    
     this.loadConversations();
     this.setupEventListeners();
     this.updateConversationsCount();
-    console.log('✅ Chat App inicializado correctamente');
+    
   }
 
   loadConversations() {
@@ -300,7 +300,7 @@ class ChatApp {
   }
 
   selectConversation(conversationId) {
-    console.log(`📱 Seleccionando conversación ${conversationId}...`);
+    
     
     // Actualizar conversación activa
     this.activeConversationId = conversationId;
@@ -436,7 +436,7 @@ class ChatApp {
       this.simulateAutoReply(conversation);
     }, 2000);
 
-    console.log('📤 Mensaje enviado:', messageText);
+    
   }
 
   simulateAutoReply(conversation) {
@@ -497,7 +497,7 @@ class ChatApp {
     this.renderConversations();
     this.updateConversationsCount();
 
-    console.log('🤖 Respuesta automática:', randomReply);
+    
   }
 
   updateConversationsCount() {
@@ -513,7 +513,7 @@ class ChatApp {
 
   showNewConversationModal() {
     // Placeholder para funcionalidad de nueva conversación
-    console.log('🆕 Abriendo modal de nueva conversación...');
+    
     alert('Funcionalidad de nueva conversación en desarrollo');
   }
 }
@@ -567,7 +567,7 @@ class SmartAutoReply {
 
 // Inicializar la aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🏁 DOM cargado, iniciando Chat App...');
+  
   const chatApp = new ChatApp();
   
   // Configurar funcionalidades de scrollbar y escritura mejorada
@@ -733,8 +733,8 @@ function showNewMessageIndicator() {
 // Manejar visibilidad de la página para notificaciones
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    console.log('👁️ Usuario regresó al chat');
+    
   } else {
-    console.log('👁️ Usuario salió del chat');
+    
   }
 });

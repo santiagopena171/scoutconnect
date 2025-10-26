@@ -5,13 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
   const directAccess = urlParams.get('direct') === 'true';
   
-  console.log('🚀 Iniciando dashboard del futbolista...');
-  console.log('🔧 Acceso directo:', directAccess);
+  
+  
   
   // Nota: checkSession() ya no actualiza playerData directamente
   // Los datos se cargarán en init() -> loadPlayerDataFromStorage()
   if (!directAccess && !checkSession()) {
-    console.log('❌ No se pudo verificar la sesión, pero continuando con datos por defecto para demo');
+    
     // Para desarrollo, permitir continuar sin sesión válida
     // En producción, descomenta la línea de abajo:
     // return;
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Cargar datos persistentes del jugador
   function loadPlayerDataFromStorage() {
-    console.log('📂 Cargando datos persistentes del jugador...');
+    
     
     try {
       // PASO 1: Cargar primero los datos del usuario registrado (nombre, apellido, etc.)
@@ -112,13 +112,13 @@ document.addEventListener('DOMContentLoaded', function() {
       if (sessionUser) {
         try {
           const userData = JSON.parse(sessionUser);
-          console.log('👤 Cargando datos del usuario registrado:', userData);
+          
           updatePlayerDataFromSession(userData);
         } catch (error) {
           console.error('❌ Error parseando datos del usuario:', error);
         }
       } else {
-        console.log('⚠️ No hay datos de usuario registrado en scoutConnectUser');
+        
       }
       
       // PASO 2: Luego cargar/fusionar con datos del perfil guardados
@@ -128,23 +128,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // Combinar datos, PERO sin sobrescribir nombre, apellido, birthDate que vienen del registro
         const { firstName, lastName, name, birthDate, age, nationality, second_nationality, ...editableData } = parsedData;
         playerData = { ...playerData, ...editableData };
-        console.log('✅ Datos del perfil fusionados desde scoutConnectPlayerData');
+        
       } else {
-        console.log('ℹ️ No hay datos del perfil guardados, usando estructura por defecto');
+        
         // Guardar datos por defecto por primera vez
         savePlayerDataToStorage();
       }
       
-      console.log('🎯 Datos finales del jugador:', playerData);
+      
     } catch (error) {
       console.error('❌ Error cargando datos del jugador:', error);
-      console.log('🔄 Usando datos por defecto');
+      
     }
   }
 
   // Guardar datos del jugador en localStorage
   async function savePlayerDataToStorage() {
-    console.log('💾 Guardando datos del jugador...');
+    
     
     try {
       updateSaveStatus('saving');
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Guardar en localStorage (fallback)
       localStorage.setItem('scoutConnectPlayerData', JSON.stringify(playerData));
-      console.log('✅ Datos guardados en localStorage');
+      
       
       // Guardar en Supabase si está disponible
       if (typeof supabase !== 'undefined') {
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Función para guardar datos en Supabase
   async function saveToSupabase() {
     try {
-      console.log('☁️ Guardando en Supabase...');
+      
       
       // Obtener el usuario actual
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
       
-      console.log('✅ Datos guardados en Supabase correctamente');
+      
       return true;
       
     } catch (error) {
@@ -452,20 +452,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Función para verificar sesión válida
   function checkSession() {
-    console.log('🔍 Verificando sesión...');
+    
     
     const sessionToken = localStorage.getItem('scoutConnectToken');
     const sessionUser = localStorage.getItem('scoutConnectUser');
     const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
 
-    console.log('📋 Datos de sesión encontrados:', {
+    
       hasToken: !!sessionToken,
       hasUser: !!sessionUser,
       hasExpiry: !!sessionExpiry
     });
 
     if (!sessionToken || !sessionUser || !sessionExpiry) {
-      console.log('⚠️ Faltan datos de sesión - funcionando en modo demo');
+      
       // En modo desarrollo, permitir continuar sin sesión
       return true;
     }
@@ -473,14 +473,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const now = new Date().getTime();
     const expiryTime = parseInt(sessionExpiry);
 
-    console.log('⏰ Verificando expiración:', {
+    
       now: new Date(now).toLocaleString(),
       expiry: new Date(expiryTime).toLocaleString(),
       isExpired: now >= expiryTime
     });
 
     if (now >= expiryTime) {
-      console.log('⏰ Sesión expirada - limpiando datos');
+      
       clearSession();
       // En modo desarrollo, permitir continuar
       return true;
@@ -490,26 +490,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Los datos se cargarán en loadPlayerDataFromStorage()
     try {
       const userData = JSON.parse(sessionUser);
-      console.log('✅ Datos de usuario validados:', userData.name || userData.email);
+      
       return true;
     } catch (error) {
       console.error('❌ Error parseando datos de sesión:', error);
-      console.log('📄 Datos de sesión raw:', sessionUser);
+      
       clearSession();
       // En modo desarrollo, permitir continuar con datos por defecto
-      console.log('⚠️ Continuando con datos por defecto');
+      
       return true;
     }
   }
 
   // Función para limpiar sesión
   function clearSession() {
-    console.log('🧹 Limpiando datos de sesión...');
+    
     try {
       localStorage.removeItem('scoutConnectToken');
       localStorage.removeItem('scoutConnectUser');
       localStorage.removeItem('scoutConnectExpiry');
-      console.log('✅ Datos de sesión limpiados');
+      
     } catch (error) {
       console.error('❌ Error limpiando sesión:', error);
     }
@@ -517,10 +517,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Función para limpiar completamente el localStorage (para debugging)
   function clearAllStorageData() {
-    console.log('🧹 Limpiando TODOS los datos del localStorage...');
+    
     try {
       localStorage.clear();
-      console.log('✅ localStorage completamente limpiado');
+      
     } catch (error) {
       console.error('❌ Error limpiando localStorage:', error);
     }
@@ -532,25 +532,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Datos principales
     const mainData = localStorage.getItem('scoutConnectPlayerData');
-    console.log('📊 Datos principales:', mainData ? JSON.parse(mainData) : 'No encontrados');
+    
     
     // Backup
     const backup = localStorage.getItem('scoutConnectBackup');
     if (backup) {
       const { timestamp, data } = JSON.parse(backup);
-      console.log('🔄 Backup disponible del:', new Date(timestamp).toLocaleString());
-      console.log('📄 Datos del backup:', data);
+      
+      
     } else {
-      console.log('❌ Sin backup disponible');
+      
     }
     
     // Contador de guardados
     const saveCount = localStorage.getItem('scoutConnectSaveCount');
-    console.log('💾 Guardados realizados:', saveCount || '0');
+    
     
     // Datos de sesión
     const sessionData = localStorage.getItem('scoutconnect_session');
-    console.log('🔐 Datos de sesión:', sessionData ? JSON.parse(sessionData) : 'No encontrados');
+    
     
     // Tamaño total del almacenamiento
     let totalSize = 0;
@@ -559,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
         totalSize += localStorage[key].length;
       }
     }
-    console.log('📦 Tamaño total del almacenamiento:', (totalSize / 1024).toFixed(2) + ' KB');
+    
     
     console.groupEnd();
     return {
@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Funciones para exportar/importar datos del perfil
   function exportPlayerData() {
-    console.log('📤 Exportando datos del jugador...');
+    
     const timestamp = new Date().toISOString().split('T')[0];
     const dataBlob = new Blob([JSON.stringify(playerData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -588,14 +588,14 @@ document.addEventListener('DOMContentLoaded', function() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    console.log('✅ Datos exportados correctamente');
+    
     showMessage('success', 'Exportación completa', `Tu perfil ha sido exportado como "scoutconnect-${playerData.name.replace(/\s+/g, '-').toLowerCase()}-${timestamp}.json"`);
   }
 
   function importPlayerData(file) {
     if (!file) return;
     
-    console.log('📥 Importando datos del jugador...');
+    
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
@@ -615,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadVideoFacets();
         calculateProfileCompletion();
         showMessage('success', 'Datos importados', 'El perfil ha sido importado correctamente.');
-        console.log('✅ Datos importados correctamente:', playerData);
+        
       } catch (error) {
         console.error('❌ Error importando datos:', error);
         showMessage('error', 'Error de importación', 'El archivo no tiene un formato válido.');
@@ -632,7 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: { ...playerData }
       };
       localStorage.setItem('scoutConnectBackup', JSON.stringify(backup));
-      console.log('🔄 Backup creado automáticamente');
+      
     } catch (error) {
       console.error('❌ Error creando backup:', error);
     }
@@ -657,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadVideoFacets();
         calculateProfileCompletion();
         showMessage('success', 'Backup restaurado', 'Tu perfil ha sido restaurado correctamente.');
-        console.log('✅ Backup restaurado:', playerData);
+        
       }
     } catch (error) {
       console.error('❌ Error restaurando backup:', error);
@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Función para redirigir al login
   function redirectToLogin(message) {
-    console.log('🚪 Redirigiendo al login:', message);
+    
     setTimeout(() => {
       alert(message + '. Serás redirigido al login.');
       window.location.href = 'login.html';
@@ -681,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Función para actualizar datos del jugador desde la sesión
   function updatePlayerDataFromSession(userData) {
-    console.log('🔄 Actualizando datos del jugador desde sesión:', userData);
+    
     
     try {
       // Usar first_name y last_name si están disponibles, si no usar name
@@ -689,42 +689,42 @@ document.addEventListener('DOMContentLoaded', function() {
         playerData.firstName = userData.first_name;
         playerData.lastName = userData.last_name;
         playerData.name = `${userData.first_name} ${userData.last_name}`;
-        console.log('✅ Nombre actualizado desde first_name/last_name:', playerData.name);
+        
       } else if (userData.name) {
         playerData.name = userData.name;
         const nameParts = userData.name.split(' ');
         playerData.firstName = nameParts[0] || 'Usuario';
         playerData.lastName = nameParts.slice(1).join(' ') || '';
-        console.log('✅ Nombre actualizado desde name:', playerData.name);
+        
       }
       
       if (userData.email) {
         playerData.email = userData.email;
-        console.log('✅ Email actualizado:', playerData.email);
+        
       }
       
       if (userData.nationality) {
         playerData.nationality = userData.nationality;
-        console.log('✅ Nacionalidad actualizada:', playerData.nationality);
+        
       }
       
       if (userData.second_nationality) {
         playerData.second_nationality = userData.second_nationality;
-        console.log('✅ Segunda nacionalidad actualizada:', playerData.second_nationality);
+        
       }
       
       if (userData.birth_date) {
         playerData.birthDate = userData.birth_date;
         // Calcular edad automáticamente
         playerData.age = calculateAge(userData.birth_date);
-        console.log('✅ Fecha de nacimiento actualizada:', playerData.birthDate, '- Edad:', playerData.age);
+        
       }
       
       if (userData.userType) {
-        console.log('✅ Tipo de usuario:', userData.userType);
+        
       }
       
-      console.log('🎯 Datos del jugador actualizados correctamente');
+      
     } catch (error) {
       console.error('❌ Error actualizando datos del jugador:', error);
     }
@@ -759,8 +759,8 @@ document.addEventListener('DOMContentLoaded', function() {
     calculateProfileCompletion();
     
     // Debug chat
-    console.log('💬 Inicializando chat...');
-    console.log('📊 Conversaciones disponibles:', conversations.length);
+    
+    
     
     updateChatBadge(); // Inicializar badge del chat
     setupChatInput(); // Configurar input del chat
@@ -917,9 +917,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeChatModal = document.getElementById('closeChatModal');
 
     if (chatBtn && chatModal) {
-      console.log('✅ Elementos de chat encontrados, configurando event listeners...');
+      
       chatBtn.addEventListener('click', () => {
-        console.log('🖱️ Click en botón de chat detectado');
+        
         openChatModal();
       });
 
@@ -1101,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', function() {
       closePhotoModal();
       showNotification('✅ Foto de perfil actualizada correctamente', 'success');
       
-      console.log('✅ Foto de perfil cambiada:', {
+      
         fileName: file.name,
         fileSize: `${(file.size / 1024).toFixed(2)} KB`,
         fileType: file.type
@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', function() {
       progressFill.style.width = `${progressPercentage}%`;
     }
     
-    console.log(`📹 Progreso de videos: ${completedVideos}/${totalVideos} (${progressPercentage}%)`);
+    
   }
 
   function loadNotifications() {
@@ -1339,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                report.playerId === playerData.id.toString();
       });
 
-      console.log('📊 Reportes encontrados para', playerData.name + ':', playerReports.length);
+      
       
       updateReportsStats(playerReports);
       renderReports(playerReports);
@@ -1590,7 +1590,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function refreshPlayerReports() {
-    console.log('🔄 Actualizando reportes...');
+    
     loadPlayerReports();
     showNotification('success', 'Reportes actualizados');
   }
@@ -1599,7 +1599,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('refreshReportsBtn')?.addEventListener('click', refreshPlayerReports);
   document.getElementById('viewAllReportsBtn')?.addEventListener('click', () => {
     // Redirigir a página de todos los reportes o mostrar modal expandido
-    console.log('📄 Ver todos los reportes');
+    
   });
 
   function calculateProfileCompletion() {
@@ -2345,11 +2345,11 @@ document.addEventListener('DOMContentLoaded', function() {
   let activeConversationId = null;
 
   function openChatModal() {
-    console.log('🔄 Abriendo modal de chat...');
+    
     const chatModal = document.getElementById('chatModal');
     if (chatModal) {
       chatModal.classList.add('show');
-      console.log('✅ Modal mostrado');
+      
       loadConversations();
       updateChatBadge();
     } else {
@@ -2358,20 +2358,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function loadConversations() {
-    console.log('🔄 Cargando conversaciones...');
+    
     const conversationsList = document.getElementById('conversationsList');
     
     if (!conversationsList) {
       console.error('❌ No se encontró el elemento conversationsList');
       // Intentar encontrar elementos similares
-      console.log('🔍 Buscando elementos similares...');
+      
       const allElements = document.querySelectorAll('[id*="conversation"], [class*="conversation"]');
-      console.log('📋 Elementos encontrados:', allElements);
+      
       return;
     }
     
-    console.log('📊 Número de conversaciones:', conversations.length);
-    console.log('📍 Elemento conversationsList encontrado:', conversationsList);
+    
+    
     
     // Limpiar contenido existente
     conversationsList.innerHTML = '';
@@ -2391,7 +2391,7 @@ document.addEventListener('DOMContentLoaded', function() {
     conversationsList.innerHTML = '';
 
     conversations.forEach((conversation, index) => {
-      console.log(`➕ Agregando conversación ${index + 1}:`, conversation.user.name);
+      
       
       const conversationElement = document.createElement('div');
       conversationElement.className = 'conversation-item';
@@ -2412,11 +2412,11 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
       
       conversationsList.appendChild(conversationElement);
-      console.log(`✅ Conversación ${index + 1} agregada al DOM`);
+      
     });
     
-    console.log('✅ Todas las conversaciones cargadas');
-    console.log('📏 Altura del contenedor:', conversationsList.scrollHeight, 'px');
+    
+    
   }
 
   function selectConversation(conversationId) {
@@ -2634,7 +2634,7 @@ document.addEventListener('DOMContentLoaded', function() {
       clearTimeout(window.videoSaveTimeout);
       window.videoSaveTimeout = setTimeout(() => {
         savePlayerDataToStorage();
-        console.log('💾 Video auto-guardado:', facetKey, url);
+        
         
         // Actualizar UI después de un segundo
         setTimeout(() => {
@@ -2645,15 +2645,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  console.log('🏆 Dashboard del futbolista inicializado correctamente');
-  console.log('💡 Para debugging: ejecuta debugStorage() en la consola para ver el estado completo');
-  console.log('🔧 Funciones disponibles: clearAllStorageData(), debugStorage(), exportPlayerData(), restoreFromBackup()');
+  
+  
+  
   
   // Mostrar estadísticas iniciales
   setTimeout(() => {
     const stats = debugStorage();
     if (stats.mainData) {
-      console.log(`📈 Perfil de ${stats.mainData.name} cargado (${stats.saveCount} guardados realizados)`);
+      
     }
   }, 1000);
 });

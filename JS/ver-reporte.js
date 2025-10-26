@@ -13,7 +13,7 @@ class ReportViewer {
   }
 
   async init() {
-    console.log('🎯 Iniciando visualizador de reportes...');
+    
     
     // Inicializar Supabase si está disponible
     if (typeof initSupabase === 'function') {
@@ -44,11 +44,11 @@ class ReportViewer {
     try {
       // 1. Intentar obtener usuario desde Supabase primero
       if (typeof supabase !== 'undefined' && supabase) {
-        console.log('👤 Buscando usuario en Supabase...');
+        
         const { data: { user }, error } = await supabase.auth.getUser();
         
         if (!error && user) {
-          console.log('✅ Usuario encontrado en Supabase:', user);
+          
           return {
             id: user.id,
             name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Scout',
@@ -57,21 +57,21 @@ class ReportViewer {
             userType: 'scout'
           };
         } else {
-          console.log('ℹ️ No hay usuario autenticado en Supabase');
+          
         }
       }
       
       // 2. Fallback: buscar en sessionStorage
-      console.log('💾 Buscando usuario en sessionStorage...');
+      
       const userStr = sessionStorage.getItem('scoutConnectUser');
       const user = userStr ? JSON.parse(userStr) : null;
       
       if (user) {
-        console.log('✅ Usuario encontrado en sessionStorage:', user);
+        
         return user;
       }
       
-      console.log('⚠️ No se encontró usuario');
+      
       return null;
       
     } catch (error) {
@@ -82,7 +82,7 @@ class ReportViewer {
 
   async loadReport() {
     try {
-      console.log('📂 Cargando reporte con ID:', this.reportId);
+      
       
       // Inicializar Supabase si está disponible
       if (typeof initSupabase === 'function') {
@@ -93,34 +93,34 @@ class ReportViewer {
       
       // 1. Intentar cargar desde Supabase primero
       if (typeof supabase !== 'undefined' && supabase) {
-        console.log('☁️ Buscando reporte en Supabase...');
+        
         report = await this.loadReportFromSupabase(this.reportId);
         
         if (report) {
-          console.log('✅ Reporte encontrado en Supabase:', report);
+          
           this.report = report;
         }
       }
       
       // 2. Si no se encontró en Supabase, buscar en localStorage como fallback
       if (!report) {
-        console.log('💾 Buscando reporte en localStorage...');
+        
         const reportsStr = localStorage.getItem('generatedReports');
-        console.log('📊 Datos de reportes en localStorage:', reportsStr);
+        
         
         const reports = reportsStr ? JSON.parse(reportsStr) : [];
-        console.log('📋 Total de reportes encontrados en localStorage:', reports.length);
+        
         
         if (reports.length > 0) {
-          console.log('🔍 IDs disponibles:', reports.map(r => `"${r.id}" (${typeof r.id})`).join(', '));
-          console.log('🎯 Buscando ID:', `"${this.reportId}" (${typeof this.reportId})`);
+          
+          
         }
         
         // Buscar el reporte específico (comparación flexible)
         this.report = reports.find(r => {
           const match = r.id === this.reportId || r.id == this.reportId || String(r.id) === String(this.reportId);
           if (match) {
-            console.log('✅ Reporte encontrado en localStorage:', r);
+            
           }
           return match;
         });
@@ -132,7 +132,7 @@ class ReportViewer {
         return;
       }
 
-      console.log('✅ Reporte cargado correctamente:', this.report);
+      
 
       // Validar acceso: solo el scout que creó el reporte puede verlo
       if (!this.validateAccess()) {
@@ -153,7 +153,7 @@ class ReportViewer {
 
   async loadReportFromSupabase(reportId) {
     try {
-      console.log('🔍 Buscando reporte en Supabase con ID:', reportId);
+      
       
       // Obtener el usuario actual para filtrar por scout
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -172,7 +172,7 @@ class ReportViewer {
       
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('📭 Reporte no encontrado en Supabase');
+          
           return null;
         }
         console.error('❌ Error buscando en Supabase:', error);
@@ -180,7 +180,7 @@ class ReportViewer {
       }
       
       if (!reportData) {
-        console.log('📭 No se encontró el reporte en Supabase');
+        
         return null;
       }
       
@@ -226,7 +226,7 @@ class ReportViewer {
         overallRating: reportData.overall_rating || 0
       };
       
-      console.log('🔄 Reporte convertido de Supabase:', report);
+      
       return report;
       
     } catch (error) {
@@ -266,9 +266,9 @@ class ReportViewer {
 
   validateAccess() {
     // Registro detallado para depuración
-    console.log('🔐 Iniciando validación de acceso...');
-    console.log('Usuario actual:', this.currentUser);
-    console.log('Reporte:', this.report);
+    
+    
+    
 
     // Si no hay usuario actual, permitir acceso temporal (para depuración)
     if (!this.currentUser) {
@@ -278,7 +278,7 @@ class ReportViewer {
 
     // Si no hay reporte, denegar
     if (!this.report) {
-      console.log('❌ No hay reporte cargado');
+      
       return false;
     }
 
@@ -296,8 +296,8 @@ class ReportViewer {
       email: this.report.scoutEmail
     };
 
-    console.log('👤 Identificadores del usuario:', userIdentifiers);
-    console.log('📝 Scout del reporte:', reportScout);
+    
+    
 
     // Validar acceso con múltiples criterios (más permisivo)
     const isAuthor = 
@@ -316,7 +316,7 @@ class ReportViewer {
       // Fallback: si no hay información específica del scout, permitir acceso
       (!reportScout.id && !reportScout.email);
 
-    console.log('✅ Resultado de validación:', {
+    
       isAuthor,
       matchById: userIdentifiers.id && reportScout.id && userIdentifiers.id == reportScout.id,
       matchByEmail: userIdentifiers.email && reportScout.email && userIdentifiers.email === reportScout.email,
@@ -330,7 +330,7 @@ class ReportViewer {
   renderReport() {
     if (!this.report) return;
 
-    console.log('📊 Renderizando reporte:', this.report);
+    
 
     // Título y meta información
     document.getElementById('reportTitle').textContent = this.report.title || 'Reporte de Scouting';
@@ -518,8 +518,8 @@ class ReportViewer {
   }
 
   renderStrengthsWeaknesses() {
-    console.log('🔍 Renderizando fortalezas y debilidades...');
-    console.log('Datos del reporte:', {
+    
+    
       strengths: this.report.strengths,
       weaknesses: this.report.weaknesses,
       strengthsType: typeof this.report.strengths,
@@ -539,7 +539,7 @@ class ReportViewer {
       strengths = this.report.strengths.filter(s => s && s !== 'No especificadas' && s !== 'No especificado');
     }
     
-    console.log('✅ Fortalezas procesadas:', strengths);
+    
     
     if (strengths.length === 0) {
       strengthsList.innerHTML = '<li>No se especificaron fortalezas en este reporte</li>';
@@ -560,7 +560,7 @@ class ReportViewer {
       weaknesses = this.report.weaknesses.filter(w => w && w !== 'No especificadas' && w !== 'No especificado');
     }
     
-    console.log('⚠️ Debilidades procesadas:', weaknesses);
+    
     
     if (weaknesses.length === 0) {
       weaknessesList.innerHTML = '<li>No se especificaron áreas de mejora en este reporte</li>';
@@ -574,7 +574,7 @@ class ReportViewer {
     
     // Usar los ratings principales si están disponibles
     const ratings = this.report.ratings || {};
-    console.log('📊 Ratings para generar fortalezas:', ratings);
+    
     
     if (ratings.technical >= 8) {
       strengths.push('Excelente técnica individual');
@@ -611,7 +611,7 @@ class ReportViewer {
       }
     }
 
-    console.log('✅ Fortalezas generadas:', strengths);
+    
     return strengths.slice(0, 4); // Máximo 4 fortalezas
   }
 
@@ -620,7 +620,7 @@ class ReportViewer {
     
     // Usar los ratings principales si están disponibles
     const ratings = this.report.ratings || {};
-    console.log('📊 Ratings para generar debilidades:', ratings);
+    
     
     if (ratings.technical <= 4) {
       weaknesses.push('Necesita mejorar aspectos técnicos');
@@ -657,7 +657,7 @@ class ReportViewer {
       }
     }
 
-    console.log('⚠️ Debilidades generadas:', weaknesses);
+    
     return weaknesses.slice(0, 4); // Máximo 4 debilidades
   }
 
@@ -719,7 +719,7 @@ class ReportViewer {
       badgeText = this.report.recommendationText;
     }
 
-    console.log('📝 Recomendación:', {
+    
       recommendation: this.report.recommendation,
       recommendationText: this.report.recommendationText,
       badgeText: badgeText
@@ -840,7 +840,7 @@ class ReportViewer {
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 DOM cargado, iniciando visualizador de reportes...');
+  
   window.reportViewer = new ReportViewer();
   // El init() ya es async ahora, se llamará automáticamente en el constructor
 });
@@ -874,27 +874,27 @@ document.head.appendChild(style);
 
 // Función de utilidad para depuración (accesible desde consola)
 window.debugReportViewer = function() {
-  console.log('🔧 Información de depuración del ReportViewer:');
-  console.log('📍 URL actual:', window.location.href);
-  console.log('🎯 Report ID desde URL:', new URLSearchParams(window.location.search).get('id'));
+  
+  
+  
   
   const reportsStr = localStorage.getItem('generatedReports');
   const reports = reportsStr ? JSON.parse(reportsStr) : [];
-  console.log('📊 Total de reportes:', reports.length);
+  
   
   if (reports.length > 0) {
-    console.log('📋 Reportes disponibles:');
+    
     reports.forEach((r, i) => {
-      console.log(`  ${i + 1}. ID: "${r.id}", Jugador: "${r.playerName}", Scout: "${r.scoutName}"`);
+      
     });
   }
   
   const currentUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
-  console.log('👤 Usuario actual:', currentUser);
+  
   
   if (window.reportViewer) {
-    console.log('🎭 ReportViewer instance:', window.reportViewer);
-    console.log('📝 Reporte cargado:', window.reportViewer.report);
+    
+    
   }
 };
 
@@ -908,9 +908,9 @@ window.setTestScout = function(name = 'Scout Test', email = 'scout@test.com') {
     userType: 'scout'
   };
   localStorage.setItem('scoutConnectUser', JSON.stringify(testUser));
-  console.log('✅ Usuario de prueba creado:', testUser);
+  
   if (window.reportViewer) {
     window.reportViewer.currentUser = testUser;
-    console.log('🔄 Usuario actualizado en ReportViewer');
+    
   }
 };

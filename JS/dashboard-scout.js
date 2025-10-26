@@ -17,7 +17,7 @@ class ScoutDashboard {
   }
 
   init() {
-    console.log('🚀 Inicializando Scout Dashboard...');
+    
     this.loadMockData();
     this.loadWatchlistCount();
     this.setupEventListeners();
@@ -26,7 +26,7 @@ class ScoutDashboard {
     this.hideAllSectionsExceptDashboard();
     this.updateStats();
     this.initializeRealTimeUpdates();
-    console.log('✅ Scout Dashboard inicializado correctamente');
+    
   }
 
   loadMockData() {
@@ -674,7 +674,7 @@ class ScoutDashboard {
   }
 
   editPlayer(playerId) {
-    console.log(`Editando jugador ${playerId}`);
+    
     // Implementar modal de edición
   }
 
@@ -916,7 +916,7 @@ class ScoutDashboard {
     event.preventDefault();
     
     // Aquí procesarías los datos del formulario
-    console.log('📋 Guardando reporte...');
+    
     
     // Simular guardado
     setTimeout(() => {
@@ -958,12 +958,12 @@ class ScoutDashboard {
 
   filterPlayers(filter) {
     // Implementar filtrado de jugadores
-    console.log(`Filtrando por: ${filter}`);
+    
   }
 
   globalSearch(query) {
     // Implementar búsqueda global
-    console.log(`Buscando: ${query}`);
+    
   }
 
   setupAdvancedSearch() {
@@ -979,17 +979,17 @@ class ScoutDashboard {
   }
 
   applyAdvancedFilters() {
-    console.log('🔍 Aplicando filtros avanzados...');
+    
     // Implementar lógica de filtros
   }
 
   resetAdvancedFilters() {
-    console.log('🔄 Reseteando filtros...');
+    
     // Implementar reset de filtros
   }
 
   exportData() {
-    console.log('📊 Exportando datos...');
+    
     // Implementar exportación
   }
 
@@ -1017,12 +1017,12 @@ class ScoutDashboard {
   }
 
   renderReports() {
-    console.log('📋 Cargando reportes...');
+    
     this.loadGeneratedReports();
   }
 
   async loadGeneratedReports() {
-    console.log('📊 Cargando reportes del scout desde Supabase...');
+    
     
     try {
       // Obtener el usuario actual autenticado
@@ -1035,7 +1035,7 @@ class ScoutDashboard {
         return;
       }
 
-      console.log('👤 Scout ID:', user.id);
+      
 
       // Cargar reportes del scout desde Supabase
       const { data: reports, error } = await supabase
@@ -1051,7 +1051,7 @@ class ScoutDashboard {
         return;
       }
 
-      console.log(`✅ ${reports.length} reportes cargados desde Supabase`);
+      
 
       // Convertir formato de Supabase al formato esperado por el dashboard
       const formattedReports = reports.map(r => ({
@@ -1327,17 +1327,17 @@ Generado por ScoutConnect
   }
 
   renderWatchlist() {
-    console.log('⭐ Cargando lista de seguimiento...');
+    
     // Implementar renderizado de watchlist
   }
 
   renderCalendar() {
-    console.log('📅 Cargando calendario...');
+    
     // Implementar renderizado de calendario
   }
 
   renderAnalytics() {
-    console.log('📊 Cargando analytics avanzado...');
+    
     this.loadAnalyticsCharts();
     this.loadTopPerformers();
   }
@@ -1405,7 +1405,7 @@ Generado por ScoutConnect
   }
 
   renderComparisons() {
-    console.log('⚖️ Cargando sistema de comparativas...');
+    
     this.setupComparisonSelectors();
   }
 
@@ -1595,7 +1595,7 @@ Generado por ScoutConnect
   }
 
   renderTeam() {
-    console.log('👥 Cargando gestión de equipo...');
+    
     this.setupTeamCollaboration();
   }
 
@@ -1687,7 +1687,7 @@ Generado por ScoutConnect
     const role = document.getElementById('inviteRole').value;
     const message = document.getElementById('inviteMessage').value;
     
-    console.log('📧 Enviando invitación...', { email, role, message });
+    
     
     // Simular envío
     setTimeout(() => {
@@ -1698,11 +1698,11 @@ Generado por ScoutConnect
 
   loadTeamNotifications() {
     // Simular notificaciones de equipo
-    console.log('🔔 Cargando notificaciones de equipo...');
+    
   }
 
   renderNotifications() {
-    console.log('🔔 Cargando centro de notificaciones...');
+    
     this.setupNotificationFilters();
     this.loadNotificationSettings();
   }
@@ -1721,7 +1721,7 @@ Generado por ScoutConnect
   }
 
   filterNotifications(filter) {
-    console.log(`🔍 Filtrando notificaciones por: ${filter}`);
+    
     // Implementar lógica de filtrado
   }
 
@@ -1738,7 +1738,7 @@ Generado por ScoutConnect
   }
 
   markAllNotificationsRead() {
-    console.log('✅ Marcando todas las notificaciones como leídas...');
+    
     
     const unreadItems = document.querySelectorAll('.notification-item.unread');
     unreadItems.forEach(item => {
@@ -1749,13 +1749,13 @@ Generado por ScoutConnect
   }
 
   showNotificationSettings() {
-    console.log('⚙️ Abriendo configuración de notificaciones...');
+    
     // Implementar modal de configuración avanzada
   }
 
   // Funciones de exportación de datos
   exportData() {
-    console.log('📊 Iniciando exportación de datos...');
+    
     
     const data = {
       players: this.players,
@@ -2352,7 +2352,7 @@ Generado por ScoutConnect
     
     // Obtener resultados actuales y reordenar
     // Esta es una implementación simplificada
-    console.log('Ordenando por:', sortBy);
+    
   }
 
   // Añadir a lista de seguimiento
@@ -2366,7 +2366,7 @@ Generado por ScoutConnect
 
   // Cargar sección de búsqueda avanzada
   loadAdvancedSearchSection() {
-    console.log('🔍 Cargando sección de búsqueda avanzada...');
+    
     // La sección ya está en el HTML, solo necesitamos configurar los eventos
     this.setupAdvancedSearch();
   }
@@ -2427,7 +2427,7 @@ Generado por ScoutConnect
   }
 
   renderAnalytics() {
-    console.log('📊 Cargando analytics...');
+    
     // Implementar renderizado de analytics
   }
 }
@@ -2752,6 +2752,6 @@ function closeModal(modalId) {
 
 // Inicializar aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🏁 DOM cargado, iniciando Scout Dashboard...');
+  
   window.scoutDashboard = new ScoutDashboard();
 });

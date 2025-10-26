@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Si acabamos de hacer logout, NO verificar sesión
       const justLoggedOut = localStorage.getItem('justLoggedOut');
       if (justLoggedOut === 'true') {
-        console.log('🚪 Logout reciente detectado, no verificar sesión');
+        
         localStorage.removeItem('justLoggedOut');
         clearSession();
         return false;
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        console.log('✅ Sesión activa de Supabase detectada');
+        
         
         // Obtener datos del perfil
         const { data: profile, error } = await supabase
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
           .single();
         
         if (profile && !error) {
-          console.log('👤 Perfil encontrado:', profile);
+          
           redirectToDashboard(profile.user_type);
           return true;
         }
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Función para redirigir al dashboard según tipo de usuario
   function redirectToDashboard(userType) {
-    console.log('🎯 Redirigiendo usuario tipo:', userType);
+    
     
     showMessage('info', 'Iniciando sesión...', 'Redirigiendo a tu dashboard...');
     
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
           redirectUrl = 'dashboard-futbolista.html';
       }
       
-      console.log('🚀 Redirigiendo a:', redirectUrl);
+      
       window.location.href = redirectUrl;
     }, 1500);
   }
@@ -202,14 +202,14 @@ document.addEventListener('DOMContentLoaded', function() {
   loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    console.log('🔄 Iniciando proceso de login...');
+    
 
     // Validar campos
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
     if (!isEmailValid || !isPasswordValid) {
-      console.log('❌ Validación de campos fallida');
+      
       return;
     }
 
@@ -218,16 +218,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     try {
       // Login con Supabase
-      console.log('📡 Autenticando con Supabase...');
+      
       const loginResult = await authenticateWithSupabase();
-      console.log('✅ Login exitoso:', loginResult);
+      
       
       // Verificar que el tipo de usuario seleccionado coincida con el registrado
       const selectedUserType = document.querySelector('input[name="userType"]:checked').value;
       const registeredUserType = loginResult.profile.user_type;
       
-      console.log('🔍 Tipo seleccionado:', selectedUserType);
-      console.log('🔍 Tipo registrado:', registeredUserType);
+      
+      
       
       if (selectedUserType !== registeredUserType) {
         // Cerrar la sesión de Supabase ya que no coincide el tipo
@@ -262,17 +262,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // Marcar que acabamos de iniciar sesión (para que auth-guard no bloquee)
       localStorage.setItem('justLoggedIn', 'true');
 
-      console.log('💾 Datos de usuario:', userData);
+      
 
       if (rememberMe.checked) {
         localStorage.setItem('rememberMe', 'true');
         localStorage.setItem('userEmail', emailInput.value.trim());
-        console.log('✅ Datos de "recordarme" guardados');
+        
       }
 
       showMessage('success', '¡Bienvenido!', 'Has iniciado sesión correctamente.');
       
-      console.log('🚀 Redirigiendo al dashboard...');
+      
       // Redirigir inmediatamente
       redirectToDashboard(userData.userType);
 
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
-    console.log('🔍 Validando credenciales para:', email);
+    
 
     // 1. Iniciar sesión con Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
       throw authError;
     }
 
-    console.log('✅ Autenticación exitosa');
+    
 
     // 2. Obtener perfil del usuario
     let { data: profile, error: profileError } = await supabase
@@ -351,10 +351,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       profile = createdProfile;
-      console.log('✅ Perfil creado exitosamente');
+      
     }
 
-    console.log('👤 Perfil obtenido:', profile);
+    
 
     return {
       user: authData.user,
@@ -466,5 +466,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  console.log('🔐 Login page initialized successfully');
+  
 });

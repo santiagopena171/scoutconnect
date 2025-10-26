@@ -4,12 +4,12 @@
 // =============================================
 
 (async function() {
-  console.log('🔒 Verificando autenticación...');
+  
 
   // Verificar si acabamos de iniciar sesión
   const justLoggedIn = localStorage.getItem('justLoggedIn');
   if (justLoggedIn === 'true') {
-    console.log('✅ Usuario acaba de iniciar sesión, permitiendo acceso...');
+    
     localStorage.removeItem('justLoggedIn'); // Limpiar la marca
     
     // Esperar más tiempo para que todo se establezca
@@ -43,12 +43,12 @@
     }
 
     if (!session) {
-      console.log('❌ No hay sesión activa');
+      
       redirectToLogin();
       return;
     }
 
-    console.log('✅ Sesión activa encontrada');
+    
 
     // Obtener perfil del usuario
     let { data: profile, error: profileError } = await supabase
@@ -83,23 +83,23 @@
       }
 
       profile = createdProfile;
-      console.log('✅ Perfil creado por auth-guard');
+      
     }
 
-    console.log('👤 Usuario autenticado:', profile);
+    
 
     // Verificar que el usuario esté en la página correcta
     const currentPage = window.location.pathname.split('/').pop();
     const userType = profile.user_type;
 
     if (currentPage === 'dashboard-scout.html' && userType !== 'scout') {
-      console.log('⚠️ Usuario no es scout, redirigiendo...');
+      
       window.location.href = getDashboardForUserType(userType);
       return;
     }
 
     if (currentPage === 'dashboard-futbolista.html' && userType !== 'jugador') {
-      console.log('⚠️ Usuario no es jugador, redirigiendo...');
+      
       window.location.href = getDashboardForUserType(userType);
       return;
     }
@@ -113,7 +113,7 @@
       profile: profile
     };
 
-    console.log('✅ Protección de ruta completada');
+    
 
   } catch (error) {
     console.error('❌ Error en protección de ruta:', error);
@@ -122,7 +122,7 @@
 })();
 
 function redirectToLogin() {
-  console.log('🚪 Redirigiendo a login...');
+  
   
   // Limpiar sesiones antiguas
   localStorage.removeItem('scoutConnectToken');
@@ -149,7 +149,7 @@ function getDashboardForUserType(userType) {
 // Función global para cerrar sesión
 window.logout = async function() {
   try {
-    console.log('🚪 Cerrando sesión...');
+    
     
     // Marcar que estamos haciendo logout (ANTES de limpiar)
     localStorage.setItem('justLoggedOut', 'true');
@@ -166,7 +166,7 @@ window.logout = async function() {
     localStorage.clear();
     localStorage.setItem('justLoggedOut', justLoggedOut);
     
-    console.log('✅ Sesión cerrada completamente');
+    
     
     // Esperar un momento para asegurar que Supabase procese el signOut
     await new Promise(resolve => setTimeout(resolve, 300));

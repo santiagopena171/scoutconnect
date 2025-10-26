@@ -378,11 +378,11 @@
     <!-- Script de depuración -->
     <script>
     window.addEventListener('load', () => {
-        console.log('🔍 DEBUG: Verificando secciones...');
+        
         document.querySelectorAll('.profile-section').forEach(section => {
             const display = window.getComputedStyle(section).display;
             const hasActive = section.classList.contains('active');
-            console.log(`${section.id}: display=${display}, active=${hasActive}`);
+            
             
             // Forzar que solo la sección activa sea visible
             if (!hasActive && display !== 'none') {

@@ -35,12 +35,12 @@ function initSupabase() {
   if (SUPABASE_CONFIG.url === 'TU_SUPABASE_URL_AQUI' || 
       SUPABASE_CONFIG.anonKey === 'TU_SUPABASE_ANON_KEY_AQUI') {
     console.error('⚠️ ERROR: Debes configurar las credenciales de Supabase en supabase-config.js');
-    console.log('📋 Instrucciones:');
-    console.log('1. Ve a https://supabase.com/dashboard');
-    console.log('2. Abre tu proyecto');
-    console.log('3. Settings → API');
-    console.log('4. Copia Project URL y anon key');
-    console.log('5. Pégalos en supabase-config.js');
+    
+    
+    
+    
+    
+    
     return null;
   }
 
@@ -51,7 +51,7 @@ function initSupabase() {
       SUPABASE_CONFIG.anonKey
     );
     
-    console.log('✅ Supabase inicializado correctamente');
+    
     return supabase;
   } catch (error) {
     console.error('❌ Error al inicializar Supabase:', error);
@@ -80,7 +80,7 @@ async function signUpUser(email, password, userData) {
 
     if (error) throw error;
 
-    console.log('✅ Usuario registrado:', data);
+    
     return { success: true, data };
   } catch (error) {
     console.error('❌ Error al registrar usuario:', error);
@@ -98,7 +98,7 @@ async function signInUser(email, password) {
 
     if (error) throw error;
 
-    console.log('✅ Sesión iniciada:', data);
+    
     return { success: true, data };
   } catch (error) {
     console.error('❌ Error al iniciar sesión:', error);
@@ -112,7 +112,7 @@ async function signOutUser() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
 
-    console.log('✅ Sesión cerrada');
+    
     return { success: true };
   } catch (error) {
     console.error('❌ Error al cerrar sesión:', error);
@@ -153,7 +153,7 @@ async function resetPassword(email) {
 
     if (error) throw error;
 
-    console.log('✅ Email de recuperación enviado');
+    
     return { success: true };
   } catch (error) {
     console.error('❌ Error al enviar email de recuperación:', error);
@@ -184,7 +184,7 @@ async function createProfile(userId, profileData) {
 
     if (error) throw error;
 
-    console.log('✅ Perfil creado:', data);
+    
     return { success: true, data };
   } catch (error) {
     console.error('❌ Error al crear perfil:', error);
@@ -221,7 +221,7 @@ async function updateProfile(userId, updates) {
 
     if (error) throw error;
 
-    console.log('✅ Perfil actualizado:', data);
+    
     return { success: true, data };
   } catch (error) {
     console.error('❌ Error al actualizar perfil:', error);
@@ -253,7 +253,7 @@ async function createPlayerProfile(userId, playerData) {
 
     if (error) throw error;
 
-    console.log('✅ Perfil de jugador creado:', data);
+    
     return { success: true, data };
   } catch (error) {
     console.error('❌ Error al crear perfil de jugador:', error);
@@ -310,7 +310,7 @@ async function createScoutProfile(userId, scoutData) {
 
     if (error) throw error;
 
-    console.log('✅ Perfil de scout creado:', data);
+    
     return { success: true, data };
   } catch (error) {
     console.error('❌ Error al crear perfil de scout:', error);
@@ -340,7 +340,7 @@ async function uploadAvatar(userId, file) {
       .from('avatars')
       .getPublicUrl(filePath);
 
-    console.log('✅ Avatar subido:', data.publicUrl);
+    
     return { success: true, url: data.publicUrl };
   } catch (error) {
     console.error('❌ Error al subir avatar:', error);

@@ -1,5 +1,7 @@
 // ===== JAVASCRIPT PARA LA PÁGINA DE REGISTRO =====
 
+const { sanitizeInput, validateEmail, validatePassword } = require('./utils');
+
 document.addEventListener('DOMContentLoaded', function() {
   // Verificar sesión activa al cargar la página
   checkActiveSession();
@@ -30,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        console.log('✅ Sesión activa de Supabase detectada');
+        
         
         // Obtener datos del perfil
         const { data: profile } = await supabase
@@ -420,10 +422,10 @@ document.addEventListener('DOMContentLoaded', function() {
       showMessage('success', '¡Cuenta creada exitosamente!', 'Bienvenido a ScoutConnect. Serás redirigido a tu dashboard.');
       
       // Esperar un poco más para asegurar que todo esté listo
-      console.log('⏳ Esperando que el perfil se complete...');
+      
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log('🚀 Redirigiendo a dashboard...');
+      
       redirectToDashboard(userData.userType);
 
 
@@ -464,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function simulateRegistration(formData) {
     try {
-      console.log('🚀 Iniciando registro con Supabase...');
+      
       
       // 1. Registrar usuario en Supabase Auth (el trigger creará el perfil automáticamente)
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -488,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
         throw new Error(authError.message);
       }
 
-      console.log('✅ Usuario registrado:', authData);
+      
 
       // 2. Verificar si el perfil existe, si no, crearlo manualmente
       let { data: existingProfile } = await supabase
@@ -534,9 +536,9 @@ document.addEventListener('DOMContentLoaded', function() {
           throw new Error('Error al crear el perfil: ' + insertError.message);
         }
         
-        console.log('✅ Perfil creado manualmente');
+        
       } else {
-        console.log('✅ Perfil encontrado, actualizando datos adicionales...');
+        
         
         // Actualizar con datos adicionales
         const updateData = {
@@ -565,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (updateError) {
           console.warn('⚠️ No se pudieron actualizar datos adicionales:', updateError);
         } else {
-          console.log('✅ Perfil actualizado');
+          
         }
       }
 
@@ -587,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (playerError) {
           console.error('❌ Error al crear perfil de jugador:', playerError);
         } else {
-          console.log('✅ Perfil de jugador creado');
+          
         }
       } else if (formData.userType === 'scout') {
         const { error: scoutError } = await supabase
@@ -602,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (scoutError) {
           console.error('❌ Error al crear perfil de scout:', scoutError);
         } else {
-          console.log('✅ Perfil de scout creado');
+          
         }
       }
 
@@ -682,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Call detect country on load
   detectUserCountry();
 
-  console.log('📝 Registration page initialized successfully');
+  
 
   // Función para sanitizar entradas de usuario
   function sanitizeInput(input) {

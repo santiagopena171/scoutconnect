@@ -8,12 +8,12 @@ class ScoutProfile {
   }
 
   init() {
-    console.log('🚀 Inicializando Perfil Scout...');
+    
     this.loadUserData();
     this.setupEventListeners();
     this.loadOverviewData();
     this.loadRecentActivity();
-    console.log('✅ Perfil Scout inicializado');
+    
   }
 
   loadUserData() {
@@ -104,7 +104,7 @@ class ScoutProfile {
   // ===== NAVEGACIÓN DE PESTAÑAS =====
 
   switchTab(tabName) {
-    console.log(`📑 Cambiando a pestaña: ${tabName}`);
+    
     
     // Ocultar todas las pestañas
     document.querySelectorAll('.tab-panel').forEach(panel => {

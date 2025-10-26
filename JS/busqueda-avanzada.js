@@ -12,7 +12,7 @@ class AdvancedSearch {
   }
 
   async init() {
-    console.log('🔍 Inicializando Búsqueda Avanzada...');
+    
     await this.getCurrentUser();
     await this.loadWatchlistFromSupabase();
     await this.loadCountriesData();
@@ -24,18 +24,18 @@ class AdvancedSearch {
     // Mostrar todos los jugadores al cargar la página
     this.performSearch();
     
-    console.log('✅ Búsqueda Avanzada inicializada correctamente');
+    
   }
 
   async loadWatchlistFromSupabase() {
     try {
       if (!this.currentUserId) {
-        console.log('⚠️ No hay usuario para cargar watchlist');
+        
         this.watchlist = [];
         return;
       }
 
-      console.log('📥 Cargando watchlist desde Supabase...');
+      
 
       // Primero obtener los IDs de la watchlist
       const { data: watchlistData, error: watchlistError } = await supabase
@@ -50,10 +50,10 @@ class AdvancedSearch {
         return;
       }
 
-      console.log('📊 Watchlist entries:', watchlistData?.length || 0);
+      
 
       if (!watchlistData || watchlistData.length === 0) {
-        console.log('📭 No hay jugadores en la lista');
+        
         this.watchlist = [];
         return;
       }
@@ -73,7 +73,7 @@ class AdvancedSearch {
         return;
       }
 
-      console.log('✅ Jugadores cargados:', playersData?.length || 0);
+      
 
       // Combinar los datos
       this.watchlist = watchlistData.map(item => {
@@ -113,7 +113,7 @@ class AdvancedSearch {
       if (error) throw error;
       if (user) {
         this.currentUserId = user.id;
-        console.log('👤 Usuario actual:', this.currentUserId);
+        
       }
     } catch (error) {
       console.error('❌ Error al obtener usuario:', error);
@@ -124,7 +124,7 @@ class AdvancedSearch {
     try {
       const response = await fetch('JS/countries-states.json');
       this.countriesData = await response.json();
-      console.log('✅ Datos de países cargados correctamente');
+      
     } catch (error) {
       console.error('❌ Error al cargar datos de países:', error);
       // Fallback a datos básicos
@@ -164,7 +164,7 @@ class AdvancedSearch {
   }
 
   async loadPlayerData() {
-    console.log('📊 Cargando jugadores desde Supabase...');
+    
     
     // Cargar jugadores reales desde Supabase
     try {
@@ -176,7 +176,7 @@ class AdvancedSearch {
       if (error) {
         console.error('❌ Error al cargar perfiles:', error);
       } else if (profiles && profiles.length > 0) {
-        console.log(`✅ ${profiles.length} jugadores cargados desde Supabase`);
+        
         
         // Convertir perfiles de Supabase al formato esperado
         const realPlayers = profiles.map(profile => ({
@@ -207,16 +207,16 @@ class AdvancedSearch {
         }));
 
         this.players = [...realPlayers, ...this.getDemoPlayers()];
-        console.log(`📋 Total de jugadores disponibles: ${this.players.length} (${realPlayers.length} reales + ${this.getDemoPlayers().length} demo)`);
+        
       } else {
-        console.log('⚠️ No se encontraron jugadores en Supabase, usando datos demo');
+        
         this.players = this.getDemoPlayers();
-        console.log(`📋 Total de jugadores disponibles: ${this.players.length} (solo demo)`);
+        
       }
     } catch (error) {
       console.error('❌ Error inesperado al cargar jugadores:', error);
       this.players = this.getDemoPlayers();
-      console.log(`📋 Total de jugadores disponibles: ${this.players.length} (fallback a demo por error)`);
+      
     }
   }
 
@@ -1012,7 +1012,7 @@ class AdvancedSearch {
       return pid === playerId;
     });
     
-    console.log('🔄 Toggle follow para:', playerId, '- Siguiendo:', isFollowing);
+    
     
     if (isFollowing) {
       await this.removeFromWatchlist(playerId);
@@ -1033,7 +1033,7 @@ class AdvancedSearch {
         }
       }
 
-      console.log('👤 Añadiendo para usuario:', this.currentUserId);
+      
 
       // Buscar el jugador en los resultados de búsqueda
       const player = this.searchResults.find(p => p.id === playerId);
@@ -1068,7 +1068,7 @@ class AdvancedSearch {
         return;
       }
 
-      console.log('✅ Guardado en Supabase:', data);
+      
 
       // Agregar a la lista local
       this.watchlist.push({
@@ -1085,7 +1085,7 @@ class AdvancedSearch {
       const playerName = player.name || `${player.first_name} ${player.last_name}`;
       this.showMessage(`✓ ${playerName} añadido a tu lista de seguimiento`, 'success');
       
-      console.log('✅ Jugador añadido exitosamente');
+      
     } catch (error) {
       console.error('❌ Error al añadir a lista de seguimiento:', error);
       this.showMessage('Error al añadir a la lista de seguimiento', 'error');
@@ -1128,7 +1128,7 @@ class AdvancedSearch {
       const playerName = player.name || `${player.first_name} ${player.last_name}`;
       this.showMessage(`✓ ${playerName} eliminado de tu lista de seguimiento`, 'success');
       
-      console.log('✅ Jugador eliminado de lista de seguimiento:', playerName);
+      
     } catch (error) {
       console.error('❌ Error al eliminar de lista de seguimiento:', error);
       this.showMessage('Error al eliminar de la lista de seguimiento', 'error');
@@ -1138,7 +1138,7 @@ class AdvancedSearch {
   saveWatchlist() {
     try {
       localStorage.setItem('scoutconnect_watchlist', JSON.stringify(this.watchlist));
-      console.log('💾 Lista de seguimiento guardada:', this.watchlist.length, 'jugadores');
+      
     } catch (error) {
       console.error('❌ Error al guardar lista de seguimiento:', error);
     }
@@ -1430,7 +1430,7 @@ class AdvancedSearch {
     }
     
     this.updateTagsSummary();
-    console.log('Etiquetas seleccionadas:', this.selectedTags);
+    
   }
 
   updateTagsSummary() {
@@ -1454,7 +1454,7 @@ class AdvancedSearch {
       }
     }
     
-    console.log('Etiquetas seleccionadas:', this.selectedTags);
+    
   }
 
   clearSelectedTags() {
@@ -1550,15 +1550,15 @@ class AdvancedSearch {
   loadWatchlist() {
     try {
       if (!this.currentUserId) {
-        console.log('⚠️ No hay usuario logueado');
+        
         return [];
       }
       const key = `scoutconnect_watchlist_${this.currentUserId}`;
       const saved = localStorage.getItem(key);
-      console.log('📥 Cargando watchlist para usuario:', this.currentUserId);
-      console.log('🔑 Clave utilizada:', key);
+      
+      
       const parsed = saved ? JSON.parse(saved) : [];
-      console.log('📊 Jugadores cargados:', parsed.length);
+      
       return parsed;
     } catch (error) {
       console.error('Error al cargar watchlist:', error);
@@ -1574,9 +1574,9 @@ class AdvancedSearch {
       }
       const key = `scoutconnect_watchlist_${this.currentUserId}`;
       localStorage.setItem(key, JSON.stringify(this.watchlist));
-      console.log('💾 Watchlist guardada para usuario:', this.currentUserId, '- Items:', this.watchlist.length);
-      console.log('🔑 Clave utilizada:', key);
-      console.log('💾 Datos guardados:', JSON.stringify(this.watchlist).substring(0, 200) + '...');
+      
+      
+      
     } catch (error) {
       console.error('Error al guardar watchlist:', error);
     }
@@ -1659,7 +1659,7 @@ function closeModal(modalId) {
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 DOM cargado, iniciando Búsqueda Avanzada...');
+  
   
   // Verificar que Supabase esté disponible
   if (typeof supabase === 'undefined') {
@@ -1682,7 +1682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   
-  console.log('✅ Supabase disponible, inicializando búsqueda...');
+  
   window.advancedSearch = new AdvancedSearch();
   await window.advancedSearch.init();
 });

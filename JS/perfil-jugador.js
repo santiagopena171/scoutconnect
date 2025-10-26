@@ -11,7 +11,7 @@ class PlayerProfile {
   }
 
   async init() {
-    console.log('🎯 Iniciando Perfil de Jugador...');
+    
     this.playerId = this.getPlayerIdFromURL();
     
     if (!this.playerId) {
@@ -32,7 +32,7 @@ class PlayerProfile {
     
     // Aplicar filtro inicial (actualiza botones y lista)
     this.setReportsFilter(this.reportsFilter);
-    console.log('✅ Perfil de Jugador inicializado');
+    
   }
 
   getPlayerIdFromURL() {
@@ -64,11 +64,11 @@ class PlayerProfile {
 
   async fetchPlayerData(playerId) {
     try {
-      console.log('🔍 Buscando jugador con ID:', playerId);
+      
       
       // Primero intentar buscar en Supabase si el ID parece ser un UUID
       if (typeof supabase !== 'undefined' && playerId && playerId.length > 10) {
-        console.log('📊 Buscando en Supabase...');
+        
         
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -78,7 +78,7 @@ class PlayerProfile {
           .single();
 
         if (!error && profile) {
-          console.log('✅ Jugador encontrado en Supabase:', profile);
+          
           
           // Convertir perfil de Supabase al formato esperado
           return {
@@ -127,7 +127,7 @@ class PlayerProfile {
       }
       
       // Fallback a datos mock si no se encuentra en Supabase
-      console.log('📦 Usando datos mock...');
+      
       return this.getMockPlayerData(playerId);
       
     } catch (error) {
@@ -1087,41 +1087,41 @@ class PlayerProfile {
 
   async loadReports() {
     try {
-      console.log('📊 Cargando reportes del jugador...');
-      console.log('   - Player ID:', this.playerId);
-      console.log('   - Supabase disponible:', typeof supabase !== 'undefined');
+      
+      
+      
       
       // Intentar cargar desde Supabase primero
       if (typeof supabase !== 'undefined' && this.playerId) {
-        console.log('   - Intentando cargar desde Supabase...');
+        
         const reports = await this.loadReportsFromSupabase();
-        console.log('   - Reportes de Supabase:', reports);
+        
         if (reports && reports.length > 0) {
-          console.log(`✅ ${reports.length} reportes cargados desde Supabase`);
+          
           return reports;
         } else {
-          console.log('   - No hay reportes en Supabase para este jugador o sin acceso');
+          
         }
       }
       
       // Fallback: cargar desde localStorage
-      console.log('📦 Intentando cargar reportes desde localStorage...');
+      
       const localReports = localStorage.getItem('generatedReports');
-      console.log('   - Datos en localStorage:', localReports ? 'Encontrados' : 'No encontrados');
+      
       
       const allReports = localReports ? JSON.parse(localReports) : [];
-      console.log('   - Total reportes en localStorage:', allReports.length);
+      
       
       // Filtrar solo los reportes de este jugador
       const playerReports = allReports.filter(r => {
         const match = r.playerId == this.playerId;
         if (match) {
-          console.log('   - Reporte encontrado:', r.title || r.playerName);
+          
         }
         return match;
       });
       
-      console.log(`✅ ${playerReports.length} reportes encontrados en localStorage para este jugador`);
+      
       
       return playerReports;
     } catch (error) {
@@ -1132,16 +1132,16 @@ class PlayerProfile {
 
   async loadReportsFromSupabase() {
     try {
-      console.log('📊 Cargando reportes del jugador desde Supabase...');
-      console.log('🎯 Player ID:', this.playerId);
+      
+      
 
       // Obtener el usuario actual (scout)
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
         console.warn('⚠️ No hay usuario autenticado en Supabase');
-        console.log('   - AuthError:', authError);
-        console.log('   - User:', user);
+        
+        
         // Si no hay usuario autenticado, intentar cargar todos los reportes del jugador
         // (esto puede estar restringido por RLS, pero intentamos)
         const { data: reports, error: reportError } = await supabase
@@ -1155,8 +1155,8 @@ class PlayerProfile {
           return [];
         }
         
-        console.log(`📋 ${reports.length} reportes cargados sin autenticación`);
-        console.log('   - Reportes encontrados:', reports.map(r => ({ id: r.id, title: r.title, player_name: r.player_name })));
+        
+        
         
         // Mapear reportes sin información del scout
         return reports.map(r => ({
@@ -1184,7 +1184,7 @@ class PlayerProfile {
         }));
       }
 
-      console.log('👤 Scout ID:', user.id);
+      
 
       // La política RLS ya filtra automáticamente por scout_id = auth.uid()
       // Consulta simple que funcionaba antes
@@ -1199,7 +1199,7 @@ class PlayerProfile {
         return [];
       }
 
-      console.log(`✅ ${reports.length} reportes cargados para este jugador (creados por ti)`);
+      
 
       // Convertir formato de Supabase al formato esperado
       return reports.map(r => {
@@ -1242,12 +1242,12 @@ class PlayerProfile {
 
   loadCurrentUser() {
     try {
-      console.log('🔍 Cargando usuario actual...');
+      
       
       // 1. Buscar en localStorage (clave del login)
       const scoutConnectUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
       if (scoutConnectUser) {
-        console.log('✅ Usuario encontrado en scoutConnectUser:', scoutConnectUser);
+        
         return {
           id: scoutConnectUser.userId || scoutConnectUser.id,
           name: scoutConnectUser.fullName || scoutConnectUser.full_name || scoutConnectUser.name || scoutConnectUser.email?.split('@')[0],
@@ -1258,7 +1258,7 @@ class PlayerProfile {
       // 2. Alternativa: buscar en localStorage del perfil (clave alternativa)
       const userProfile = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
       if (userProfile) {
-        console.log('✅ Usuario encontrado en scoutconnect_user:', userProfile);
+        
         return {
           id: userProfile.id || userProfile.userId,
           name: userProfile.name || userProfile.fullName || userProfile.email?.split('@')[0],
@@ -1267,7 +1267,7 @@ class PlayerProfile {
       }
 
       console.warn('⚠️ No se encontró usuario en localStorage');
-      console.log('💡 Tip: Inicia sesión o ejecuta en consola: setTestScout("Tu Nombre", "tu@email.com")');
+      
       return null;
     } catch (e) {
       console.error('❌ Error al cargar usuario actual:', e);
@@ -1314,20 +1314,20 @@ class PlayerProfile {
   }
 
   renderReportsSection() {
-    console.log('📊 Renderizando sección de reportes...');
-    console.log('   - Player ID:', this.playerId);
-    console.log('   - this.reports es array?', Array.isArray(this.reports));
-    console.log('   - Total reportes cargados:', Array.isArray(this.reports) ? this.reports.length : 'NO ES ARRAY');
-    console.log('   - Reportes:', this.reports);
-    console.log('   - Usuario actual:', this.currentUser);
-    console.log('   - Filtro activo:', this.reportsFilter);
+    
+    
+    
+    
+    
+    
+    
     
     const sectionReports = document.getElementById('section-reports');
     
     // Si ya está renderizado, solo actualizar datos
     if (sectionReports.querySelector('.reports-header')) {
       const playerReports = this.getPlayerReports();
-      console.log('   - Reportes del jugador (filtrados):', playerReports.length);
+      
       this.updateReportsStats(playerReports);
       this.renderReportsList(playerReports);
       this.updateReportsCounter();
@@ -1405,7 +1405,7 @@ class PlayerProfile {
     
     // Ahora renderizar los datos
     const playerReports = this.getPlayerReports();
-    console.log('   - Reportes del jugador (primera carga):', playerReports.length);
+    
     this.updateReportsStats(playerReports);
     this.renderReportsList(playerReports);
     this.updateReportsCounter();
@@ -1608,7 +1608,7 @@ class PlayerProfile {
     if (!confirmed) return;
 
     try {
-      console.log('🗑️ Eliminando reporte:', reportId);
+      
       
       let deleted = false;
       
@@ -1621,7 +1621,7 @@ class PlayerProfile {
             .eq('id', reportId);
           
           if (!error) {
-            console.log('✅ Reporte eliminado de Supabase');
+            
             deleted = true;
           } else {
             console.warn('⚠️ Error eliminando de Supabase:', error);
@@ -1638,7 +1638,7 @@ class PlayerProfile {
           const reports = JSON.parse(reportsStr);
           const updatedReports = reports.filter(r => r.id !== reportId);
           localStorage.setItem('generatedReports', JSON.stringify(updatedReports));
-          console.log('✅ Reporte eliminado de localStorage');
+          
           deleted = true;
         }
       } catch (localError) {
@@ -1731,11 +1731,11 @@ class PlayerProfile {
   }
 
   async refreshReports() {
-    console.log('🔄 Actualizando reportes...');
+    
     this.reports = await this.loadReports();
     this.currentUser = this.loadCurrentUser();
-    console.log('   - Total reportes cargados:', this.reports.length);
-    console.log('   - Usuario actual:', this.currentUser);
+    
+    
     this.renderReportsSection();
     this.showNotification('Reportes actualizados', 'success');
   }
@@ -1848,7 +1848,7 @@ class PlayerProfile {
     if (!playerHasReports) {
       existingReports.push(...sampleReports);
       localStorage.setItem('generatedReports', JSON.stringify(existingReports));
-      console.log('📊 Reportes de ejemplo generados para', this.playerData.name);
+      
       
       // Recargar reportes
       this.reports = await this.loadReports();
@@ -1938,9 +1938,9 @@ function setTestScout(name = 'Scout Profesional', email = 'scout@test.com') {
   localStorage.setItem('scoutConnectUser', JSON.stringify(testUser));
   localStorage.setItem('scoutconnect_user', JSON.stringify(testUser));
   
-  console.log('✅ Usuario de prueba establecido:', testUser);
-  console.log('💾 Guardado en: scoutConnectUser y scoutconnect_user');
-  console.log('💡 Recarga la página o ejecuta: playerProfile.refreshReports()');
+  
+  
+  
   return testUser;
 }
 
@@ -1952,25 +1952,25 @@ function debugReports() {
   const scoutConnectUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
   const scoutconnect_user = JSON.parse(sessionStorage.getItem('scoutconnect_user') || 'null');
   
-  console.log('👤 Usuario Actual:');
-  console.log('   scoutConnectUser:', scoutConnectUser);
-  console.log('   scoutconnect_user:', scoutconnect_user);
-  console.log('');
   
-  console.log('📊 Debug de Reportes:');
-  console.log('   Total reportes:', reports.length);
-  console.log('   Reportes:', reports);
-  console.log('');
+  
+  
+  
+  
+  
+  
+  
+  
   
   if (reports.length > 0) {
-    console.log('📋 Desglose por reporte:');
+    
     reports.forEach((r, i) => {
-      console.log(`   [${i}] ${r.playerName || 'Sin nombre'}`);
-      console.log(`       Scout: ${r.scoutName || 'No especificado'}`);
-      console.log(`       Scout ID: ${r.scoutId || 'No especificado'}`);
-      console.log(`       Email: ${r.scoutEmail || 'No especificado'}`);
-      console.log(`       Fecha: ${r.date || r.createdAt || 'No especificado'}`);
-      console.log('');
+      
+      
+      
+      
+      
+      
     });
   }
   
@@ -1979,48 +1979,48 @@ function debugReports() {
 
 // Función para ver quién eres según el sistema
 function whoAmI() {
-  console.log('🔍 Verificando identidad del usuario...');
-  console.log('');
+  
+  
   
   // Verificar scoutConnectUser (clave principal del login)
   const scoutConnectUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
-  console.log('1️⃣ scoutConnectUser (login principal):');
+  
   if (scoutConnectUser) {
-    console.log('   ✅ Encontrado');
-    console.log('   ID:', scoutConnectUser.userId || scoutConnectUser.id);
-    console.log('   Nombre:', scoutConnectUser.fullName || scoutConnectUser.full_name || scoutConnectUser.name);
-    console.log('   Email:', scoutConnectUser.email);
+    
+    
+    
+    
   } else {
-    console.log('   ❌ No encontrado');
+    
   }
-  console.log('');
+  
   
   // Verificar scoutconnect_user (clave alternativa)
   const scoutconnect_user = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
-  console.log('2️⃣ scoutconnect_user (alternativo):');
+  
   if (scoutconnect_user) {
-    console.log('   ✅ Encontrado');
-    console.log('   ID:', scoutconnect_user.id || scoutconnect_user.userId);
-    console.log('   Nombre:', scoutconnect_user.name || scoutconnect_user.fullName);
-    console.log('   Email:', scoutconnect_user.email);
+    
+    
+    
+    
   } else {
-    console.log('   ❌ No encontrado');
+    
   }
-  console.log('');
+  
   
   // Resumen
   if (scoutConnectUser || scoutconnect_user) {
     const activeUser = scoutConnectUser || scoutconnect_user;
-    console.log('✅ RESUMEN: Estás identificado como');
-    console.log('   👤', activeUser.fullName || activeUser.full_name || activeUser.name || 'Sin nombre');
-    console.log('   📧', activeUser.email || 'Sin email');
-    console.log('   🆔', activeUser.userId || activeUser.id || 'Sin ID');
+    
+    
+    
+    
   } else {
-    console.log('❌ RESUMEN: No hay usuario identificado');
-    console.log('');
-    console.log('💡 Soluciones:');
-    console.log('   1. Inicia sesión en la aplicación');
-    console.log('   2. O ejecuta: setTestScout("Tu Nombre", "tu@email.com")');
+    
+    
+    
+    
+    
   }
   
   return scoutConnectUser || scoutconnect_user;
@@ -2033,12 +2033,12 @@ window.whoAmI = whoAmI;
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 DOM cargado, iniciando Perfil de Jugador...');
+  
   window.playerProfile = new PlayerProfile();
   await window.playerProfile.init();
-  console.log('');
-  console.log('💡 Funciones de debug disponibles:');
-  console.log('   - whoAmI()         → Ver tu identidad actual');
-  console.log('   - debugReports()   → Ver todos los reportes');
-  console.log('   - setTestScout()   → Establecer usuario de prueba');
+  
+  
+  
+  
+  
 });

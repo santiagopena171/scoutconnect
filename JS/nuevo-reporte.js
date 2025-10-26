@@ -24,14 +24,14 @@ class ReportGenerator {
     const playerId = urlParams.get('playerId');
     
     if (playerId) {
-      console.log('🎯 Jugador preseleccionado detectado:', playerId);
+      
       
       // Buscar el jugador en la lista de seguimiento
       let player = this.watchedPlayers.find(p => p.id == playerId);
       
       if (player) {
         // El jugador ya está en la lista de seguimiento
-        console.log('✅ Jugador encontrado en lista de seguimiento');
+        
         setTimeout(() => {
           this.selectPlayerById(playerId);
           // Avanzar automáticamente al paso 2
@@ -39,7 +39,7 @@ class ReportGenerator {
         }, 100);
       } else {
         // Si el jugador no está en seguimiento, cargarlo desde Supabase o datos mock
-        console.log('📥 Cargando jugador desde base de datos...');
+        
         await this.loadPlayerFromId(playerId);
       }
     }
@@ -47,11 +47,11 @@ class ReportGenerator {
 
   async loadPlayerFromId(playerId) {
     try {
-      console.log('🔍 Buscando jugador con ID:', playerId);
+      
       
       // Primero intentar buscar en Supabase si el ID parece ser un UUID
       if (typeof supabase !== 'undefined' && playerId && playerId.length > 10) {
-        console.log('📊 Buscando en Supabase...');
+        
         
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -61,7 +61,7 @@ class ReportGenerator {
           .single();
 
         if (!error && profile) {
-          console.log('✅ Jugador encontrado en Supabase:', profile);
+          
           
           // Convertir perfil de Supabase al formato esperado
           const playerData = {
@@ -98,7 +98,7 @@ class ReportGenerator {
       }
       
       // Fallback: Buscar en datos mock
-      console.log('📦 Buscando en datos mock...');
+      
       const mockPlayers = [
         {
           id: 1,
@@ -179,7 +179,7 @@ class ReportGenerator {
     try {
       const saved = localStorage.getItem('scoutconnect_watchlist');
       this.watchedPlayers = saved ? JSON.parse(saved) : [];
-      console.log('📊 Jugadores cargados:', this.watchedPlayers.length);
+      
     } catch (error) {
       console.error('❌ Error al cargar jugadores:', error);
       this.watchedPlayers = [];
@@ -314,7 +314,7 @@ class ReportGenerator {
       continueBtn.disabled = false;
     }
 
-    console.log('✅ Jugador seleccionado:', this.selectedPlayer?.name);
+    
   }
 
   // Función auxiliar para seleccionar jugador por ID (usado en precarga)
@@ -568,10 +568,10 @@ class ReportGenerator {
     const finalRecommendation = finalRecommendationSelect.value;
     const finalRecommendationText = finalRecommendationSelect.options[finalRecommendationSelect.selectedIndex].text;
 
-    console.log('📝 Datos recolectados del formulario:');
-    console.log('Fortalezas:', finalStrengths);
-    console.log('Debilidades:', finalWeaknesses);
-    console.log('Observaciones:', finalObservations);
+    
+    
+    
+    
 
     // Crear objeto de reporte completo
     const report = {
@@ -617,12 +617,12 @@ class ReportGenerator {
 
   getScoutInfo() {
     try {
-      console.log('🔍 Buscando información del scout...');
+      
       
       // 1. Buscar en localStorage (clave del login)
       const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
       if (scoutConnectUser) {
-        console.log('✅ Usuario encontrado en scoutConnectUser:', scoutConnectUser);
+        
         return {
           scoutId: scoutConnectUser.userId || scoutConnectUser.id,
           scoutName: scoutConnectUser.fullName || scoutConnectUser.full_name || scoutConnectUser.name || scoutConnectUser.email?.split('@')[0] || 'Scout',
@@ -634,7 +634,7 @@ class ReportGenerator {
       if (typeof supabase !== 'undefined' && supabase) {
         supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) {
-            console.log('✅ Usuario encontrado en Supabase Auth:', user);
+            
             return {
               scoutId: user.id,
               scoutName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Scout',
@@ -647,7 +647,7 @@ class ReportGenerator {
       // 3. Alternativa: buscar en localStorage del perfil (clave alternativa)
       const userProfile = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
       if (userProfile) {
-        console.log('✅ Usuario encontrado en scoutconnect_user:', userProfile);
+        
         return {
           scoutId: userProfile.id || userProfile.userId || Date.now().toString(),
           scoutName: userProfile.name || userProfile.fullName || userProfile.email?.split('@')[0] || 'Scout',
@@ -657,7 +657,7 @@ class ReportGenerator {
 
       // Fallback: información por defecto
       console.warn('⚠️ No se pudo obtener información del scout, usando valores por defecto');
-      console.log('💡 Tip: Ejecuta en consola: setTestScout("Tu Nombre", "tu@email.com")');
+      
       return {
         scoutId: 'scout_' + Date.now(),
         scoutName: 'Scout Profesional',
@@ -679,7 +679,7 @@ class ReportGenerator {
       const existingReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
       existingReports.push(report);
       localStorage.setItem('generatedReports', JSON.stringify(existingReports));
-      console.log('✅ Reporte guardado en localStorage');
+      
       
       // 2. Guardar en Supabase si está disponible
       if (typeof supabase !== 'undefined') {
@@ -696,7 +696,7 @@ class ReportGenerator {
 
   async saveReportToSupabase(report) {
     try {
-      console.log('☁️ Guardando reporte en Supabase...');
+      
       
       // Obtener el usuario actual (scout)
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -742,7 +742,7 @@ class ReportGenerator {
         return false;
       }
       
-      console.log('✅ Reporte guardado en Supabase correctamente');
+      
       return true;
       
     } catch (error) {
@@ -798,7 +798,7 @@ class ReportGenerator {
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
   window.reportGenerator = new ReportGenerator();
-  console.log('🚀 Generador de reportes iniciado');
+  
 });
 
 // Cerrar modal al hacer clic fuera
