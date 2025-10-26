@@ -53,4 +53,19 @@
   .chat-main {
     height: calc(100vh - 320px);
   }
+
+  .chat-layout.sidebar-hidden .sidebar-conversations {
+    display: none;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sidebar-conversations {
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .chat-layout.sidebar-hidden .chat-main {
+    height: 100vh;
+    transition: height 0.3s ease-in-out;
+  }
 }

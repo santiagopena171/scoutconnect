@@ -37,11 +37,33 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [conversationsVersion, setConversationsVersion] = useState(0);
   const [backUrl, setBackUrl] = useState<string | null>(null);
+  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const { messages, setMessages } = useRealtimeMessages(selectedConversationId);
   const statusesMap = useMessageStatus(selectedConversationId);
   const { presenceState, startTyping, stopTyping } = usePresence(selectedConversationId);
   const { canSendMessage, recordMessageSent, messagesRemaining } = useAntiSpam(selectedConversationId);
+
+  // Detectar si es móvil/tablet
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 960);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  // Ocultar sidebar cuando se selecciona conversación en móvil
+  useEffect(() => {
+    if (isMobile && selectedConversationId) {
+      setIsSidebarHidden(true);
+    } else if (!isMobile) {
+      setIsSidebarHidden(false);
+    }
+  }, [isMobile, selectedConversationId]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -300,6 +322,12 @@ export default function App() {
   };
 
   const handleBack = useCallback(() => {
+    if (isMobile && selectedConversationId) {
+      // En móvil, volver a la lista de conversaciones
+      setIsSidebarHidden(false);
+      return;
+    }
+
     if (backUrl) {
       window.location.href = backUrl;
       return;
@@ -311,7 +339,7 @@ export default function App() {
     }
 
     window.location.href = 'index.html';
-  }, [backUrl]);
+  }, [backUrl, isMobile, selectedConversationId]);
 
   const handleSelectConversationRef = useRef(handleSelectConversation);
 
@@ -396,7 +424,7 @@ export default function App() {
   }
 
   return (
-    <div className="chat-layout">
+    <div className={`chat-layout ${isSidebarHidden ? 'sidebar-hidden' : ''}`}>
       <SidebarConversations
         currentUserId={currentUserId}
         conversations={conversations}
