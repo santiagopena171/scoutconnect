@@ -18,7 +18,7 @@ class ScoutProfile {
 
   loadUserData() {
     // Cargar datos del usuario desde localStorage
-    const savedUser = localStorage.getItem('scoutConnectUser');
+    const savedUser = sessionStorage.getItem('scoutConnectUser');
     if (savedUser) {
       this.currentUser = JSON.parse(savedUser);
     } else {

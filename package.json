@@ -1,0 +1,18 @@
+{
+  "name": "scoutconnect",
+  "version": "1.0.0",
+  "description": "Plataforma web que conecta scouts/ojeadores de fútbol con jugadores",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node build.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {},
+  "keywords": ["scout", "football", "platform"],
+  "author": "Santiago Peña",
+  "license": "ISC"
+}

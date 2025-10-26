@@ -61,13 +61,13 @@ class ReportViewer {
         }
       }
       
-      // 2. Fallback: buscar en localStorage
-      console.log('💾 Buscando usuario en localStorage...');
-      const userStr = localStorage.getItem('scoutConnectUser');
+      // 2. Fallback: buscar en sessionStorage
+      console.log('💾 Buscando usuario en sessionStorage...');
+      const userStr = sessionStorage.getItem('scoutConnectUser');
       const user = userStr ? JSON.parse(userStr) : null;
       
       if (user) {
-        console.log('✅ Usuario encontrado en localStorage:', user);
+        console.log('✅ Usuario encontrado en sessionStorage:', user);
         return user;
       }
       
@@ -889,7 +889,7 @@ window.debugReportViewer = function() {
     });
   }
   
-  const currentUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+  const currentUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
   console.log('👤 Usuario actual:', currentUser);
   
   if (window.reportViewer) {

@@ -1245,7 +1245,7 @@ class PlayerProfile {
       console.log('🔍 Cargando usuario actual...');
       
       // 1. Buscar en localStorage (clave del login)
-      const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+      const scoutConnectUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
       if (scoutConnectUser) {
         console.log('✅ Usuario encontrado en scoutConnectUser:', scoutConnectUser);
         return {
@@ -1949,8 +1949,8 @@ function debugReports() {
   const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
   
   // Mostrar usuario actual
-  const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
-  const scoutconnect_user = JSON.parse(localStorage.getItem('scoutconnect_user') || 'null');
+  const scoutConnectUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
+  const scoutconnect_user = JSON.parse(sessionStorage.getItem('scoutconnect_user') || 'null');
   
   console.log('👤 Usuario Actual:');
   console.log('   scoutConnectUser:', scoutConnectUser);
@@ -1983,7 +1983,7 @@ function whoAmI() {
   console.log('');
   
   // Verificar scoutConnectUser (clave principal del login)
-  const scoutConnectUser = JSON.parse(localStorage.getItem('scoutConnectUser') || 'null');
+  const scoutConnectUser = JSON.parse(sessionStorage.getItem('scoutConnectUser') || 'null');
   console.log('1️⃣ scoutConnectUser (login principal):');
   if (scoutConnectUser) {
     console.log('   ✅ Encontrado');

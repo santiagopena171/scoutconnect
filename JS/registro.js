@@ -683,4 +683,21 @@ document.addEventListener('DOMContentLoaded', function() {
   detectUserCountry();
 
   console.log('📝 Registration page initialized successfully');
+
+  // Función para sanitizar entradas de usuario
+  function sanitizeInput(input) {
+    if (typeof input !== 'string') return input;
+    return input.trim().replace(/[<>]/g, '');
+  }
+
+  // Función para validar email
+  function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  // Función para validar contraseña
+  function validatePassword(password) {
+    return password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password);
+  }
 });

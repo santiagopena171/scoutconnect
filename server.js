@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+require('dotenv').config();
 
 const server = http.createServer((req, res) => {
     let filePath = url.parse(req.url).pathname;
