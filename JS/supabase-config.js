@@ -3,16 +3,19 @@
 // =============================================
 
 // 🔐 INSTRUCCIONES:
-// 1. Ve a tu proyecto en Supabase: https://supabase.com/dashboard
-// 2. Click en Settings (⚙️) → API
-// 3. Copia tu "Project URL" y "anon public key"
-// 4. Pega los valores abajo (reemplaza los textos entre comillas)
+// Las credenciales de Supabase se cargan desde variables de entorno (.env)
+// Para configurar:
+// 1. Copia el archivo .env.example a .env
+// 2. Rellena los valores en .env con tus credenciales reales
+// 3. Ejecuta: node build.js para inyectar las variables
+// 
+// IMPORTANTE: El archivo .env NO se sube a Git por seguridad
 
 const SUPABASE_CONFIG = {
-  // 📍 URL del proyecto (ejemplo: https://xyzcompany.supabase.co)
+  // 📍 URL del proyecto - Se inyecta desde SUPABASE_URL en .env
   url: 'https://lcujogyjgncfsxeptrlz.supabase.co',
   
-  // 🔑 API Key pública/anon (ejemplo: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...)
+  // 🔑 API Key pública/anon - Se inyecta desde SUPABASE_ANON_KEY en .env
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdWpvZ3lqZ25jZnN4ZXB0cmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4ODUwNTcsImV4cCI6MjA3NjQ2MTA1N30.9V_LbNKuIoHt1p1-jSnXM1U33bG6qMN4R4JTbxhRbbM'
 };
 
@@ -32,29 +35,32 @@ function initSupabase() {
   }
 
   // Verificar que las credenciales estén configuradas
-  if (SUPABASE_CONFIG.url === 'TU_SUPABASE_URL_AQUI' || 
-      SUPABASE_CONFIG.anonKey === 'TU_SUPABASE_ANON_KEY_AQUI') {
-    console.error('⚠️ ERROR: Debes configurar las credenciales de Supabase en supabase-config.js');
-    
-    
-    
-    
-    
-    
+  if (SUPABASE_CONFIG.url === 'SUPABASE_URL_PLACEHOLDER' || 
+      SUPABASE_CONFIG.anonKey === 'SUPABASE_ANON_KEY_PLACEHOLDER') {
+    console.error('⚠️ ERROR: Debes ejecutar "node build.js" para inyectar las credenciales de Supabase desde .env');
     return null;
   }
 
   try {
+    // Verificar que la librería de Supabase esté cargada
+    if (typeof window.supabase === 'undefined') {
+      console.error('❌ ERROR: La librería de Supabase no está cargada. Verifica que el CDN esté disponible.');
+      return null;
+    }
+
     // Crear cliente de Supabase
     supabase = window.supabase.createClient(
       SUPABASE_CONFIG.url,
       SUPABASE_CONFIG.anonKey
     );
     
+    console.log('✅ Cliente de Supabase inicializado correctamente');
+    console.log('🔗 URL:', SUPABASE_CONFIG.url);
     
     return supabase;
   } catch (error) {
     console.error('❌ Error al inicializar Supabase:', error);
+    console.error('Detalles:', error.message);
     return null;
   }
 }

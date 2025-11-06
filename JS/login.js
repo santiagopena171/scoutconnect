@@ -302,7 +302,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
-    
+    // Verificar que Supabase esté inicializado
+    if (!supabase) {
+      console.error('❌ Supabase no está inicializado');
+      throw new Error('Error de configuración: No se pudo conectar con el servidor');
+    }
+
+    console.log('🔐 Intentando autenticar usuario...');
 
     // 1. Iniciar sesión con Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -315,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
       throw authError;
     }
 
-    
+    console.log('✅ Autenticación exitosa');
 
     // 2. Obtener perfil del usuario
     let { data: profile, error: profileError } = await supabase

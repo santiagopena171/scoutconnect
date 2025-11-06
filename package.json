@@ -4,21 +4,25 @@
   "description": "Plataforma web que conecta scouts/ojeadores de fútbol con jugadores",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node build.js && node server.js",
     "build": "node build.js",
-    "dev": "node server.js",
+    "dev": "node build.js && node server.js",
     "test": "jest",
     "test:ci": "jest --coverage --watchAll=false",
     "validate": "npm run build && npm test"
   },
   "dependencies": {
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.6.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0"
   },
-  "keywords": ["scout", "football", "platform"],
+  "keywords": [
+    "scout",
+    "football",
+    "platform"
+  ],
   "author": "Santiago Peña",
   "license": "ISC"
 }

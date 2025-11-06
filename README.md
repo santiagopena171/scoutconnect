@@ -61,50 +61,78 @@ scoutconnect-2/
 
 ## 🔧 Configuración
 
-### 1. Crear proyecto en Supabase
+### Configuración Rápida (Recomendado)
+
+Para Windows PowerShell:
+```powershell
+.\setup.ps1
+```
+
+Este script automáticamente:
+1. Crea el archivo `.env` desde `.env.example`
+2. Te solicita configurar tus credenciales
+3. Instala las dependencias necesarias
+4. Inyecta las credenciales en el proyecto
+
+### Configuración Manual
+
+#### 1. Crear proyecto en Supabase
 
 1. Ve a [supabase.com](https://supabase.com) y crea una cuenta
 2. Crea un nuevo proyecto
 3. Anota tu `URL` y `anon key`
 
-### 2. Configurar base de datos
+#### 2. Configurar variables de entorno
+
+1. Copia el archivo de ejemplo:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+2. Edita `.env` y añade tus credenciales:
+   ```env
+   SUPABASE_URL=https://tu-proyecto.supabase.co
+   SUPABASE_ANON_KEY=tu_clave_publica_aqui
+   ```
+
+3. Inyecta las credenciales en el proyecto:
+   ```powershell
+   node build.js
+   ```
+
+📖 **Nota:** Para más detalles sobre variables de entorno, consulta [CONFIGURACION_ENV.md](./CONFIGURACION_ENV.md)
+
+#### 3. Configurar base de datos
 
 1. Ve a SQL Editor en Supabase
 2. Ejecuta el script `database/supabase-setup.sql`
 3. Ejecuta el script `database/supabase-fix-policies.sql`
 
-### 3. Configurar credenciales
-
-Edita `JS/supabase-config.js` y actualiza:
-
-```javascript
-const SUPABASE_URL = 'TU_URL_DE_SUPABASE';
-const SUPABASE_ANON_KEY = 'TU_ANON_KEY_DE_SUPABASE';
-```
-
-### 4. Desactivar confirmación de email (Desarrollo)
+#### 4. Desactivar confirmación de email (Desarrollo)
 
 1. Ve a Authentication → Providers en Supabase
 2. Click en "Email"
 3. Desactiva "Confirm email"
 4. Guarda los cambios
 
-### 5. Ejecutar la aplicación
+#### 5. Ejecutar la aplicación
 
-Puedes usar cualquier servidor local:
-
-**Opción 1: Live Server (VS Code)**
+**Opción 1: Con npm (Recomendado)**
 ```bash
-# Instalar extensión Live Server en VS Code
+npm start
+```
+
+**Opción 2: Live Server (VS Code)**
+```bash
 # Click derecho en index.html → "Open with Live Server"
 ```
 
-**Opción 2: Python**
+**Opción 3: Python**
 ```bash
 python -m http.server 5500
 ```
 
-**Opción 3: Node.js**
+**Opción 4: Node.js**
 ```bash
 node server.js
 ```
