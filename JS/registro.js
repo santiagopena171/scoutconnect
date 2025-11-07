@@ -1,6 +1,8 @@
 // ===== JAVASCRIPT PARA LA PÁGINA DE REGISTRO =====
 
-const { sanitizeInput, validateEmail, validatePassword } = require('./utils');
+// Nota: Evitamos require() porque esta página se carga sin bundler.
+// Las utilidades necesarias (sanitizeInput, validateEmail, validatePassword)
+// están definidas más abajo en este mismo archivo para uso en el navegador.
 
 document.addEventListener('DOMContentLoaded', function() {
   // Verificar sesión activa al cargar la página
