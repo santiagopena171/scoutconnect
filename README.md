@@ -31,32 +31,46 @@ Plataforma web que conecta scouts/ojeadores de fútbol con jugadores, facilitand
 ## 📁 Estructura del Proyecto
 
 ```
-scoutconnect-2/
-├── CSS/                      # Estilos de la aplicación
-│   ├── styles.css           # Estilos globales
-│   ├── login.css            # Estilos del login
-│   ├── registro.css         # Estilos del registro
-│   ├── dashboard-*.css      # Estilos de dashboards
-│   └── ...
-├── JS/                       # JavaScript de la aplicación
-│   ├── supabase-config.js   # Configuración de Supabase
-│   ├── auth-guard.js        # Protección de rutas
-│   ├── login.js             # Lógica de login
-│   ├── registro.js          # Lógica de registro
-│   └── ...
+scoutconnect/
+├── public/                   # Archivos públicos (frontend)
+│   ├── CSS/                 # Estilos de la aplicación
+│   │   ├── styles.css       # Estilos globales
+│   │   ├── login.css        # Estilos del login
+│   │   ├── registro.css     # Estilos del registro
+│   │   └── ...
+│   ├── imagenes/            # Assets e imágenes
+│   ├── login.html           # Página de login
+│   ├── registro.html        # Página de registro
+│   ├── dashboard-scout.html # Dashboard de scouts
+│   ├── dashboard-futbolista.html # Dashboard de jugadores
+│   └── ...                  # Otros archivos HTML
+├── src/                      # Código fuente JavaScript
+│   └── JS/                  # JavaScript de la aplicación
+│       ├── supabase-config.js   # Configuración de Supabase
+│       ├── auth-guard.js        # Protección de rutas
+│       ├── login.js             # Lógica de login
+│       ├── registro.js          # Lógica de registro
+│       └── ...
+├── config/                   # Archivos de configuración
+│   └── jest.config.js       # Configuración de Jest
+├── scripts/                  # Scripts de utilidad
+│   ├── build.js             # Script de build
+│   ├── server.js            # Servidor Node.js
+│   └── setup.ps1            # Script de configuración inicial
 ├── database/                 # Scripts SQL
 │   ├── supabase-setup.sql   # Configuración inicial de BD
 │   └── supabase-fix-policies.sql  # Políticas RLS
 ├── docs/                     # Documentación
-│   ├── GUIA_SUPABASE.md     # Guía de configuración
-│   └── ...
-├── imagenes/                 # Assets e imágenes
-├── index.html               # Página de inicio
-├── login.html               # Página de login
-├── registro.html            # Página de registro
-├── dashboard-scout.html     # Dashboard de scouts
-├── dashboard-futbolista.html # Dashboard de jugadores
-└── server.js                # Servidor Node.js (opcional)
+│   ├── guides/              # Guías de usuario
+│   ├── setup/               # Documentación de configuración
+│   └── troubleshooting/     # Solución de problemas
+├── tests/                    # Tests
+├── .env                      # Variables de entorno (NO en Git)
+├── .env.example              # Plantilla de variables de entorno
+├── .gitignore                # Archivos ignorados por Git
+├── index.html                # Página de inicio
+├── package.json              # Dependencias y scripts npm
+└── README.md                 # Este archivo
 ```
 
 ## 🔧 Configuración
@@ -65,7 +79,7 @@ scoutconnect-2/
 
 Para Windows PowerShell:
 ```powershell
-.\setup.ps1
+.\scripts\setup.ps1
 ```
 
 Este script automáticamente:
@@ -97,10 +111,10 @@ Este script automáticamente:
 
 3. Inyecta las credenciales en el proyecto:
    ```powershell
-   node build.js
+   node scripts/build.js
    ```
 
-📖 **Nota:** Para más detalles sobre variables de entorno, consulta [CONFIGURACION_ENV.md](./CONFIGURACION_ENV.md)
+📖 **Nota:** Para más detalles sobre variables de entorno, consulta [docs/setup/CONFIGURACION_ENV.md](./docs/setup/CONFIGURACION_ENV.md)
 
 #### 3. Configurar base de datos
 

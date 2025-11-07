@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsqueda Avanzada - ScoutConnect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="CSS/busqueda-avanzada.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="imagenes/logo.png" alt="ScoutConnect" onerror="this.style.display='none'">
+                    <h1>ScoutConnect</h1>
+                </div>
+                <div class="header-actions">
+                    <a href="dashboard-scout.html" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="search-header">
+                <h1><i class="fas fa-search-plus"></i> Búsqueda Avanzada de Jugadores</h1>
+                <p>Utiliza los filtros específicos para encontrar el talento perfecto</p>
+            </div>
+
+            <div class="search-layout">
+                <!-- Sidebar con Filtros -->
+                <aside class="filters-sidebar">
+                    <form id="advancedSearchForm" class="search-form">
+                        
+                        <!-- Información Básica -->
+                        <div class="filter-section">
+                            <h3><i class="fas fa-user"></i> Información Básica</h3>
+                            
+                            <div class="filter-item">
+                                <label for="playerName">Nombre del Jugador</label>
+                                <input type="text" id="playerName" placeholder="Buscar por nombre...">
+                            </div>
+                            
+                            <div class="filter-item">
+                                <label for="ageRange">Rango de Edad</label>
+                                <div class="range-inputs">
+                                    <input type="number" id="ageMin" placeholder="Min" min="16" max="45">
+                                    <span>-</span>
+                                    <input type="number" id="ageMax" placeholder="Max" min="16" max="45">
+                                </div>
+                            </div>
+                            
+                            <div class="filter-item">
+                                <label for="primaryPosition">Posición Primaria</label>
+                                <select id="primaryPosition">
+                                    <option value="">Seleccionar posición primaria</option>
+                                    <option value="Portero">Portero</option>
+                                    <option value="Defensa Central">Defensa Central</option>
+                                    <option value="Lateral Derecho">Lateral Derecho</option>
+                                    <option value="Lateral Izquierdo">Lateral Izquierdo</option>
+                                    <option value="Mediocampista Defensivo">Mediocampista Defensivo</option>
+                                    <option value="Mediocampista Centro">Mediocampista Centro</option>
+                                    <option value="Mediocampista Ofensivo">Mediocampista Ofensivo</option>
+                                    <option value="Extremo Derecho">Extremo Derecho</option>
+                                    <option value="Extremo Izquierdo">Extremo Izquierdo</option>
+                                    <option value="Delantero Centro">Delantero Centro</option>
+                                    <option value="Segundo Delantero">Segundo Delantero</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-item">
+                                <label for="secondaryPosition">Posición Secundaria (Opcional)</label>
+                                <select id="secondaryPosition">
+                                    <option value="">Seleccionar posición secundaria</option>
+                                    <option value="Portero">Portero</option>
+                                    <option value="Defensa Central">Defensa Central</option>
+                                    <option value="Lateral Derecho">Lateral Derecho</option>
+                                    <option value="Lateral Izquierdo">Lateral Izquierdo</option>
+                                    <option value="Mediocampista Defensivo">Mediocampista Defensivo</option>
+                                    <option value="Mediocampista Centro">Mediocampista Centro</option>
+                                    <option value="Mediocampista Ofensivo">Mediocampista Ofensivo</option>
+                                    <option value="Extremo Derecho">Extremo Derecho</option>
+                                    <option value="Extremo Izquierdo">Extremo Izquierdo</option>
+                                    <option value="Delantero Centro">Delantero Centro</option>
+                                    <option value="Segundo Delantero">Segundo Delantero</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-item">
+                                <label for="foot">Pierna Hábil</label>
+                                <select id="foot">
+                                    <option value="">Cualquiera</option>
+                                    <option value="Derecho">Derecho</option>
+                                    <option value="Izquierdo">Izquierdo</option>
+                                    <option value="Ambidiestro">Ambidiestro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación y Club -->
+                        <div class="filter-section">
+                            <h3><i class="fas fa-globe"></i> Ubicación y Club</h3>
+                            
+                            <div class="filter-item">
+                                <label for="nationality">Nacionalidad</label>
+                                <select id="nationality">
+                                    <option value="">Todas las nacionalidades</option>
+                                    <!-- Se llenarán dinámicamente desde el JSON -->
+                                </select>
+                            </div>
+                            
+                            <div class="filter-item">
+                                <label for="country">País de Residencia</label>
+                                <select id="country" onchange="updateStates()">
+                                    <option value="">Todos los países</option>
+                                    <!-- Se llenarán dinámicamente desde el JSON -->
+                                </select>
+                            </div>
+
+                            <div class="filter-item">
+                                <label for="state">Estado/Departamento</label>
+                                <div class="multi-select-dropdown">
+                                    <div class="multi-select-button" onclick="toggleStateDropdown()">
+                                        <span id="stateButtonText">Selecciona primero un país</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="multi-select-list" id="stateDropdownList">
+                                        <div class="multi-select-item">
+                                            <span>Selecciona primero un país</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="filter-item">
+                                <label for="league">Liga</label>
+                                <select id="league">
+                                    <option value="">Todas las ligas</option>
+                                    <option value="Liga Profesional Argentina">Liga Profesional Argentina</option>
+                                    <option value="Campeonato Brasileiro">Campeonato Brasileiro</option>
+                                    <option value="Primera División Uruguay">Primera División Uruguay</option>
+                                    <option value="LaLiga">LaLiga</option>
+                                    <option value="Serie A">Serie A</option>
+                                    <option value="Premier League">Premier League</option>
+                                    <option value="Ligue 1">Ligue 1</option>
+                                    <option value="Bundesliga">Bundesliga</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-item">
+                                <label for="club">Club</label>
+                                <input type="text" id="club" placeholder="Nombre del club...">
+                            </div>
+                        </div>
+
+                        <!-- Características Físicas -->
+                        <div class="filter-section">
+                            <h3><i class="fas fa-dumbbell"></i> Características Físicas</h3>
+                            
+                            <div class="filter-item">
+                                <label for="heightRange">Altura (cm)</label>
+                                <div class="range-inputs">
+                                    <input type="number" id="heightMin" placeholder="Min" min="160" max="210">
+                                    <span>-</span>
+                                    <input type="number" id="heightMax" placeholder="Max" min="160" max="210">
+                                </div>
+                            </div>
+                            
+                            <div class="filter-item">
+                                <label for="weightRange">Peso (kg)</label>
+                                <div class="range-inputs">
+                                    <input type="number" id="weightMin" placeholder="Min" min="50" max="120">
+                                    <span>-</span>
+                                    <input type="number" id="weightMax" placeholder="Max" min="50" max="120">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información Contractual -->
+                        <div class="filter-section">
+                            <h3><i class="fas fa-file-contract"></i> Información Contractual</h3>
+                            
+                            <div class="filter-item">
+                                <label for="contractStatus">Estado Contractual</label>
+                                <select id="contractStatus" onchange="toggleContractFields()">
+                                    <option value="">Todos los estados</option>
+                                    <option value="professional">Profesional</option>
+                                    <option value="semiprofessional">Semi-profesional</option>
+                                    <option value="amateur">Amateur</option>
+                                    <option value="free-agent">Agente libre</option>
+                                    <option value="youth">Juvenil</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-item" id="contractExpiryContainer">
+                                <label for="contractExpiry">Contrato expira</label>
+                                <select id="contractExpiry">
+                                    <option value="">Cualquier fecha</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027 o después</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Etiquetas de Características -->
+                        <div class="filter-section">
+                            <h3><i class="fas fa-tags"></i> Etiquetas de Características</h3>
+                            
+                            <!-- Atributos Físicos -->
+                            <div class="tags-category">
+                                <h4><i class="fas fa-dumbbell"></i> Físico</h4>
+                                <div class="tags-grid" id="physicalTags">
+                                    <!-- Se llenarán dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Atributos Técnicos -->
+                            <div class="tags-category">
+                                <h4><i class="fas fa-futbol"></i> Técnico</h4>
+                                <div class="tags-grid" id="technicalTags">
+                                    <!-- Se llenarán dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Atributos Mentales -->
+                            <div class="tags-category">
+                                <h4><i class="fas fa-brain"></i> Mental</h4>
+                                <div class="tags-grid" id="mentalTags">
+                                    <!-- Se llenarán dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Atributos Tácticos -->
+                            <div class="tags-category">
+                                <h4><i class="fas fa-chess"></i> Táctico</h4>
+                                <div class="tags-grid" id="tacticalTags">
+                                    <!-- Se llenarán dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Características Especiales -->
+                            <div class="tags-category">
+                                <h4><i class="fas fa-star"></i> Especiales</h4>
+                                <div class="tags-grid" id="specialTags">
+                                    <!-- Se llenarán dinámicamente -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen de Etiquetas Seleccionadas -->
+                        <div class="tags-summary" style="display: none;">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="filter-actions">
+                            <button type="button" class="btn btn-secondary" id="clearFiltersBtn">
+                                <i class="fas fa-eraser"></i> Limpiar Filtros
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="searchBtn">
+                                <i class="fas fa-search"></i> Buscar Jugadores
+                            </button>
+                        </div>
+                    </form>
+                </aside>
+
+                <!-- Área de Resultados -->
+                <main class="results-area">
+                    <!-- Header de Resultados -->
+                    <div class="results-header">
+                        <div class="results-info">
+                            <h2><i class="fas fa-list"></i> Resultados de Búsqueda</h2>
+                            <span id="resultsCount">Use los filtros para buscar jugadores</span>
+                        </div>
+                        <div class="results-controls">
+                            <select id="sortResults">
+                                <option value="rating">Ordenar por Rating</option>
+                                <option value="age">Ordenar por Edad</option>
+                                <option value="marketValue">Ordenar por Valor</option>
+                                <option value="name">Ordenar por Nombre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Grid de Resultados -->
+                    <div class="results-container" id="searchResults">
+                        <div class="search-placeholder">
+                            <i class="fas fa-search"></i>
+                            <h3>Utiliza los filtros para buscar jugadores</h3>
+                            <p>Ajusta los criterios en el panel izquierdo para encontrar el talento perfecto</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para Ver Perfil Completo del Jugador -->
+    <div class="modal" id="playerProfileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalPlayerName">Perfil del Jugador</h2>
+                <button class="modal-close" onclick="closeModal('playerProfileModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="playerProfileContent">
+                    <!-- El contenido se carga dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase CDN - DEBE cargarse primero -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Scripts - IMPORTANTE: supabase-config.js DEBE cargarse después de Supabase CDN -->
+    <script src="../src/JS/supabase-config.js"></script>
+    <script src="../src/JS/activity-logger.js"></script>
+    <script src="../src/JS/busqueda-avanzada.js"></script>
+</body>
+</html>
+

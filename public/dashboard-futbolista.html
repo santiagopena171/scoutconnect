@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Futbolista | ScoutConnect</title>
+  <link rel="stylesheet" href="CSS/styles.css">
+  <link rel="stylesheet" href="CSS/dashboard-futbolista.css">
+  <link rel="stylesheet" href="CSS/navbar-fix.css">
+</head>
+<body>
+  <!-- Navbar del Dashboard -->
+  <nav class="dashboard-navbar">
+    <div class="navbar-container">
+      <!-- Logo -->
+      <div class="navbar-logo">
+        <a href="index.html">
+          <img src="imagenes/logo.png" alt="ScoutConnect Logo">
+        </a>
+      </div>
+
+      <!-- Menú de navegación -->
+      <div class="navbar-menu">
+        <a href="dashboard-futbolista.html" class="nav-link active">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#videos-section" class="nav-link" id="navVideosLink">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+          <span>Videos</span>
+        </a>
+  <a href="chat.html" class="nav-link" data-open-chat>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+          <span>Mensajes</span>
+        </a>
+        <!-- Mobile-only logout link -->
+        <a href="#" class="nav-link mobile-only logout-link" id="mobileLogout" onclick="logout(); return false;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16,17 21,12 16,7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Cerrar sesión</span>
+        </a>
+      </div>
+
+      <!-- Hamburger Menu Button (mobile) -->
+      <button class="hamburger-menu" id="hamburgerMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Información del usuario -->
+      <div class="user-info" id="userInfo">
+        <div class="user-profile">
+          <img src="imagenes/imagen1.png" alt="Foto de perfil" class="user-avatar" id="userAvatar">
+          <span class="user-name" id="userName">Juan Pérez</span>
+        </div>
+        
+        <!-- Notificaciones -->
+        <div class="notifications">
+          <button class="notification-btn" id="notificationBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge" id="notificationBadge">3</span>
+          </button>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-header">
+              <h3>Notificaciones</h3>
+              <button class="mark-all-read">Marcar como leídas</button>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <!-- Las notificaciones se cargarán dinámicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="chat-section">
+          <a href="chat.html" class="chat-btn" data-open-chat>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+            <span class="chat-badge">7</span>
+          </a>
+        </div>
+
+        <!-- Menú de usuario -->
+        <div class="user-menu">
+          <button class="user-menu-btn" id="userMenuBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+          <div class="user-menu-dropdown" id="userMenuDropdown">
+            <a href="#" class="menu-item" id="editProfileBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+              Editar perfil
+            </a>
+            <a href="#" class="menu-item" id="accountSettingsBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              Configuración
+            </a>
+            <a href="dashboard-scout.html" class="menu-item scout-access" style="color: #667eea; font-weight: 600;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+              Dashboard Scout (Demo)
+            </a>
+            <hr class="menu-divider">
+            <a href="#" onclick="logout(); return false;" class="menu-item logout" id="logoutBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16,17 21,12 16,7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Cerrar sesión
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenido principal -->
+  <main class="dashboard-main">
+    <div class="dashboard-container">
+      
+      <!-- Sección de perfil del jugador -->
+      <section class="player-profile-section">
+        <div class="profile-card">
+          <div class="profile-header">
+          <div class="profile-photo">
+            <img src="imagenes/imagen1.png" alt="Foto de perfil" id="profilePhoto">
+            <button class="change-photo-btn" id="changePhotoBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </button>
+              <!-- Input file oculto para cargar imagen -->
+              <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
+            </div>
+            <div class="profile-basic-info">
+              <h1 class="player-name" id="playerName">Juan Pérez</h1>
+              <div class="position-info">
+                <span class="primary-position" id="primaryPosition">Mediocampista Ofensivo</span>
+                <span class="secondary-position" id="secondaryPosition">Extremo Derecho</span>
+              </div>
+              <div class="basic-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Edad</span>
+                  <span class="stat-value" id="playerAge">22 años</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Pierna hábil</span>
+                  <span class="stat-value" id="dominantFoot">Derecha</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Altura</span>
+                  <span class="stat-value" id="playerHeight">1.75m</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Peso</span>
+                  <span class="stat-value" id="playerWeight">68kg</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="profile-details">
+            <div class="location-info">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span id="playerLocation">Buenos Aires, Argentina</span>
+            </div>
+            
+            <div class="level-info">
+              <span class="level-badge" id="competitiveLevel">Semi-profesional</span>
+              <span class="club-info" id="currentClub">River Plate - Reserva</span>
+            </div>
+            
+            <div class="player-description">
+              <p id="playerBio">Mediocampista creativo con gran visión de juego y capacidad para generar jugadas. Especializado en pases largos y remates de media distancia.</p>
+            </div>
+            
+            <div class="profile-actions">
+              <button class="btn btn-primary" id="editProfileInfoBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Editar información
+              </button>
+              
+              <div class="profile-completion">
+                <div class="completion-text">
+                  <span>Perfil completado</span>
+                  <span class="completion-percentage" id="completionPercentage">75%</span>
+                </div>
+                <div class="completion-bar">
+                  <div class="completion-fill" id="completionFill" style="width: 75%"></div>
+                </div>
+              </div>
+              
+              <!-- Indicador de estado de guardado -->
+              <div class="save-status" id="saveStatus">
+                <span class="save-indicator">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20 6L9 17l-5-5"></path>
+                  </svg>
+                  Cambios guardados
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grid de secciones adicionales -->
+      <div class="dashboard-grid">
+        
+        <!-- Configuración y Gestión de Datos -->
+        <section class="config-section">
+          <div class="section-card">
+            <div class="section-header">
+              <h3>⚙️ Configuración</h3>
+              <p>Gestiona tu perfil y datos</p>
+            </div>
+            <div class="config-content">
+              <div class="config-item">
+                <h4>Gestión de Datos</h4>
+                <p>Exporta o importa tu información de perfil</p>
+                <div class="config-actions">
+                  <button class="btn btn-secondary" onclick="exportPlayerData()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7,10 12,15 17,10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Exportar Perfil
+                  </button>
+                  <label for="import-file" class="btn btn-secondary" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17,8 12,3 7,8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Importar Perfil
+                  </label>
+                  <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importPlayerData(this.files[0])">
+                  <button class="btn btn-outline" onclick="restoreFromBackup()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                      <path d="M21 3v5h-5"></path>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                      <path d="M3 21v-5h5"></path>
+                    </svg>
+                    Restaurar Backup
+                  </button>
+                </div>
+              </div>
+              
+              <div class="config-item">
+                <h4>Eliminar Datos</h4>
+                <p>Elimina toda la información almacenada (no se puede deshacer)</p>
+                <button class="btn btn-danger" onclick="if(confirm('¿Estás seguro? Esta acción no se puede deshacer.')) clearAllStorageData()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="3,6 5,6 21,6"></polyline>
+                    <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                  </svg>
+                  Eliminar Todos los Datos
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- Mensajes y propuestas -->
+        <section class="messages-section">
+          <div class="section-card">
+            <div class="section-header">
+              <h3>💬 Mensajes y propuestas</h3>
+              <span class="message-count" id="messageCount">5 nuevos</span>
+            </div>
+            <div class="messages-list" id="messagesList">
+              <!-- Los mensajes se cargarán dinámicamente -->
+            </div>
+            <button class="btn btn-text" id="viewAllMessagesBtn">Ver todos los mensajes</button>
+          </div>
+        </section>
+
+        <!-- Scouts y clubes interesados -->
+        <section class="scouts-section">
+          <div class="section-card">
+            <div class="section-header">
+              <h3>🔍 Scouts interesados</h3>
+              <div class="stats-info">
+                <span class="views-count" id="profileViews">12 visualizaciones</span>
+              </div>
+            </div>
+            <div class="scouts-list" id="scoutsList">
+              <!-- Los scouts se cargarán dinámicamente -->
+            </div>
+            <button class="btn btn-text" id="viewAllScoutsBtn">Ver todos los scouts</button>
+          </div>
+        </section>
+
+        <!-- Reportes de Scouting -->
+        <section class="reports-section">
+          <div class="section-card">
+            <div class="section-header">
+              <h3>📋 Mis Reportes de Scouting</h3>
+              <div class="reports-stats">
+                <div class="stat-item">
+                  <span class="stat-value" id="totalReportsCount">0</span>
+                  <span class="stat-label">Total</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value" id="averageRating">-</span>
+                  <span class="stat-label">Rating Promedio</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value" id="lastReportDate">-</span>
+                  <span class="stat-label">Último Reporte</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="reports-container" id="reportsContainer">
+              <!-- Los reportes se cargarán dinámicamente -->
+            </div>
+
+            <div class="empty-reports-state" id="emptyReportsState" style="display: none;">
+              <div class="empty-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+              </div>
+              <h4>No tienes reportes aún</h4>
+              <p>Los scouts que te evalúen generarán reportes que aparecerán aquí. Mantén tu perfil actualizado para atraer más scouts.</p>
+            </div>
+
+            <div class="section-actions" id="reportsActions" style="display: none;">
+              <button class="btn btn-text" id="viewAllReportsBtn">Ver todos los reportes</button>
+              <button class="btn btn-secondary" id="refreshReportsBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                </svg>
+                Actualizar
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Sección de videos por facetas (Separada del perfil) -->
+  <section class="videos-section-separated" id="videos-section">
+    <div class="container">
+      <div class="videos-card">
+        <div class="videos-header">
+          <h2>🎥 Mostrá tu juego en todas las facetas</h2>
+          <p>Agregá tus videos según tu posición. Cuanto más completo tu perfil, más visibilidad tendrás ante los scouts.</p>
+          
+          <!-- Barra de progreso de videos -->
+          <div class="video-progress">
+            <div class="progress-info">
+              <span>Videos completados</span>
+              <span id="videoProgressText">2 de 9</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="videoProgressFill" style="width: 22%"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="video-facets" id="videoFacets">
+          <!-- Las facetas se cargarán dinámicamente según la posición -->
+        </div>
+        
+        <div class="video-actions">
+          <button class="btn btn-outline" id="addMoreVideosBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            Agregar más videos
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modales -->
+  
+  <!-- Modal de edición de perfil -->
+  <div id="editProfileModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Editar información del perfil</h3>
+        <button class="modal-close" id="closeEditModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editProfileForm">
+          <!-- Formulario de edición se cargará dinámicamente -->
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de agregar video -->
+  <div id="addVideoModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Agregar video</h3>
+        <button class="modal-close" id="closeVideoModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addVideoForm">
+          <div class="form-group">
+            <label for="videoCategory">Categoría del video</label>
+            <select id="videoCategory" name="videoCategory" required>
+              <!-- Opciones se cargarán según la posición -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="videoUrl">URL del video</label>
+            <input type="url" id="videoUrl" name="videoUrl" placeholder="https://youtube.com/watch?v=..." required>
+            <small>Acepta enlaces de YouTube, Vimeo, Google Drive, etc.</small>
+          </div>
+          <div class="form-group">
+            <label for="videoDescription">Descripción (opcional)</label>
+            <textarea id="videoDescription" name="videoDescription" placeholder="Describe brevemente este video..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" id="cancelVideoBtn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Agregar video</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="dashboard-footer">
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="#">Política de privacidad</a>
+        <a href="#">Términos y condiciones</a>
+        <a href="#">Contacto</a>
+      </div>
+      <div class="footer-logo">
+        <img src="imagenes/logo.png" alt="ScoutConnect">
+      </div>
+    </div>
+  </footer>
+
+              </svg>
+            </button>
+          </div>
+          <div class="conversations-list" id="conversationsList">
+            <!-- Las conversaciones se cargarán dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Área de chat -->
+        <div class="chat-area" id="chatArea">
+          <div class="chat-header" id="chatHeader">
+            <div class="chat-user-info">
+              <img src="imagenes/scout-avatar.png" alt="Avatar" class="chat-avatar" id="chatAvatar">
+              <div class="chat-user-details">
+                <h4 id="chatUserName">Selecciona una conversación</h4>
+                <span id="chatUserStatus">—</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="chat-messages" id="chatMessages">
+            <div class="no-chat-selected">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" opacity="0.3">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              <p>Selecciona una conversación para empezar a chatear</p>
+            </div>
+          </div>
+          
+          <div class="chat-input-area" id="chatInputArea" style="display: none;">
+            <div class="chat-input-container">
+              <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." />
+              <button class="send-btn" id="sendBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de previsualización de foto -->
+  <div class="modal" id="photoPreviewModal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>Cambiar foto de perfil</h3>
+        <button class="modal-close" id="closePhotoModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="photo-preview-container">
+          <img id="photoPreview" src="" alt="Vista previa" style="width: 100%; height: 300px; object-fit: cover; border-radius: 12px; margin-bottom: 16px;">
+          <div class="photo-info">
+            <p id="photoFileName" style="font-size: 14px; color: #666; margin-bottom: 8px;"></p>
+            <p id="photoFileSize" style="font-size: 12px; color: #999;"></p>
+          </div>
+        </div>
+        <div class="modal-actions" style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+          <button class="btn-secondary" id="cancelPhotoChange">Cancelar</button>
+          <button class="btn-primary" id="confirmPhotoChange">Confirmar cambio</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel del chat -->
+  <div id="chatOverlay" class="chat-overlay" aria-hidden="true">
+    <div class="chat-overlay__backdrop" data-chat-close></div>
+    <section class="chat-overlay__panel" role="dialog" aria-modal="true" aria-label="Mensajes">
+      <button type="button" class="chat-overlay__close" data-chat-close aria-label="Cerrar chat">&times;</button>
+      <div class="chat-overlay__loader" aria-hidden="true">
+        <div class="chat-overlay__spinner"></div>
+        <span>Cargando conversación...</span>
+      </div>
+      <div class="chat-overlay__body">
+        <div id="chat-root"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Scripts -->
+  <!-- Librería de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Configuración de Supabase -->
+  <script src="../src/JS/supabase-config.js"></script>
+  
+  <!-- Protección de ruta (Auth Guard) -->
+  <script src="../src/JS/auth-guard.js"></script>
+  
+  <!-- Script principal del dashboard -->
+  <script src="../src/JS/dashboard-futbolista.js"></script>
+  <script src="../src/JS/chat-integration.js"></script>
+</body>
+</html>
+

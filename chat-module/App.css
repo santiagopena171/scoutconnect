@@ -1,7 +1,8 @@
 .chat-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #f6f8fa;
+  overflow: hidden;
 }
 
 .chat-main {
@@ -9,6 +10,8 @@
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .chat-loading-state,

@@ -328,18 +328,36 @@ export default function App() {
       return;
     }
 
+    // Redirigir al dashboard según el rol del usuario
+    if (currentUserProfile) {
+      switch (currentUserProfile.role) {
+        case 'player':
+          window.location.href = '/public/dashboard-futbolista.html';
+          return;
+        case 'scout':
+          window.location.href = '/public/dashboard-scout.html';
+          return;
+        case 'admin':
+          window.location.href = '/index.html';
+          return;
+      }
+    }
+
+    // Fallback: si hay backUrl, usarlo
     if (backUrl) {
       window.location.href = backUrl;
       return;
     }
 
+    // Fallback: volver atrás en el historial
     if (window.history.length > 1) {
       window.history.back();
       return;
     }
 
-    window.location.href = 'index.html';
-  }, [backUrl, isMobile, selectedConversationId]);
+    // Fallback final: ir a index
+    window.location.href = '/index.html';
+  }, [backUrl, isMobile, selectedConversationId, currentUserProfile]);
 
   const handleSelectConversationRef = useRef(handleSelectConversation);
 
