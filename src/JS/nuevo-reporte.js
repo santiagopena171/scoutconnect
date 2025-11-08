@@ -742,6 +742,15 @@ class ReportGenerator {
         return false;
       }
       
+      // Registrar actividad: Reporte creado
+      if (window.logReportCreated) {
+        await window.logReportCreated(
+          report.playerName,
+          report.playerPosition,
+          reportData.overall_rating
+        );
+      }
+      
       
       return true;
       
