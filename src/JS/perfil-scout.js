@@ -861,6 +861,12 @@ class ScoutProfile {
       this.currentUser.avatar_url = avatarUrl;
       document.getElementById('avatarImage').src = avatarUrl;
       
+      // Actualizar avatar en el navbar
+      const navbarAvatar = document.getElementById('profileToggle');
+      if (navbarAvatar) {
+        navbarAvatar.src = avatarUrl;
+      }
+      
       // Limpiar
       this.avatarFile = null;
       
@@ -959,3 +965,525 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// ===== INICIALIZACIÓN DEL NAVBAR =====
+// Agregar estilos CSS para el navbar y dropdown
+const navbarStyles = document.createElement('style');
+navbarStyles.textContent = `
+  /* Dropdown de Notificaciones en Navbar */
+  .notifications-wrapper {
+    position: relative;
+  }
+
+  .notifications-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 380px;
+    max-height: 500px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .notifications-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .notifications-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 16px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    transform: rotate(45deg);
+    box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+  }
+
+  .dropdown-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .mark-all-read-small {
+    background: none;
+    border: none;
+    color: #667eea;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+
+  .mark-all-read-small:hover {
+    background: rgba(102, 126, 234, 0.1);
+  }
+
+  .notifications-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 380px;
+  }
+
+  .notifications-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .notifications-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .notifications-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+
+  .dropdown-notification-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .dropdown-notification-item:hover {
+    background: #f8f9fa;
+  }
+
+  .dropdown-notification-item:not(.read) {
+    background: #f0f4ff;
+  }
+
+  .dropdown-notification-item:not(.read):hover {
+    background: #e8f0fe;
+  }
+
+  .notif-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+
+  .notif-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notif-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 4px 0;
+    line-height: 1.4;
+  }
+
+  .notif-time {
+    font-size: 12px;
+    color: #999;
+  }
+
+  .notif-unread-dot {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background: #667eea;
+    border-radius: 50%;
+  }
+
+  .dropdown-loading, .dropdown-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+  }
+
+  .dropdown-loading i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .dropdown-empty i {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+    color: #ddd;
+  }
+
+  .dropdown-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+    text-align: center;
+  }
+
+  .view-all-link {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+
+  .view-all-link:hover {
+    color: #5568d3;
+  }
+
+  .profile-avatar-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #e0e0e0;
+    transition: border-color 0.2s;
+  }
+
+  .profile-avatar-icon:hover {
+    border-color: #667eea;
+  }
+
+  .messages-icon {
+    display: block;
+  }
+`;
+document.head.appendChild(navbarStyles);
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Inicializar notificaciones
+  if (window.Notifications) {
+    window.Notifications.init({
+      onNew: (notification) => {
+        console.log('Nueva notificación en perfil:', notification);
+      }
+    });
+    
+    // Cargar notificaciones en el dropdown
+    loadNotificationsDropdown();
+    updateNotificationBadge();
+  }
+  
+  // Dropdown de notificaciones
+  setupNotificationsDropdown();
+  
+  // Dropdown de perfil
+  setupProfileDropdown();
+  
+  // Botón de mensajes
+  setupMessagesButton();
+  
+  // Actualizar foto de perfil en navbar
+  updateNavbarProfilePhoto();
+  
+  // Actualizar badge de mensajes no leídos
+  updateUnreadMessagesBadge();
+});
+
+async function updateNavbarProfilePhoto() {
+  const profileToggle = document.getElementById('profileToggle');
+  if (!profileToggle || !supabase) return;
+  
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single();
+    
+    if (profile && profile.avatar_url) {
+      profileToggle.src = profile.avatar_url;
+    }
+  } catch (error) {
+    console.error('Error updating navbar profile photo:', error);
+  }
+}
+
+async function updateUnreadMessagesBadge() {
+  const messagesBadge = document.querySelector('#messagesBtn .notification-badge');
+  if (!messagesBadge || !supabase) return;
+  
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    // Obtener todas las conversaciones del usuario
+    const { data: participantData } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', user.id);
+    
+    if (!participantData || participantData.length === 0) {
+      messagesBadge.style.display = 'none';
+      return;
+    }
+    
+    const conversationIds = participantData.map(p => p.conversation_id);
+    
+    // Obtener mensajes no leídos
+    const { data: messages } = await supabase
+      .from('messages')
+      .select('id')
+      .in('conversation_id', conversationIds)
+      .neq('sender_id', user.id)
+      .is('deleted_at', null);
+    
+    if (!messages || messages.length === 0) {
+      messagesBadge.style.display = 'none';
+      return;
+    }
+    
+    const messageIds = messages.map(m => m.id);
+    
+    // Verificar cuáles han sido vistos
+    const { data: seenStatuses } = await supabase
+      .from('message_status')
+      .select('message_id')
+      .in('message_id', messageIds)
+      .eq('user_id', user.id)
+      .eq('status', 'seen');
+    
+    const seenIds = seenStatuses?.map(s => s.message_id) || [];
+    const unreadCount = messageIds.filter(id => !seenIds.includes(id)).length;
+    
+    if (unreadCount > 0) {
+      messagesBadge.textContent = unreadCount;
+      messagesBadge.style.display = 'flex';
+    } else {
+      messagesBadge.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error updating unread messages badge:', error);
+  }
+}
+
+
+function setupNotificationsDropdown() {
+  const notificationsBtn = document.getElementById('notificationsBtn');
+  const notificationsDropdown = document.getElementById('notificationsDropdown');
+  const markAllReadBtn = document.getElementById('markAllReadSmall');
+  
+  if (!notificationsBtn || !notificationsDropdown) return;
+  
+  notificationsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notificationsDropdown.classList.toggle('show');
+    
+    // Cerrar dropdown de perfil si está abierto
+    const profileMenu = document.getElementById('profileMenu');
+    if (profileMenu) profileMenu.classList.remove('show');
+    
+    // Recargar notificaciones al abrir
+    if (notificationsDropdown.classList.contains('show')) {
+      loadNotificationsDropdown();
+    }
+  });
+  
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await markAllNotificationsRead();
+    });
+  }
+  
+  // Cerrar al hacer clic fuera
+  document.addEventListener('click', () => {
+    notificationsDropdown.classList.remove('show');
+  });
+  
+  notificationsDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+async function loadNotificationsDropdown() {
+  const list = document.getElementById('notificationsDropdownList');
+  if (!list || !window.Notifications) return;
+  
+  try {
+    const notifications = await window.Notifications.fetchLatest(5);
+    
+    if (notifications.length === 0) {
+      list.innerHTML = '<div class="dropdown-empty"><p>No hay notificaciones</p></div>';
+      return;
+    }
+    
+    list.innerHTML = notifications.map(notif => createDropdownNotificationHTML(notif)).join('');
+    
+    // Agregar event listeners para marcar como leída
+    list.querySelectorAll('.dropdown-notification-item').forEach(item => {
+      item.addEventListener('click', async function() {
+        const notifId = this.dataset.id;
+        if (notifId && !this.classList.contains('read')) {
+          await window.Notifications.markAsRead(notifId);
+          this.classList.add('read');
+          updateNotificationBadge();
+        }
+        
+        // Navegar al link si existe
+        const link = this.dataset.link;
+        if (link) {
+          window.location.href = link;
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error loading notifications dropdown:', error);
+    list.innerHTML = '<div class="dropdown-empty"><p>Error al cargar</p></div>';
+  }
+}
+
+function createDropdownNotificationHTML(notification) {
+  const isRead = notification.read_at !== null;
+  const timeAgo = getTimeAgo(notification.created_at);
+  
+  const iconMap = {
+    'report': 'fa-file-alt',
+    'watchlist': 'fa-star',
+    'message': 'fa-envelope',
+    'system': 'fa-info-circle'
+  };
+  
+  const icon = iconMap[notification.type] || 'fa-bell';
+  
+  return `
+    <div class="dropdown-notification-item ${isRead ? 'read' : ''}" 
+         data-id="${notification.id}"
+         data-link="${notification.link || ''}">
+      <div class="notif-icon">
+        <i class="fas ${icon}"></i>
+      </div>
+      <div class="notif-content">
+        <div class="notif-title">${notification.title}</div>
+        <div class="notif-time">${timeAgo}</div>
+      </div>
+      ${!isRead ? '<div class="notif-unread-dot"></div>' : ''}
+    </div>
+  `;
+}
+
+async function updateNotificationBadge() {
+  const badge = document.getElementById('notificationBadge');
+  if (!badge || !window.Notifications) return;
+  
+  try {
+    const notifications = await window.Notifications.fetchLatest(50);
+    const unreadCount = notifications.filter(n => !n.read_at).length;
+    
+    badge.textContent = unreadCount;
+    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+  } catch (error) {
+    console.error('Error updating badge:', error);
+  }
+}
+
+async function markAllNotificationsRead() {
+  if (!window.Notifications) return;
+  
+  try {
+    const notifications = await window.Notifications.fetchLatest(50);
+    const unreadIds = notifications.filter(n => !n.read_at).map(n => n.id);
+    
+    for (const id of unreadIds) {
+      await window.Notifications.markAsRead(id);
+    }
+    
+    setTimeout(async () => {
+      await loadNotificationsDropdown();
+      await updateNotificationBadge();
+    }, 300);
+  } catch (error) {
+    console.error('Error marking all as read:', error);
+  }
+}
+
+function setupProfileDropdown() {
+  const profileToggle = document.getElementById('profileToggle');
+  const profileMenu = document.getElementById('profileMenu');
+  
+  if (!profileToggle || !profileMenu) return;
+  
+  profileToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    profileMenu.classList.toggle('show');
+    
+    // Cerrar dropdown de notificaciones si está abierto
+    const notificationsDropdown = document.getElementById('notificationsDropdown');
+    if (notificationsDropdown) notificationsDropdown.classList.remove('show');
+  });
+  
+  document.addEventListener('click', () => {
+    profileMenu.classList.remove('show');
+  });
+}
+
+function setupMessagesButton() {
+  const messagesBtn = document.getElementById('messagesBtn');
+  if (!messagesBtn) return;
+  
+  messagesBtn.addEventListener('click', () => {
+    window.location.href = 'chat.html';
+  });
+}
+
+function getTimeAgo(timestamp) {
+  const now = new Date();
+  const past = new Date(timestamp);
+  const diffMs = now - past;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Ahora';
+  if (diffMins < 60) return `Hace ${diffMins}m`;
+  if (diffHours < 24) return `Hace ${diffHours}h`;
+  if (diffDays < 7) return `Hace ${diffDays}d`;
+  return past.toLocaleDateString();
+}
+
+function logout() {
+  if (supabase) {
+    supabase.auth.signOut().then(() => {
+      window.location.href = 'login.html';
+    });
+  } else {
+    window.location.href = 'login.html';
+  }
+}

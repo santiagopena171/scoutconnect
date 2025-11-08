@@ -84,6 +84,22 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     return 'Última vez hace un momento';
   };
 
+  const handleAvatarClick = () => {
+    if (!participant) return;
+    
+    // Determinar el rol del participante (usar user_type como fallback)
+    const participantRole = String(participant.role || (participant as any).user_type || 'scout');
+    
+    // Determinar la ruta del perfil según el rol del usuario
+    const isPlayer = participantRole === 'player' || participantRole === 'jugador';
+    const profileRoute = isPlayer
+      ? `perfil-jugador.html?id=${participant.id}`
+      : `perfil-scout.html?id=${participant.id}`;
+    
+    // Redirigir a la carpeta public
+    window.location.href = `/public/${profileRoute}`;
+  };
+
   return (
     <div className={`chat-header ${participant ? '' : 'empty'}`}>
       {onBack && (
@@ -92,7 +108,12 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </button>
       )}
 
-      <div className="header-avatar">
+      <div 
+        className="header-avatar" 
+        onClick={handleAvatarClick}
+        style={{ cursor: participant ? 'pointer' : 'default' }}
+        title={participant ? `Ver perfil de ${participantName}` : ''}
+      >
         <div className="header-avatar-img" aria-hidden={!participant}>
           {participant?.avatar_url ? (
             <img src={participant.avatar_url} alt={participantName} />

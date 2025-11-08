@@ -23,17 +23,59 @@
         </div>
         
         <div class="navbar-actions">
-            <button class="action-btn" onclick="scoutProfile.goToDashboard()">
+            <button class="action-btn" onclick="window.location.href='dashboard-scout.html'" title="Volver al Dashboard">
                 <i class="fas fa-arrow-left"></i>
             </button>
-            <button class="action-btn" id="notificationsBtn">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </button>
-            <button class="action-btn" id="messagesBtn">
-                <i class="fas fa-envelope"></i>
+            <div class="notifications-wrapper">
+                <button class="action-btn" id="notificationsBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
+                
+                <!-- Dropdown de notificaciones -->
+                <div class="notifications-dropdown" id="notificationsDropdown">
+                    <div class="dropdown-header">
+                        <h4>Notificaciones</h4>
+                        <button class="mark-all-read-small" id="markAllReadSmall" title="Marcar todas como leídas">
+                            <i class="fas fa-check-double"></i>
+                        </button>
+                    </div>
+                    <div class="notifications-list" id="notificationsDropdownList">
+                        <!-- Las notificaciones se cargarán aquí dinámicamente -->
+                        <div class="dropdown-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando...</p>
+                        </div>
+                    </div>
+                    <div class="dropdown-footer">
+                        <a href="dashboard-scout.html#notifications" class="view-all-link">Ver todas las notificaciones</a>
+                    </div>
+                </div>
+            </div>
+            <button class="action-btn" id="messagesBtn" data-open-chat>
+                <svg class="messages-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
                 <span class="notification-badge">5</span>
             </button>
+            <div class="profile-dropdown">
+                <img src="imagenes/scout-avatar.png" alt="Scout" class="profile-avatar-icon" id="profileToggle">
+                <div class="dropdown-menu" id="profileMenu">
+                    <a href="perfil-scout.html" class="dropdown-item">
+                        <i class="fas fa-user"></i> Mi Perfil
+                    </a>
+                    <a href="perfil-scout.html#settings" class="dropdown-item">
+                        <i class="fas fa-cog"></i> Configuración
+                    </a>
+                    <a href="dashboard-scout.html#statistics" class="dropdown-item">
+                        <i class="fas fa-chart-bar"></i> Mis Estadísticas
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" onclick="logout(); return false;" class="dropdown-item logout">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -396,6 +438,9 @@
     
     <!-- Configuración de Supabase -->
     <script src="../src/JS/supabase-config.js"></script>
+    
+    <!-- Módulo de notificaciones -->
+    <script src="../src/JS/notifications.js"></script>
     
     <!-- Activity Logger -->
     <script src="../src/JS/activity-logger.js"></script>

@@ -23,10 +23,32 @@
     </div>
     
     <div class="navbar-actions">
-      <button class="action-btn" id="notificationsBtn">
-        <i class="fas fa-bell"></i>
-        <span class="notification-badge">3</span>
-      </button>
+      <div class="notifications-wrapper">
+        <button class="action-btn" id="notificationsBtn">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge" id="notificationBadge">0</span>
+        </button>
+        
+        <!-- Dropdown de notificaciones -->
+        <div class="notifications-dropdown" id="notificationsDropdown">
+          <div class="dropdown-header">
+            <h4>Notificaciones</h4>
+            <button class="mark-all-read-small" id="markAllReadSmall" title="Marcar todas como leídas">
+              <i class="fas fa-check-double"></i>
+            </button>
+          </div>
+          <div class="notifications-list" id="notificationsDropdownList">
+            <!-- Las notificaciones se cargarán aquí dinámicamente -->
+            <div class="dropdown-loading">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Cargando...</p>
+            </div>
+          </div>
+          <div class="dropdown-footer">
+            <a href="#notifications" class="view-all-link">Ver todas las notificaciones</a>
+          </div>
+        </div>
+      </div>
   <button class="action-btn" id="messagesBtn" data-open-chat>
         <!-- inline SVG chat icon (fallback, no external file needed) -->
         <svg class="messages-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -119,19 +141,6 @@
         <span class="nav-badge new">8</span>
       </a>
     </nav>
-
-    <div class="sidebar-footer">
-      <div class="scout-info">
-        <img src="imagenes/scout-avatar.png" alt="Scout" class="scout-avatar">
-        <div class="scout-details">
-          <h4>Carlos Mendoza</h4>
-          <p>Scout Senior - FC Barcelona</p>
-          <div class="scout-stats">
-            <span><i class="fas fa-eye"></i> 156 evaluaciones</span>
-          </div>
-        </div>
-      </div>
-    </div>
     </div>
   </aside>
 
@@ -1321,6 +1330,9 @@
   
   <!-- Configuración de Supabase -->
   <script src="../src/JS/supabase-config.js"></script>
+  
+  <!-- Módulo de notificaciones -->
+  <script src="../src/JS/notifications.js"></script>
   
   <!-- Protección de ruta (Auth Guard) -->
   <script src="../src/JS/auth-guard.js"></script>

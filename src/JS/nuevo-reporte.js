@@ -750,6 +750,25 @@ class ReportGenerator {
           reportData.overall_rating
         );
       }
+      // Crear notificación local para el scout (confirmación)
+      if (window.Notifications && user) {
+        try {
+          await window.Notifications.create({
+            userId: user.id,
+            type: 'report_created',
+            title: 'Reporte creado',
+            body: `Generaste un reporte para ${report.playerName}`,
+            link: `ver-reporte.html?id=${report.id}`,
+            metadata: {
+              playerId: report.playerId,
+              reportType: report.type,
+              overall: reportData.overall_rating
+            }
+          });
+        } catch (e) {
+          console.warn('No se pudo crear la notificación:', e);
+        }
+      }
       
       
       return true;

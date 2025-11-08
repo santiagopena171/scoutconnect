@@ -27,6 +27,7 @@ class ScoutDashboard {
     this.updateStats();
     this.initializeRealTimeUpdates();
     this.loadUserProfile();
+    this.initNotifications();
     
   }
 
@@ -1780,13 +1781,21 @@ Generado por ScoutConnect
     }
   }
 
-  markAllNotificationsRead() {
+  async markAllNotificationsRead() {
+    if (window.Notifications) {
+      await window.Notifications.markAsRead(); // Sin ID = marcar todas (debe ser async)
+    }
     
-    
-    const unreadItems = document.querySelectorAll('.notification-item.unread');
+    const unreadItems = document.querySelectorAll('.notification-item.unread, .dropdown-notification-item.unread');
     unreadItems.forEach(item => {
       item.classList.remove('unread');
     });
+    
+    // Esperar un momento y luego actualizar
+    setTimeout(() => {
+      this.updateNotificationBadge();
+      this.loadNotificationsDropdown();
+    }, 300);
     
     this.showSuccessMessage('Todas las notificaciones marcadas como leídas');
   }
@@ -2473,6 +2482,319 @@ Generado por ScoutConnect
     
     // Implementar renderizado de analytics
   }
+
+  async initNotifications() {
+    if (window.Notifications) {
+      try {
+        await window.Notifications.init({
+          onNew: (notification) => {
+            console.log('Nueva notificación recibida:', notification);
+            this.showNotificationToast(notification);
+            this.updateNotificationBadge();
+            this.loadNotificationsInUI();
+            this.loadNotificationsDropdown(); // Actualizar dropdown también
+          }
+        });
+        console.log('✅ Sistema de notificaciones inicializado');
+        this.loadNotificationsInUI();
+        this.updateNotificationBadge();
+        this.loadNotificationsDropdown();
+        this.setupNotificationsDropdown();
+      } catch (error) {
+        console.warn('⚠️ Error inicializando notificaciones:', error);
+      }
+    }
+  }
+
+  setupNotificationsDropdown() {
+    const notifBtn = document.getElementById('notificationsBtn');
+    const dropdown = document.getElementById('notificationsDropdown');
+    const markAllSmall = document.getElementById('markAllReadSmall');
+    
+    if (!notifBtn || !dropdown) return;
+    
+    // Toggle dropdown
+    notifBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('show');
+      
+      // Si se abre, recargar notificaciones
+      if (dropdown.classList.contains('show')) {
+        this.loadNotificationsDropdown();
+      }
+    });
+    
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target) && e.target !== notifBtn) {
+        dropdown.classList.remove('show');
+      }
+    });
+    
+    // Link "Ver todas" cierra el dropdown y navega
+    const viewAllLink = dropdown.querySelector('.view-all-link');
+    if (viewAllLink) {
+      viewAllLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        dropdown.classList.remove('show');
+        this.switchSection('notifications');
+      });
+    }
+    
+    // Marcar todas como leídas
+    if (markAllSmall) {
+      markAllSmall.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.markAllNotificationsRead();
+        this.loadNotificationsDropdown();
+      });
+    }
+  }
+
+  async loadNotificationsDropdown() {
+    if (!window.Notifications) return;
+    
+    const dropdownList = document.getElementById('notificationsDropdownList');
+    if (!dropdownList) return;
+    
+    // Mostrar loading
+    dropdownList.innerHTML = `
+      <div class="dropdown-loading">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+    `;
+    
+    const notifications = await window.Notifications.fetchLatest(5); // Solo las 5 más recientes
+    
+    if (notifications.length === 0) {
+      dropdownList.innerHTML = `
+        <div class="dropdown-empty">
+          <i class="fas fa-bell-slash"></i>
+          <p>No hay notificaciones</p>
+        </div>
+      `;
+      return;
+    }
+    
+    dropdownList.innerHTML = notifications.map(notif => this.createDropdownNotificationHTML(notif)).join('');
+    
+    // Agregar event listeners a cada notificación
+    dropdownList.querySelectorAll('.dropdown-notification-item').forEach(item => {
+      item.addEventListener('click', async () => {
+        const id = item.dataset.id;
+        const link = item.dataset.link;
+        
+        // Marcar como leída (esperar a que termine)
+        if (window.Notifications) {
+          await window.Notifications.markAsRead(id);
+        }
+        
+        // Actualizar UI inmediatamente
+        await this.updateNotificationBadge();
+        await this.loadNotificationsDropdown();
+        
+        // Cerrar dropdown
+        document.getElementById('notificationsDropdown').classList.remove('show');
+        
+        // Ir al link si existe
+        if (link) {
+          window.location.href = link;
+        }
+      });
+    });
+  }
+
+  createDropdownNotificationHTML(notification) {
+    const isUnread = !notification.read_at;
+    const iconClass = this.getNotificationIcon(notification.type);
+    const timeAgo = this.getTimeAgo(notification.created_at);
+    
+    return `
+      <div class="dropdown-notification-item ${isUnread ? 'unread' : ''}" 
+           data-id="${notification.id}" 
+           data-link="${notification.link || ''}">
+        <div class="dropdown-notif-icon ${notification.type}">
+          <i class="fas ${iconClass}"></i>
+        </div>
+        <div class="dropdown-notif-content">
+          <p class="dropdown-notif-title">${notification.title || 'Notificación'}</p>
+          <p class="dropdown-notif-body">${notification.body || ''}</p>
+          <span class="dropdown-notif-time">${timeAgo}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  showNotificationToast(notification) {
+    const toast = document.createElement('div');
+    toast.className = 'notification-toast';
+    toast.style.cssText = `
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 16px;
+      max-width: 350px;
+      z-index: 10000;
+      opacity: 0;
+      transform: translateX(400px);
+      transition: all 0.3s ease;
+      display: flex;
+      gap: 12px;
+    `;
+    
+    toast.innerHTML = `
+      <div style="color: var(--primary-color); font-size: 20px;">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div style="flex: 1;">
+        <strong style="display: block; margin-bottom: 4px;">${notification.title || 'Nueva notificación'}</strong>
+        <p style="margin: 0; color: #666; font-size: 14px;">${notification.body || ''}</p>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(400px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 5000);
+  }
+
+  async updateNotificationBadge() {
+    if (!window.Notifications) return;
+    
+    const notifications = await window.Notifications.fetchLatest();
+    const unreadCount = notifications.filter(n => !n.read_at).length;
+    
+    // Actualizar badge en el navbar (encima del icono de campana)
+    const navbarBadge = document.getElementById('notificationBadge');
+    if (navbarBadge) {
+      if (unreadCount > 0) {
+        navbarBadge.textContent = unreadCount;
+        navbarBadge.style.display = 'inline-block';
+      } else {
+        navbarBadge.style.display = 'none';
+      }
+    }
+    
+    // Actualizar otros badges si existen (en sidebar)
+    const badges = document.querySelectorAll('.nav-badge.urgent');
+    badges.forEach(badge => {
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    });
+  }
+
+  async loadNotificationsInUI() {
+    if (!window.Notifications) return;
+    
+    const notificationsContainer = document.querySelector('.notifications-container');
+    if (!notificationsContainer) return;
+    
+    const notifications = await window.Notifications.fetchLatest(20);
+    
+    if (notifications.length === 0) {
+      notificationsContainer.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 40px; color: #999;">
+          <i class="fas fa-bell-slash" style="font-size: 48px; margin-bottom: 16px;"></i>
+          <p>No tienes notificaciones</p>
+        </div>
+      `;
+      return;
+    }
+    
+    notificationsContainer.innerHTML = notifications.map(notif => this.createNotificationHTML(notif)).join('');
+    
+    // Configurar event listeners para marcar como leídas
+    document.querySelectorAll('.btn-mark-read').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        this.markNotificationAsRead(id);
+      });
+    });
+  }
+
+  createNotificationHTML(notification) {
+    const isUnread = !notification.read_at;
+    const iconClass = this.getNotificationIcon(notification.type);
+    const timeAgo = this.getTimeAgo(notification.created_at);
+    
+    return `
+      <div class="notification-item ${isUnread ? 'unread' : ''}" data-id="${notification.id}">
+        <div class="notification-icon ${notification.type}">
+          <i class="fas ${iconClass}"></i>
+        </div>
+        <div class="notification-content">
+          <h4>${notification.title || 'Notificación'}</h4>
+          <p>${notification.body || ''}</p>
+          <span class="notification-time">${timeAgo}</span>
+        </div>
+        <div class="notification-actions">
+          ${notification.link ? `
+            <button class="btn-icon" onclick="window.location.href='${notification.link}'" title="Ver">
+              <i class="fas fa-eye"></i>
+            </button>
+          ` : ''}
+          <button class="btn-icon btn-mark-read" data-id="${notification.id}" title="Marcar como leída">
+            <i class="fas fa-check"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  getNotificationIcon(type) {
+    const icons = {
+      'report_created': 'fa-file-alt',
+      'player_added': 'fa-user-plus',
+      'message': 'fa-envelope',
+      'team': 'fa-users',
+      'urgent': 'fa-exclamation-triangle',
+      'success': 'fa-check-circle',
+      'general': 'fa-bell'
+    };
+    return icons[type] || 'fa-bell';
+  }
+
+  getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `Hace ${diffMins} min`;
+    if (diffHours < 24) return `Hace ${diffHours}h`;
+    if (diffDays < 7) return `Hace ${diffDays}d`;
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  }
+
+  async markNotificationAsRead(id) {
+    if (!window.Notifications) return;
+    await window.Notifications.markAsRead(id);
+    
+    // Esperar un poco antes de actualizar la UI
+    setTimeout(() => {
+      this.loadNotificationsInUI();
+      this.updateNotificationBadge();
+      this.loadNotificationsDropdown();
+    }, 200);
+  }
 }
 
 // Estilos adicionales para modales y notificaciones
@@ -2574,6 +2896,217 @@ const additionalStyles = `
 
     .success-notification.show {
       transform: translateX(0);
+    }
+
+    /* Dropdown de Notificaciones en Navbar */
+    .notifications-wrapper {
+      position: relative;
+    }
+
+    .notifications-dropdown {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: 380px;
+      max-height: 500px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notifications-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .notifications-dropdown::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      right: 16px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      transform: rotate(45deg);
+      box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
+
+    .dropdown-header h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .mark-all-read-small {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .mark-all-read-small:hover {
+      background: rgba(74, 85, 162, 0.1);
+    }
+
+    .notifications-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 380px;
+    }
+
+    .notifications-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .notifications-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .notifications-list::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+
+    .dropdown-notification-item {
+      padding: 14px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .dropdown-notification-item:hover {
+      background: #f8f9fa;
+    }
+
+    .dropdown-notification-item.unread {
+      background: #f0f4ff;
+    }
+
+    .dropdown-notification-item.unread:hover {
+      background: #e8f0fe;
+    }
+
+    .dropdown-notif-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .dropdown-notif-icon.report_created {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .dropdown-notif-icon.player_added {
+      background: #e8f5e9;
+      color: #388e3c;
+    }
+
+    .dropdown-notif-icon.message {
+      background: #fff3e0;
+      color: #f57c00;
+    }
+
+    .dropdown-notif-icon.urgent {
+      background: #ffebee;
+      color: #d32f2f;
+    }
+
+    .dropdown-notif-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dropdown-notif-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 4px 0;
+      line-height: 1.4;
+    }
+
+    .dropdown-notif-body {
+      font-size: 13px;
+      color: #666;
+      margin: 0 0 4px 0;
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dropdown-notif-time {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .dropdown-loading, .dropdown-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+    }
+
+    .dropdown-loading i {
+      font-size: 24px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .dropdown-empty i {
+      font-size: 32px;
+      margin-bottom: 12px;
+      display: block;
+      color: #ddd;
+    }
+
+    .dropdown-footer {
+      padding: 12px 20px;
+      border-top: 1px solid #f0f0f0;
+      background: #fafafa;
+      text-align: center;
+    }
+
+    .view-all-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .view-all-link:hover {
+      color: var(--primary-dark);
     }
 
     .player-profile-grid {

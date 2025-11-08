@@ -1080,6 +1080,41 @@ class AdvancedSearch {
         );
       }
 
+      // Crear notificación
+      if (window.Notifications && this.currentUserId) {
+        console.log('🔔 Creando notificación para jugador añadido...');
+        const playerName = player.name || `${player.first_name || ''} ${player.last_name || ''}`.trim();
+        const playerPosition = player.primaryPosition || player.position || 'Sin posición';
+        
+        try {
+          const result = await window.Notifications.create({
+            userId: this.currentUserId,
+            type: 'player_added',
+            title: 'Jugador añadido a seguimiento',
+            body: `${playerName} - ${playerPosition}`,
+            link: `perfil-jugador.html?id=${playerId}`,
+            metadata: {
+              playerId: playerId,
+              playerName: playerName,
+              position: playerPosition
+            }
+          });
+          
+          if (result) {
+            console.log('✅ Notificación creada exitosamente:', result);
+          } else {
+            console.warn('⚠️ La notificación no se pudo crear');
+          }
+        } catch (error) {
+          console.error('❌ Error al crear notificación:', error);
+        }
+      } else {
+        console.warn('⚠️ No se puede crear notificación:', {
+          notifications: !!window.Notifications,
+          userId: this.currentUserId
+        });
+      }
+
       // Agregar a la lista local
       this.watchlist.push({
         ...player,

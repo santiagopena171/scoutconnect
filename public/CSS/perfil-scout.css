@@ -33,41 +33,45 @@ body {
    =============================================== */
 
 .top-navbar {
-    background: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 100;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    z-index: 1000;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-brand {
     display: flex;
     align-items: center;
     gap: 12px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary-color);
 }
 
 .logo {
+    width: 40px;
     height: 40px;
-}
-
-.brand-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-color);
+    border-radius: 8px;
 }
 
 .navbar-center {
     flex: 1;
-    max-width: 600px;
+    max-width: 500px;
     margin: 0 2rem;
 }
 
 .search-container {
     position: relative;
+    width: 100%;
 }
 
 .search-icon {
@@ -76,59 +80,146 @@ body {
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-secondary);
+    z-index: 1;
 }
 
 .global-search {
     width: 100%;
-    padding: 10px 16px 10px 40px;
-    border: 2px solid var(--border-color);
+    padding: 10px 12px 10px 40px;
+    border: 1px solid var(--border-color);
     border-radius: 24px;
-    font-size: 0.95rem;
-    transition: all 0.3s;
+    background: var(--light-gray);
+    font-size: 14px;
+    transition: all 0.2s;
 }
 
 .global-search:focus {
     outline: none;
     border-color: var(--primary-color);
+    background: white;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .navbar-actions {
     display: flex;
+    align-items: center;
     gap: 12px;
 }
 
 .action-btn {
     position: relative;
-    background: var(--light-gray);
+    width: 44px;
+    height: 44px;
     border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    background: transparent;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s;
-    color: var(--text-primary);
+    color: var(--text-secondary);
+    transition: all 0.2s;
 }
 
 .action-btn:hover {
-    background: var(--primary-color);
-    color: white;
-    transform: scale(1.05);
+    background: var(--light-gray);
+    color: var(--primary-color);
 }
 
 .notification-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
+    top: 8px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
     background: var(--danger-color);
     color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 10px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 2px solid white;
+}
+
+.profile-dropdown {
+    position: relative;
+}
+
+.profile-avatar-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.profile-avatar-icon:hover {
+    border-color: var(--primary-color);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    padding: 8px;
+    display: none;
+    z-index: 1001;
+}
+
+.dropdown-menu.show {
+    display: block;
+    animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background: var(--light-gray);
+    color: var(--text-primary);
+}
+
+.dropdown-item.logout {
+    color: var(--danger-color);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 8px 0;
+}
+
+.messages-icon {
+    display: block;
 }
 
 /* ===============================================
@@ -137,7 +228,7 @@ body {
 
 .profile-container {
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 64px auto 0; /* margin-top para el navbar fijo */
     padding: 2rem;
 }
 
