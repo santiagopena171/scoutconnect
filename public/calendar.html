@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Calendario - ScoutConnect</title>
+	
+	<!-- Supabase -->
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	
+	<!-- Stylesheets -->
+	<link rel="stylesheet" href="../CSS/styles.css">
+	<link rel="stylesheet" href="../CSS/dashboard.css">
+	<link rel="stylesheet" href="../CSS/calendar.css">
+</head>
+<body>
+	<div class="dashboard-layout">
+		<!-- Sidebar -->
+		<aside class="dashboard-sidebar">
+			<div class="sidebar-header">
+				<img src="../imagenes/logo.png" alt="ScoutConnect" class="sidebar-logo">
+			</div>
+			
+			<nav class="sidebar-nav">
+				<a href="dashboard-scout.html" class="sidebar-nav-item">
+					<span class="sidebar-nav-icon">📊</span>
+					<span class="sidebar-nav-text">Dashboard</span>
+				</a>
+				<a href="players.html" class="sidebar-nav-item">
+					<span class="sidebar-nav-icon">⚽</span>
+					<span class="sidebar-nav-text">Jugadores</span>
+				</a>
+				<a href="calendar.html" class="sidebar-nav-item active">
+					<span class="sidebar-nav-icon">📅</span>
+					<span class="sidebar-nav-text">Calendario</span>
+				</a>
+				<a href="reports.html" class="sidebar-nav-item">
+					<span class="sidebar-nav-icon">📝</span>
+					<span class="sidebar-nav-text">Informes</span>
+				</a>
+				<a href="../chat.html" class="sidebar-nav-item">
+					<span class="sidebar-nav-icon">💬</span>
+					<span class="sidebar-nav-text">Chat</span>
+				</a>
+			</nav>
+		</aside>
+
+		<!-- Main Content -->
+		<main class="dashboard-main">
+			<!-- Top Bar -->
+			<header class="dashboard-topbar">
+				<div class="topbar-left">
+					<h1>📅 Calendario</h1>
+				</div>
+				
+				<div class="topbar-right">
+					<!-- Search -->
+					<div class="calendar-search">
+						<input type="text" 
+						       id="cal-search" 
+						       placeholder="Buscar eventos..." 
+						       class="calendar-search-input">
+					</div>
+					
+					<!-- Timezone selector -->
+					<select id="cal-timezone" class="calendar-timezone-select">
+						<option value="America/Montevideo" selected>🇺🇾 Montevideo (GMT-3)</option>
+						<option value="America/Argentina/Buenos_Aires">🇦🇷 Buenos Aires (GMT-3)</option>
+						<option value="America/Sao_Paulo">🇧🇷 São Paulo (GMT-3)</option>
+						<option value="America/Santiago">🇨🇱 Santiago (GMT-3)</option>
+						<option value="Europe/Madrid">🇪🇸 Madrid (GMT+1)</option>
+						<option value="UTC">🌍 UTC</option>
+					</select>
+					
+					<!-- Notifications -->
+					<div class="notifications-dropdown">
+						<button class="notifications-button">
+							<span class="notifications-icon">🔔</span>
+							<span class="notifications-badge" id="notifications-count"></span>
+						</button>
+					</div>
+					
+					<!-- Profile -->
+					<div class="profile-dropdown">
+						<button class="profile-button">
+							<img src="" id="user-avatar" alt="Usuario" class="profile-avatar">
+							<span id="user-name">Usuario</span>
+						</button>
+					</div>
+				</div>
+			</header>
+
+			<!-- Calendar Container -->
+			<div class="calendar-wrapper">
+				<!-- Calendar Header -->
+				<div class="calendar-header">
+					<div class="calendar-header-left">
+						<button id="cal-back-to-month" class="calendar-nav-btn" title="Volver al mes" style="display: none; margin-right: 8px;">
+							← Mes
+						</button>
+						<button id="cal-prev" class="calendar-nav-btn" title="Anterior (←)">
+							‹
+						</button>
+						<button id="cal-today" class="calendar-today-btn" title="Hoy (T)">
+							Hoy
+						</button>
+						<button id="cal-next" class="calendar-nav-btn" title="Siguiente (→)">
+							›
+						</button>
+						<h2 id="cal-date-title" class="calendar-date-title">Enero 2024</h2>
+					</div>
+					
+					<div class="calendar-header-center">
+						<div class="calendar-view-switcher">
+							<button data-view="month" class="calendar-view-btn active" title="Mes (M)">Mes</button>
+							<button data-view="week" class="calendar-view-btn" title="Semana (W)">Semana</button>
+							<button data-view="workweek" class="calendar-view-btn">Laboral</button>
+							<button data-view="day" class="calendar-view-btn" title="Día (D)">Día</button>
+							<button data-view="agenda" class="calendar-view-btn" title="Agenda (A)">Agenda</button>
+							<button data-view="timeline" class="calendar-view-btn">Timeline</button>
+						</div>
+					</div>
+					
+					<div class="calendar-header-right">
+						<!-- Quick create button -->
+						<button id="cal-create-event" class="btn btn-primary" title="Nuevo evento (N)">
+							+ Crear evento
+						</button>
+						
+						<!-- Filter dropdown -->
+						<div class="calendar-filter-dropdown">
+							<button class="calendar-filter-btn">🔍 Filtros</button>
+							<div class="calendar-filter-menu">
+								<div class="filter-section">
+									<h4>Tipo de evento</h4>
+									<label>
+										<input type="checkbox" data-filter-type="match" checked>
+										<span style="color: #3B82F6">⚽</span> Partidos
+									</label>
+									<label>
+										<input type="checkbox" data-filter-type="tryout" checked>
+										<span style="color: #10B981">🎯</span> Pruebas
+									</label>
+									<label>
+										<input type="checkbox" data-filter-type="meeting" checked>
+										<span style="color: #8B5CF6">👥</span> Reuniones
+									</label>
+									<label>
+										<input type="checkbox" data-filter-type="travel" checked>
+										<span style="color: #F59E0B">✈️</span> Viajes
+									</label>
+									<label>
+										<input type="checkbox" data-filter-type="deadline" checked>
+										<span style="color: #EF4444">⏰</span> Deadlines
+									</label>
+									<label>
+										<input type="checkbox" data-filter-type="reminder" checked>
+										<span style="color: #6B7280">🔔</span> Recordatorios
+									</label>
+								</div>
+								
+								<div class="filter-section">
+									<h4>Estado</h4>
+									<label>
+										<input type="checkbox" data-filter-status="scheduled" checked>
+										Programados
+									</label>
+									<label>
+										<input type="checkbox" data-filter-status="done">
+										Completados
+									</label>
+									<label>
+										<input type="checkbox" data-filter-status="canceled">
+										Cancelados
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Calendar Body -->
+				<div id="calendar-container" class="calendar-container">
+					<!-- Rendered dynamically by calendar-manager.js -->
+					<div class="calendar-loading">
+						<div class="spinner"></div>
+						<p>Cargando calendario...</p>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+
+				<!-- Create/Edit Event Modal -->
+	<div id="event-modal" class="modal">
+		<div class="modal-content modal-large">
+			<div class="modal-header">
+				<h2 id="event-modal-title">Crear evento</h2>
+				<button class="modal-close" onclick="closeEventModal()">&times;</button>
+			</div>
+			
+			<form id="event-form" onsubmit="submitEventForm(event); return false;">
+				<div class="modal-body">
+					<!-- Event Type Selection -->
+					<div class="form-section">
+						<label class="form-label required">Tipo de evento</label>
+						<div class="event-type-selector">
+							<label class="event-type-option">
+								<input type="radio" name="event-type" value="match" required>
+								<span class="event-type-card" data-color="#3B82F6">
+									<span class="event-type-icon">⚽</span>
+									<span class="event-type-label">Partido</span>
+								</span>
+							</label>
+							<label class="event-type-option">
+								<input type="radio" name="event-type" value="tryout">
+								<span class="event-type-card" data-color="#10B981">
+									<span class="event-type-icon">🎯</span>
+									<span class="event-type-label">Prueba</span>
+								</span>
+							</label>
+							<label class="event-type-option">
+								<input type="radio" name="event-type" value="meeting">
+								<span class="event-type-card" data-color="#8B5CF6">
+									<span class="event-type-icon">👥</span>
+									<span class="event-type-label">Reunión</span>
+								</span>
+							</label>
+							<label class="event-type-option">
+								<input type="radio" name="event-type" value="travel">
+								<span class="event-type-card" data-color="#F59E0B">
+									<span class="event-type-icon">✈️</span>
+									<span class="event-type-label">Viaje</span>
+								</span>
+							</label>
+							<label class="event-type-option">
+								<input type="radio" name="event-type" value="deadline">
+								<span class="event-type-card" data-color="#EF4444">
+									<span class="event-type-icon">⏰</span>
+									<span class="event-type-label">Deadline</span>
+								</span>
+							</label>
+							<label class="event-type-option">
+								<input type="radio" name="event-type" value="reminder">
+								<span class="event-type-card" data-color="#6B7280">
+									<span class="event-type-icon">🔔</span>
+									<span class="event-type-label">Recordatorio</span>
+								</span>
+							</label>
+						</div>
+					</div>
+
+					<!-- Title -->
+					<div class="form-section">
+						<label for="event-title" class="form-label required">Título</label>
+						<input type="text" id="event-title" name="title" class="form-input" required 
+						       placeholder="Ej: Prueba con Matías Silva">
+					</div>
+
+					<!-- Date & Time -->
+					<div class="form-section">
+						<label class="form-label required">Fecha y hora</label>
+						
+						<div class="form-row">
+							<div class="form-group">
+								<label for="event-start-date" class="form-label-sm">Fecha inicio</label>
+								<input type="date" id="event-start-date" name="start-date" class="form-input" required>
+							</div>
+							<div class="form-group">
+								<label for="event-start-time" class="form-label-sm">Hora inicio</label>
+								<input type="time" id="event-start-time" name="start-time" class="form-input" required>
+							</div>
+						</div>
+						
+						<div class="form-row">
+							<div class="form-group">
+								<label for="event-end-date" class="form-label-sm">Fecha fin</label>
+								<input type="date" id="event-end-date" name="end-date" class="form-input" required>
+							</div>
+							<div class="form-group">
+								<label for="event-end-time" class="form-label-sm">Hora fin</label>
+								<input type="time" id="event-end-time" name="end-time" class="form-input" required>
+							</div>
+						</div>
+
+						<label class="form-checkbox">
+							<input type="checkbox" id="event-all-day" name="all_day">
+							<span>Todo el día</span>
+						</label>
+					</div>
+
+					<!-- Location -->
+					<div class="form-section">
+						<label for="event-location" class="form-label">Ubicación</label>
+						<input type="text" id="event-location" name="location" class="form-input" 
+						       placeholder="Ej: Estadio Centenario, Montevideo">
+					</div>
+
+					<!-- Description -->
+					<div class="form-section">
+						<label for="event-description" class="form-label">Descripción</label>
+						<textarea id="event-description" name="description" class="form-textarea" rows="3"
+						          placeholder="Detalles del evento..."></textarea>
+					</div>
+
+					<!-- Type-specific fields (will be shown dynamically) -->
+					<div id="event-type-fields" class="form-section" style="display: none;">
+						<!-- Rendered dynamically based on event type -->
+					</div>
+
+					<!-- Visibility -->
+					<div class="form-section">
+						<label for="event-visibility" class="form-label">Visibilidad</label>
+						<select id="event-visibility" name="visibility" class="form-select">
+							<option value="private">🔒 Privado (solo yo)</option>
+							<option value="team" selected>👥 Equipo</option>
+							<option value="org">🏢 Organización</option>
+						</select>
+					</div>
+
+					<!-- Reminders -->
+					<div class="form-section">
+						<label class="form-label">Recordatorios</label>
+						<div id="event-reminders" class="reminders-container">
+							<button type="button" class="btn btn-outline btn-sm" onclick="addReminder()">
+								+ Agregar recordatorio
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" onclick="closeEventModal()">
+						Cancelar
+					</button>
+					<button type="submit" class="btn btn-primary">
+						Guardar evento
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>	<!-- Event Details Modal -->
+	<div id="event-details-modal" class="modal">
+		<!-- Populated dynamically by calendar-interactions.js -->
+	</div>
+
+	<!-- Scripts -->
+	<script src="../src/JS/supabase-config.js"></script>
+	<script src="../src/JS/auth-guard.js"></script>
+	<script src="../src/JS/calendar-manager.js"></script>
+	<script src="../src/JS/calendar-views.js"></script>
+	<script src="../src/JS/calendar-interactions.js"></script>
+	<script src="../src/JS/calendar-form.js"></script>
+	
+	<script>
+		// Global calendar manager instance
+		let calendarManager = null;
+		
+		// Initialize calendar when DOM is ready
+		document.addEventListener('DOMContentLoaded', async function() {
+			try {
+				// Initialize calendar manager
+				calendarManager = new CalendarManager();
+				await calendarManager.init();
+				
+				// Setup create event button with default values
+				const modal = document.getElementById('event-modal');
+				const createBtn = document.getElementById('cal-create-event');
+				
+				if (createBtn) {
+					createBtn.addEventListener('click', function() {
+						// Set default date/time to now
+						const now = new Date();
+						const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+						
+						// Format for date input (YYYY-MM-DD)
+						const dateStr = now.toISOString().split('T')[0];
+						const endDateStr = oneHourLater.toISOString().split('T')[0];
+						
+						// Format for time input (HH:MM)
+						const timeStr = now.toTimeString().slice(0, 5);
+						const endTimeStr = oneHourLater.toTimeString().slice(0, 5);
+						
+						// Set values
+						document.getElementById('event-start-date').value = dateStr;
+						document.getElementById('event-start-time').value = timeStr;
+						document.getElementById('event-end-date').value = endDateStr;
+						document.getElementById('event-end-time').value = endTimeStr;
+						
+						// Show modal
+						modal.classList.add('active');
+						modal.style.display = 'flex';
+					});
+				}
+			} catch (error) {
+				console.error('Error initializing calendar:', error);
+				alert('Error al cargar el calendario. Por favor recarga la página.');
+			}
+		});
+	</script>
+</body>
+</html>
