@@ -1,70 +1,78 @@
 // Renderiza dinámicamente el navbar y el footer en los placeholders
-document.addEventListener('DOMContentLoaded', () => {
-	// Verificar sesión activa y mostrar enlace apropiado
-	checkSessionForNavbar();
+document.addEventListener('DOMContentLoaded', async () => {
+	// Verificar sesión de Supabase y mostrar enlace apropiado
+	await renderNavbarWithSession();
 
-	// Navbar
-	const navbar = document.getElementById('main-navbar-placeholder');
-	if (navbar) {
-		const loginLink = getSessionBasedLoginLink();
-		navbar.outerHTML = `
-		<nav class="main-navbar">
-			<div class="navbar-container">
-				<ul class="navbar-menu">
-					<li><a href="index.html">Inicio</a></li>
-					<li><a href="como-funciona.html">Cómo funciona</a></li>
-					<li><a href="#seguridad">Seguridad</a></li>
-					<li><a href="#requisitos">Requisitos</a></li>
-					<li><a href="#faq">Preguntas frecuentes</a></li>
-					${loginLink}
-				</ul>
-			</div>
-		</nav>
-		`;
-	}
-
-	// Función para verificar sesión y determinar enlace de login/dashboard
-	function checkSessionForNavbar() {
-		const sessionToken = localStorage.getItem('scoutConnectToken');
-		const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
+	// Función para renderizar navbar con estado de sesión de Supabase
+	async function renderNavbarWithSession() {
+		const loginLink = await getSessionBasedLoginLink();
 		
-		if (sessionToken && sessionExpiry) {
-			const now = new Date().getTime();
-			const expiryTime = parseInt(sessionExpiry);
-			
-			if (now >= expiryTime) {
-				// Sesión expirada - limpiar
-				localStorage.removeItem('scoutConnectToken');
-				localStorage.removeItem('scoutConnectUser');
-				localStorage.removeItem('scoutConnectExpiry');
-			}
+		const navbar = document.getElementById('main-navbar-placeholder');
+		if (navbar) {
+			navbar.outerHTML = `
+			<nav class="main-navbar">
+				<div class="navbar-container">
+					<ul class="navbar-menu">
+						<li><a href="index.html">Inicio</a></li>
+						<li><a href="como-funciona.html">Cómo funciona</a></li>
+						<li><a href="#seguridad">Seguridad</a></li>
+						<li><a href="#requisitos">Requisitos</a></li>
+						<li><a href="#faq">Preguntas frecuentes</a></li>
+						${loginLink}
+					</ul>
+				</div>
+			</nav>
+			`;
 		}
 	}
 
-	// Función para obtener el enlace apropiado según el estado de sesión
-	function getSessionBasedLoginLink() {
-		const sessionToken = localStorage.getItem('scoutConnectToken');
-		const sessionUser = localStorage.getItem('scoutConnectUser');
-		const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
-		
-		if (sessionToken && sessionUser && sessionExpiry) {
-			const now = new Date().getTime();
-			const expiryTime = parseInt(sessionExpiry);
+	// Función para obtener el enlace apropiado según el estado de sesión de Supabase
+	async function getSessionBasedLoginLink() {
+		try {
+			// Intentar obtener cliente de Supabase
+			let supabaseClient = null;
 			
-			if (now < expiryTime) {
-				// Sesión válida - mostrar enlace al dashboard
-				try {
-					const userData = JSON.parse(sessionUser);
-					const dashboardUrl = getDashboardUrl(userData.userType || 'jugador');
-					return `<li><a href="${dashboardUrl}">Mi Dashboard</a></li>`;
-				} catch (error) {
-					return '<li><a href="login.html">Iniciar sesión</a></li>';
-				}
+			if (typeof getSupabaseClient === 'function') {
+				supabaseClient = await getSupabaseClient();
+			} else if (typeof initSupabase === 'function') {
+				supabaseClient = await initSupabase();
+			} else if (window.supabase) {
+				supabaseClient = window.supabase;
 			}
+
+			if (!supabaseClient) {
+				console.warn('Supabase client not available in index.js');
+				return '<li><a href="login.html">Iniciar sesión</a></li>';
+			}
+
+			// Obtener sesión actual de Supabase
+			const { data: { session }, error } = await supabaseClient.auth.getSession();
+			
+			if (error) {
+				console.error('Error getting session:', error);
+				return '<li><a href="login.html">Iniciar sesión</a></li>';
+			}
+
+			if (session && session.user) {
+				// Sesión válida - obtener datos del perfil para determinar dashboard
+				const { data: profile } = await supabaseClient
+					.from('profiles')
+					.select('user_type')
+					.eq('id', session.user.id)
+					.single();
+
+				const userType = profile?.user_type || 'jugador';
+				const dashboardUrl = getDashboardUrl(userType);
+				return `<li><a href="${dashboardUrl}">Mi Dashboard</a></li>`;
+			}
+			
+			// No hay sesión válida
+			return '<li><a href="login.html">Iniciar sesión</a></li>';
+			
+		} catch (error) {
+			console.error('Error checking session:', error);
+			return '<li><a href="login.html">Iniciar sesión</a></li>';
 		}
-		
-		// No hay sesión válida - mostrar enlace de login
-		return '<li><a href="login.html">Iniciar sesión</a></li>';
 	}
 
 	// Función para obtener URL del dashboard según tipo de usuario
@@ -72,15 +80,15 @@ document.addEventListener('DOMContentLoaded', () => {
 		switch(userType) {
 			case 'jugador':
 			case 'futbolista':
-				return 'dashboard-futbolista.html';
+				return 'public/dashboard-futbolista.html';
 			case 'scout':
 			case 'ojeador':
-				return 'dashboard-futbolista.html'; // Temporal
+				return 'public/dashboard-scout.html';
 			case 'club':
 			case 'academia':
-				return 'dashboard-futbolista.html'; // Temporal
+				return 'public/dashboard-futbolista.html'; // Temporal
 			default:
-				return 'dashboard-futbolista.html';
+				return 'public/dashboard-futbolista.html';
 		}
 	}
 
