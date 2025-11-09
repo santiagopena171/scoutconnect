@@ -5,6 +5,7 @@
 class DashboardScout {
   constructor() {
     this.currentUser = null;
+    this.supabase = null;
     this.stats = {
       totalPlayers: 0,
       completedReports: 0,
@@ -18,8 +19,25 @@ class DashboardScout {
   }
 
   async init() {
+    // Asegurar que Supabase esté inicializado
+    try {
+      if (typeof getSupabaseClient === 'function') {
+        this.supabase = await getSupabaseClient();
+      } else if (typeof initSupabase === 'function') {
+        this.supabase = await initSupabase();
+      } else if (typeof window.supabase !== 'undefined') {
+        this.supabase = window.supabase;
+      } else {
+        throw new Error('Supabase no disponible');
+      }
+    } catch (error) {
+      console.error('❌ Error inicializando Supabase:', error);
+      window.location.href = 'login.html';
+      return;
+    }
+
     // Verificar autenticación
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await this.supabase.auth.getSession();
     if (!session) {
       window.location.href = 'login.html';
       return;

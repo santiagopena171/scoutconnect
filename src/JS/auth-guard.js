@@ -5,15 +5,26 @@
 
 (async function() {
   try {
-    // Verificar que Supabase esté disponible
-    if (typeof supabase === 'undefined' || !supabase) {
-      console.error('❌ Supabase no está inicializado');
+    // Asegurar que Supabase esté inicializado
+    let supabaseClient;
+    
+    if (typeof getSupabaseClient === 'function') {
+      // Usar la función helper si está disponible
+      supabaseClient = await getSupabaseClient();
+    } else if (typeof initSupabase === 'function') {
+      // Llamar a initSupabase si está disponible
+      supabaseClient = await initSupabase();
+    } else if (typeof window.supabase !== 'undefined' && window.supabase) {
+      // Fallback al objeto global si ya existe
+      supabaseClient = window.supabase;
+    } else {
+      console.error('❌ No se puede inicializar Supabase');
       redirectToLogin();
       return;
     }
 
     // Obtener sesión actual de Supabase (única fuente de verdad)
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
     if (sessionError) {
       console.error('❌ Error al obtener sesión:', sessionError);
@@ -28,7 +39,7 @@
     }
 
     // Obtener perfil del usuario
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
@@ -37,7 +48,7 @@
     // Si el perfil no existe, hay un problema - redirigir a login
     if (profileError || !profile) {
       console.error('❌ Perfil no encontrado. El usuario debe completar el registro.');
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
       redirectToLogin();
       return;
     }

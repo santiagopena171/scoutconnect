@@ -8,23 +8,38 @@
     let channel = null;
     let cache = [];
     let onNewCallback = null;
+    let supabaseClient = null;
 
-    function ensureSupabase() {
-      if (typeof window.supabase === 'undefined' || window.supabase === null) {
-        if (typeof window.initSupabase === 'function') {
-          window.initSupabase();
-        }
+    async function ensureSupabase() {
+      if (supabaseClient !== null) {
+        return supabaseClient;
       }
-      return typeof window.supabase !== 'undefined' && window.supabase !== null;
+
+      try {
+        if (typeof getSupabaseClient === 'function') {
+          supabaseClient = await getSupabaseClient();
+        } else if (typeof initSupabase === 'function') {
+          supabaseClient = await initSupabase();
+        } else if (typeof window.supabase !== 'undefined' && window.supabase !== null) {
+          supabaseClient = window.supabase;
+        } else {
+          throw new Error('Supabase no disponible');
+        }
+        return supabaseClient;
+      } catch (error) {
+        console.warn('Notifications: Error inicializando Supabase:', error);
+        return null;
+      }
     }
 
     async function init({ onNew } = {}) {
-      if (!ensureSupabase()) {
+      const client = await ensureSupabase();
+      if (!client) {
         console.warn('Notifications: Supabase no disponible');
         return;
       }
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const { data: { user }, error } = await client.auth.getUser();
         if (error || !user) {
           console.warn('Notifications: no hay usuario autenticado');
           return;
@@ -39,8 +54,8 @@
     }
 
     async function fetchLatest(limit = 20) {
-      if (!currentUser) return [];
-      const { data, error } = await supabase
+      if (!currentUser || !supabaseClient) return [];
+      const { data, error } = await supabaseClient
         .from('notifications')
         .select('*')
         .eq('user_id', currentUser.id)
@@ -55,8 +70,8 @@
     }
 
     async function markAsRead(id = null) {
-      if (!currentUser) return;
-      let query = supabase
+      if (!currentUser || !supabaseClient) return;
+      let query = supabaseClient
         .from('notifications')
         .update({ read_at: new Date().toISOString() })
         .eq('user_id', currentUser.id);
@@ -67,7 +82,8 @@
     }
 
     async function create({ userId, type, title, body, link = null, metadata = {} }) {
-      if (!ensureSupabase()) {
+      const client = await ensureSupabase();
+      if (!client) {
         console.warn('❌ Supabase no disponible para crear notificación');
         return null;
       }
@@ -85,7 +101,7 @@
       
       console.log('📦 Payload a insertar:', payload);
       
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('notifications')
         .insert([payload])
         .select()
@@ -107,10 +123,10 @@
     }
 
     function subscribe() {
-      if (!currentUser) return;
+      if (!currentUser || !supabaseClient) return;
       try {
-        if (channel) supabase.removeChannel(channel);
-        channel = supabase
+        if (channel) supabaseClient.removeChannel(channel);
+        channel = supabaseClient
           .channel('notifications_realtime')
           .on('postgres_changes', {
             event: 'INSERT',
