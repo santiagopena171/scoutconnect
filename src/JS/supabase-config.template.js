@@ -1,18 +1,13 @@
-// ⚠️ ARCHIVO GENERADO AUTOMÁTICAMENTE - NO EDITAR
-// Este archivo fue generado desde supabase-config.template.js
-// Generado el: 2025-11-09T00:08:40.219Z
-// Para regenerar: npm run build
-
 // =============================================
 // CONFIGURACIÓN DE SUPABASE - ScoutConnect
 // =============================================
 
 const SUPABASE_CONFIG = {
   // 📍 URL del proyecto - Se inyecta desde SUPABASE_URL en .env
-  url: 'https://lcujogyjgncfsxeptrlz.supabase.co',
+  url: '{{SUPABASE_URL}}',
   
   // 🔑 API Key pública/anon - Se inyecta desde SUPABASE_ANON_KEY en .env
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdWpvZ3lqZ25jZnN4ZXB0cmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4ODUwNTcsImV4cCI6MjA3NjQ2MTA1N30.9V_LbNKuIoHt1p1-jSnXM1U33bG6qMN4R4JTbxhRbbM'
+  anonKey: '{{SUPABASE_ANON_KEY}}'
 };
 
 // =============================================

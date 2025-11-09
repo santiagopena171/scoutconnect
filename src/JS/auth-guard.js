@@ -1,110 +1,78 @@
 // =============================================
-// PROTECCIÓN DE RUTAS - Auth Guard
+// PROTECCIÓN DE RUTAS - Auth Guard (Simplificado)
 // Incluir este script en TODAS las páginas protegidas
 // =============================================
 
 (async function() {
-  
-
-  // Verificar si acabamos de iniciar sesión
-  const justLoggedIn = localStorage.getItem('justLoggedIn');
-  if (justLoggedIn === 'true') {
-    
-    localStorage.removeItem('justLoggedIn'); // Limpiar la marca
-    
-    // Esperar más tiempo para que todo se establezca
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-
   try {
-    // Verificar si Supabase está inicializado
-    if (typeof supabase === 'undefined') {
+    // Verificar que Supabase esté disponible
+    if (typeof supabase === 'undefined' || !supabase) {
       console.error('❌ Supabase no está inicializado');
-      // Esperar un poco por si aún se está cargando
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (typeof supabase === 'undefined') {
-        console.error('❌ Supabase definitivamente no está disponible');
-        redirectToLogin();
-        return;
-      }
+      redirectToLogin();
+      return;
     }
 
-    // Esperar un poco para que la sesión se establezca completamente
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Obtener sesión actual de Supabase (única fuente de verdad)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    // Obtener sesión actual
-    const { data: { session }, error } = await supabase.auth.getSession();
-
-    if (error) {
-      console.error('❌ Error al obtener sesión:', error);
+    if (sessionError) {
+      console.error('❌ Error al obtener sesión:', sessionError);
       redirectToLogin();
       return;
     }
 
     if (!session) {
-      
+      console.log('ℹ️ No hay sesión activa');
       redirectToLogin();
       return;
     }
 
-    
-
     // Obtener perfil del usuario
-    let { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single();
 
-    // Si el perfil no existe, crear uno básico
+    // Si el perfil no existe, hay un problema - redirigir a login
     if (profileError || !profile) {
-      console.warn('⚠️ Perfil no encontrado en auth-guard, creando uno básico...');
-      
-      const userMetadata = session.user.user_metadata || {};
-      const newProfile = {
-        id: session.user.id,
-        email: session.user.email,
-        user_type: userMetadata.user_type || 'jugador',
-        full_name: userMetadata.full_name || 'Usuario',
-        phone: userMetadata.phone || null
-      };
-
-      const { data: createdProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert([newProfile])
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('❌ No se pudo crear perfil en auth-guard:', createError);
-        redirectToLogin();
-        return;
-      }
-
-      profile = createdProfile;
-      
+      console.error('❌ Perfil no encontrado. El usuario debe completar el registro.');
+      await supabase.auth.signOut();
+      redirectToLogin();
+      return;
     }
 
-    
-
-    // Verificar que el usuario esté en la página correcta
+    // Verificar que el usuario esté en la página correcta según su tipo
     const currentPage = window.location.pathname.split('/').pop();
     const userType = profile.user_type;
 
+    // Validar que el tipo de usuario corresponde con la página
     if (currentPage === 'dashboard-scout.html' && userType !== 'scout') {
-      
+      console.warn('⚠️ Usuario no es scout, redirigiendo...');
       window.location.href = getDashboardForUserType(userType);
       return;
     }
 
     if (currentPage === 'dashboard-futbolista.html' && userType !== 'jugador') {
-      
+      console.warn('⚠️ Usuario no es jugador, redirigiendo...');
       window.location.href = getDashboardForUserType(userType);
       return;
     }
 
-    // Guardar datos del usuario en variable global
+    // Validar perfiles específicos de scout/jugador
+    if (currentPage === 'perfil-scout.html' && userType !== 'scout') {
+      console.warn('⚠️ Usuario no es scout, redirigiendo...');
+      window.location.href = getDashboardForUserType(userType);
+      return;
+    }
+
+    if (currentPage === 'perfil-jugador.html' && userType !== 'jugador') {
+      console.warn('⚠️ Usuario no es jugador, redirigiendo...');
+      window.location.href = getDashboardForUserType(userType);
+      return;
+    }
+
+    // Guardar datos del usuario en variable global (solo lectura)
     window.currentUser = {
       id: session.user.id,
       email: profile.email,
@@ -113,7 +81,7 @@
       profile: profile
     };
 
-    
+    console.log('✅ Sesión validada correctamente');
 
   } catch (error) {
     console.error('❌ Error en protección de ruta:', error);
@@ -122,64 +90,50 @@
 })();
 
 function redirectToLogin() {
+  console.log('🔄 Redirigiendo a login...');
   
-  
-  // Limpiar sesiones antiguas
-  localStorage.removeItem('scoutConnectToken');
-  localStorage.removeItem('scoutConnectUser');
-  localStorage.removeItem('scoutConnectExpiry');
-  
-  // Redirigir a login
-  if (!window.location.href.includes('login.html')) {
-    window.location.href = 'login.html';
+  // NO redirigir si ya estamos en login
+  if (window.location.href.includes('login.html')) {
+    return;
   }
+  
+  window.location.href = 'login.html';
 }
 
 function getDashboardForUserType(userType) {
   switch(userType) {
     case 'scout':
+    case 'ojeador':
       return 'dashboard-scout.html';
     case 'jugador':
+    case 'futbolista':
       return 'dashboard-futbolista.html';
     default:
       return 'dashboard-futbolista.html';
   }
 }
 
-// Función global para cerrar sesión
+// Función global para cerrar sesión (simplificada)
 window.logout = async function() {
   try {
+    console.log('🚪 Cerrando sesión...');
     
-    
-    // Marcar que estamos haciendo logout (ANTES de limpiar)
-    localStorage.setItem('justLoggedOut', 'true');
-    
-    // Cerrar sesión en Supabase
+    // Cerrar sesión en Supabase (única fuente de verdad)
     const { error } = await supabase.auth.signOut();
     
     if (error) {
-      console.error('Error al cerrar sesión en Supabase:', error);
+      console.error('❌ Error al cerrar sesión:', error);
     }
     
-    // Limpiar todo el localStorage EXCEPTO justLoggedOut
-    const justLoggedOut = localStorage.getItem('justLoggedOut');
-    localStorage.clear();
-    localStorage.setItem('justLoggedOut', justLoggedOut);
-    
-    
-    
-    // Esperar un momento para asegurar que Supabase procese el signOut
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Limpiar variable global
+    window.currentUser = null;
     
     // Redirigir a login
     window.location.href = 'login.html';
+    
   } catch (error) {
     console.error('❌ Error al cerrar sesión:', error);
-    // Forzar limpieza y redirección
-    localStorage.setItem('justLoggedOut', 'true');
-    const justLoggedOut = localStorage.getItem('justLoggedOut');
-    localStorage.clear();
-    localStorage.setItem('justLoggedOut', justLoggedOut);
+    // Forzar redirección a login de todos modos
     window.location.href = 'login.html';
   }
 };

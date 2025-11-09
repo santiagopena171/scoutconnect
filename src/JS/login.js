@@ -1,4 +1,6 @@
-// ===== JAVASCRIPT PARA LA PÁGINA DE LOGIN =====
+// =============================================
+// LOGIN - Simplificado (Solo Supabase)
+// =============================================
 
 document.addEventListener('DOMContentLoaded', function() {
   // Verificar sesión activa al cargar la página
@@ -17,25 +19,24 @@ document.addEventListener('DOMContentLoaded', function() {
   const messageText = document.getElementById('messageText');
   const messageClose = document.getElementById('messageClose');
 
+  // Cargar email guardado si existe
+  const savedEmail = localStorage.getItem('userEmail');
+  const rememberedUser = localStorage.getItem('rememberMe');
+  if (savedEmail && rememberedUser === 'true') {
+    emailInput.value = savedEmail;
+    rememberMe.checked = true;
+  }
+
   // Función para verificar sesión activa
   async function checkActiveSession() {
     try {
-      // Si acabamos de hacer logout, NO verificar sesión
-      const justLoggedOut = localStorage.getItem('justLoggedOut');
-      if (justLoggedOut === 'true') {
-        
-        localStorage.removeItem('justLoggedOut');
-        clearSession();
-        return false;
-      }
-
-      // Verificar sesión en Supabase
+      // Verificar sesión en Supabase (única fuente de verdad)
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
+        console.log('✅ Sesión activa detectada');
         
-        
-        // Obtener datos del perfil
+        // Obtener perfil del usuario
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -43,27 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
           .single();
         
         if (profile && !error) {
-          
+          console.log('✅ Perfil encontrado, redirigiendo...');
           redirectToDashboard(profile.user_type);
           return true;
-        }
-      }
-
-      // Fallback: verificar localStorage (sesiones antiguas)
-      const sessionToken = localStorage.getItem('scoutConnectToken');
-      const sessionUser = localStorage.getItem('scoutConnectUser');
-      const sessionExpiry = localStorage.getItem('scoutConnectExpiry');
-
-      if (sessionToken && sessionUser && sessionExpiry) {
-        const now = new Date().getTime();
-        const expiryTime = parseInt(sessionExpiry);
-
-        if (now < expiryTime) {
-          const userData = JSON.parse(sessionUser);
-          redirectToDashboard(userData.userType || 'jugador');
-          return true;
-        } else {
-          clearSession();
         }
       }
     } catch (error) {
@@ -73,19 +56,9 @@ document.addEventListener('DOMContentLoaded', function() {
     return false;
   }
 
-  // Función para limpiar sesión
-  function clearSession() {
-    localStorage.removeItem('scoutConnectToken');
-    localStorage.removeItem('scoutConnectUser');
-    localStorage.removeItem('scoutConnectExpiry');
-    localStorage.removeItem('rememberMe');
-    localStorage.removeItem('userEmail');
-  }
-
   // Función para redirigir al dashboard según tipo de usuario
   function redirectToDashboard(userType) {
-    
-    
+    console.log(`🔄 Redirigiendo a dashboard de ${userType}`);
     showMessage('info', 'Iniciando sesión...', 'Redirigiendo a tu dashboard...');
     
     setTimeout(() => {
@@ -100,18 +73,12 @@ document.addEventListener('DOMContentLoaded', function() {
         case 'ojeador':
           redirectUrl = 'dashboard-scout.html';
           break;
-        case 'club':
-        case 'academia':
-          // Cuando esté listo: redirectUrl = 'dashboard-club.html';
-          redirectUrl = 'dashboard-futbolista.html'; // Temporal
-          break;
         default:
           redirectUrl = 'dashboard-futbolista.html';
       }
       
-      
       window.location.href = redirectUrl;
-    }, 1500);
+    }, 1000);
   }
 
   // Funcionalidad de mostrar/ocultar contraseña
@@ -202,14 +169,11 @@ document.addEventListener('DOMContentLoaded', function() {
   loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    
-
     // Validar campos
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
     if (!isEmailValid || !isPasswordValid) {
-      
       return;
     }
 
@@ -217,180 +181,127 @@ document.addEventListener('DOMContentLoaded', function() {
     setLoadingState(true);
 
     try {
-      // Login con Supabase
-      
-      const loginResult = await authenticateWithSupabase();
-      
-      
-      // Verificar que el tipo de usuario seleccionado coincida con el registrado
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
       const selectedUserType = document.querySelector('input[name="userType"]:checked').value;
-      const registeredUserType = loginResult.profile.user_type;
-      
-      
-      
-      
-      if (selectedUserType !== registeredUserType) {
-        // Cerrar la sesión de Supabase ya que no coincide el tipo
+
+      console.log('🔐 Intentando login...');
+
+      // Login con Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) throw error;
+
+      console.log('✅ Login exitoso en Supabase');
+
+      // Obtener perfil del usuario
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error('No se pudo cargar el perfil del usuario. Por favor, contacta al administrador.');
+      }
+
+      console.log('✅ Perfil cargado:', profile.user_type);
+
+      // Verificar que el tipo de usuario seleccionado coincida con el registrado
+      if (selectedUserType !== profile.user_type) {
+        // Cerrar la sesión ya que no coincide el tipo
         await supabase.auth.signOut();
         
         const tipoSeleccionado = selectedUserType === 'scout' ? 'Scout' : 'Futbolista';
-        const tipoReal = registeredUserType === 'scout' ? 'Scout' : 'Futbolista';
+        const tipoReal = profile.user_type === 'scout' ? 'Scout' : 'Futbolista';
         
         throw new Error(`Esta cuenta está registrada como ${tipoReal}. Por favor, selecciona "${tipoReal}" para iniciar sesión.`);
       }
-      
-      // Login exitoso - obtener perfil del usuario
-      const userData = {
-        id: loginResult.user.id,
-        email: loginResult.user.email,
-        userType: loginResult.profile.user_type,
-        name: loginResult.profile.full_name,
-        first_name: loginResult.profile.first_name,
-        last_name: loginResult.profile.last_name,
-        phone: loginResult.profile.phone,
-        birth_date: loginResult.profile.birth_date,
-        nationality: loginResult.profile.nationality,
-        second_nationality: loginResult.profile.second_nationality,
-        city: loginResult.profile.city,
-        avatar_url: loginResult.profile.avatar_url,
-        loginTime: new Date().toISOString()
-      };
 
-      // Guardar en localStorage para compatibilidad
-      localStorage.setItem('scoutConnectUser', JSON.stringify(userData));
-      
-      // Marcar que acabamos de iniciar sesión (para que auth-guard no bloquee)
-      localStorage.setItem('justLoggedIn', 'true');
-
-      
-
+      // Guardar preferencias de "Recordarme" (solo email, no sesión)
       if (rememberMe.checked) {
         localStorage.setItem('rememberMe', 'true');
-        localStorage.setItem('userEmail', emailInput.value.trim());
-        
+        localStorage.setItem('userEmail', email);
+      } else {
+        localStorage.removeItem('rememberMe');
+        localStorage.removeItem('userEmail');
       }
 
-      showMessage('success', '¡Bienvenido!', 'Has iniciado sesión correctamente.');
+      // Mostrar mensaje de éxito
+      showMessage('success', '¡Bienvenido!', `Iniciando sesión como ${profile.full_name || email}`);
       
-      
-      // Redirigir inmediatamente
-      redirectToDashboard(userData.userType);
+      // Redirigir al dashboard
+      setTimeout(() => {
+        redirectToDashboard(profile.user_type);
+      }, 1500);
 
     } catch (error) {
-      // Error en el login
       console.error('❌ Error en login:', error);
-      let errorMessage = 'Credenciales incorrectas. Por favor, verifica tu correo y contraseña.';
+      setLoadingState(false);
+      
+      let errorMessage = 'Ha ocurrido un error al iniciar sesión';
       
       if (error.message.includes('Invalid login credentials')) {
-        errorMessage = 'Email o contraseña incorrectos.';
+        errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña.';
       } else if (error.message.includes('Email not confirmed')) {
-        errorMessage = 'Tu email no está confirmado. Ve a Supabase Dashboard → Authentication → Providers → Email y desactiva "Confirm email" para desarrollo.';
-      } else if (error.message.includes('Esta cuenta está registrada como')) {
-        errorMessage = error.message; // Mensaje personalizado de tipo de usuario
-      } else if (error.message) {
+        errorMessage = 'Por favor, confirma tu email antes de iniciar sesión.';
+      } else if (error.message.includes('registrada como')) {
         errorMessage = error.message;
       }
       
       showMessage('error', 'Error de autenticación', errorMessage);
-    } finally {
-      setLoadingState(false);
     }
   });
 
-  // Función para autenticar con Supabase
-  async function authenticateWithSupabase() {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    // Verificar que Supabase esté inicializado
-    if (!supabase) {
-      console.error('❌ Supabase no está inicializado');
-      throw new Error('Error de configuración: No se pudo conectar con el servidor');
-    }
-
-    console.log('🔐 Intentando autenticar usuario...');
-
-    // 1. Iniciar sesión con Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
-
-    if (authError) {
-      console.error('❌ Error de autenticación:', authError);
-      throw authError;
-    }
-
-    console.log('✅ Autenticación exitosa');
-
-    // 2. Obtener perfil del usuario
-    let { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', authData.user.id)
-      .single();
-
-    // 3. Si el perfil no existe, crearlo ahora
-    if (profileError || !profile) {
-      console.warn('⚠️ Perfil no encontrado, creando uno nuevo...');
-      
-      const userMetadata = authData.user.user_metadata || {};
-      const newProfile = {
-        id: authData.user.id,
-        email: authData.user.email,
-        user_type: userMetadata.user_type || 'jugador',
-        full_name: userMetadata.full_name || 'Usuario',
-        first_name: userMetadata.first_name || 'Usuario',
-        last_name: userMetadata.last_name || '',
-        phone: userMetadata.phone || null
-      };
-
-      const { data: createdProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert([newProfile])
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('❌ Error al crear perfil:', createError);
-        throw new Error('No se pudo crear el perfil del usuario: ' + createError.message);
-      }
-
-      profile = createdProfile;
-      
-    }
-
-    
-
-    return {
-      user: authData.user,
-      session: authData.session,
-      profile: profile
-    };
-  }
-
-  // Función para generar token de sesión
-  function generateSessionToken() {
-    return 'scToken_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-  }
-
-  // Estados de carga del botón
-  function setLoadingState(loading) {
-    if (loading) {
-      loginBtn.classList.add('loading');
+  // Función para establecer estado de carga
+  function setLoadingState(isLoading) {
+    if (isLoading) {
       loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="spinner"></span> Iniciando sesión...';
     } else {
-      loginBtn.classList.remove('loading');
       loginBtn.disabled = false;
+      loginBtn.innerHTML = 'Iniciar Sesión';
     }
   }
 
-  // Mostrar mensajes modales
-  function showMessage(type, title, text) {
-    messageIcon.className = `message-icon ${type}`;
-    messageIcon.innerHTML = type === 'success' ? '✓' : '✕';
+  // Función para mostrar mensajes
+  function showMessage(type, title, message) {
     messageTitle.textContent = title;
-    messageText.textContent = text;
+    messageText.textContent = message;
+    
+    // Cambiar icono y colores según el tipo
+    messageIcon.className = 'message-icon';
+    if (type === 'success') {
+      messageIcon.innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      `;
+      messageIcon.classList.add('success');
+    } else if (type === 'error') {
+      messageIcon.innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+      `;
+      messageIcon.classList.add('error');
+    } else {
+      messageIcon.innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      `;
+      messageIcon.classList.add('info');
+    }
+    
     messageModal.classList.add('show');
   }
 
@@ -399,78 +310,10 @@ document.addEventListener('DOMContentLoaded', function() {
     messageModal.classList.remove('show');
   });
 
-  // Cerrar modal al hacer click fuera
+  // Cerrar modal al hacer clic fuera
   messageModal.addEventListener('click', function(e) {
     if (e.target === messageModal) {
       messageModal.classList.remove('show');
     }
   });
-
-  // Cargar datos recordados
-  if (localStorage.getItem('rememberMe') === 'true') {
-    const savedEmail = localStorage.getItem('userEmail');
-    if (savedEmail) {
-      emailInput.value = savedEmail;
-      rememberMe.checked = true;
-    }
-  }
-
-  // Manejo de botones sociales
-  const googleBtn = document.querySelector('.google-btn');
-  googleBtn.addEventListener('click', function() {
-    // Aquí iría la lógica para login con Google
-    showMessage('info', 'Próximamente', 'El login con Google estará disponible próximamente.');
-  });
-
-  // Manejo de enlaces
-  const forgotPasswordLink = document.querySelector('.forgot-password');
-  forgotPasswordLink.addEventListener('click', function(e) {
-    e.preventDefault();
-    showMessage('info', 'Recuperar contraseña', 'Se enviará un enlace de recuperación a tu correo electrónico.');
-  });
-
-  const signupLink = document.querySelector('.signup-btn');
-  signupLink.addEventListener('click', function(e) {
-    e.preventDefault();
-    // Redirigir a la página de registro
-    window.location.href = 'registro.html';
-  });
-
-  // Efectos visuales adicionales
-  const inputs = document.querySelectorAll('input');
-  inputs.forEach(input => {
-    input.addEventListener('focus', function() {
-      this.parentElement.classList.add('focused');
-    });
-
-    input.addEventListener('blur', function() {
-      this.parentElement.classList.remove('focused');
-    });
-  });
-
-  // Animación de entrada
-  setTimeout(() => {
-    document.querySelector('.login-wrapper').style.transform = 'translateY(0)';
-    document.querySelector('.login-wrapper').style.opacity = '1';
-  }, 100);
-
-  // Aplicar estilos iniciales para la animación
-  document.querySelector('.login-wrapper').style.transform = 'translateY(20px)';
-  document.querySelector('.login-wrapper').style.opacity = '0';
-  document.querySelector('.login-wrapper').style.transition = 'all 0.6s ease';
-
-  // Manejo de teclas
-  document.addEventListener('keydown', function(e) {
-    // Cerrar modal con Escape
-    if (e.key === 'Escape' && messageModal.classList.contains('show')) {
-      messageModal.classList.remove('show');
-    }
-    
-    // Submit con Enter
-    if (e.key === 'Enter' && document.activeElement.tagName !== 'BUTTON') {
-      loginForm.dispatchEvent(new Event('submit'));
-    }
-  });
-
-  
 });

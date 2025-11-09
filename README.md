@@ -109,10 +109,21 @@ Este script automáticamente:
    SUPABASE_ANON_KEY=tu_clave_publica_aqui
    ```
 
-3. Inyecta las credenciales en el proyecto:
+3. **Genera el archivo de configuración** (IMPORTANTE):
    ```powershell
-   node scripts/build.js
+   npm run build
    ```
+   
+   Este comando:
+   - Lee las credenciales desde `.env`
+   - Genera `src/JS/supabase-config.js` desde el template
+   - El archivo generado NO se sube a Git por seguridad
+
+⚠️ **IMPORTANTE: Seguridad de Credenciales**
+- El archivo `supabase-config.js` contiene credenciales y está en `.gitignore`
+- NUNCA edites `supabase-config.js` directamente
+- Usa siempre `npm run build` después de cambiar `.env`
+- El template seguro está en `supabase-config.template.js`
 
 📖 **Nota:** Para más detalles sobre variables de entorno, consulta [docs/setup/CONFIGURACION_ENV.md](./docs/setup/CONFIGURACION_ENV.md)
 

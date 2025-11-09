@@ -1328,22 +1328,17 @@
   <!-- Librería de Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Supabase Client Library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <!-- Configuración de Supabase -->
   <script src="../src/JS/supabase-config.js"></script>
-  
-  <!-- Protección de ruta (Auth Guard) -->
-  <script src="../src/JS/auth-guard.js"></script>
   
   <!-- Módulo de notificaciones -->
   <script src="../src/JS/notifications.js"></script>
   
-  <!-- Dashboard con estadísticas reales -->
-  <script src="../src/JS/dashboard-scout-real.js"></script>
+  <!-- Protección de ruta (Auth Guard) -->
+  <script src="../src/JS/auth-guard.js"></script>
   
-  <!-- Integración de chat -->
+  <!-- Script principal del dashboard -->
+  <script src="../src/JS/dashboard-scout.js"></script>
   <script src="../src/JS/chat-integration.js"></script>
 </body>
 </html>

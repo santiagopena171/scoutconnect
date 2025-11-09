@@ -7,6 +7,9 @@ package-lock.json
 .env.local
 .env.production
 
+# Generated config files with credentials (DO NOT COMMIT)
+src/JS/supabase-config.js
+
 # IDE
 .vscode/
 .idea/
